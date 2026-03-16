@@ -2,29 +2,51 @@ import streamlit as st
 import pandas as pd
 import folium
 from streamlit_folium import folium_static
-import os
 from datetime import datetime
+import gspread
+from google.oauth2.service_account import Credentials
+import json
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(page_title="Gestión UOCRA - Seccional Monte Grande", layout="wide", page_icon="🏗️")
 
-# --- BASES DE DATOS LOCALES ---
-ARCHIVO_OBRAS = "db_obras_montegrande.xlsx"
-ARCHIVO_DELEGADOS = "db_delegados_montegrande.xlsx"
-ARCHIVO_CONTACTOS = "db_contactos_montegrande.xlsx"
-ARCHIVO_RECLAMOS = "db_reclamos_montegrande.xlsx"
+# --- CONEXIÓN A GOOGLE SHEETS ---
+scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+try:
+    creds_dict = json.loads(st.secrets["gcp_service_account"])
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+    client = gspread.authorize(creds)
+    NOMBRE_DEL_EXCEL = "Base_Datos_UOCRA" # Debe llamarse exactamente así en tu Google Drive
+except Exception as e:
+    st.error("⚠️ Error de conexión. Verificá los Secrets en Streamlit.")
+    st.stop()
 
-def cargar_db(archivo, columnas):
-    return pd.read_excel(archivo) if os.path.exists(archivo) else pd.DataFrame(columns=columnas)
+# --- FUNCIONES DE BASE DE DATOS EN LA NUBE ---
+def cargar_db(hoja_nombre, columnas):
+    try:
+        sheet = client.open(NOMBRE_DEL_EXCEL).worksheet(hoja_nombre)
+        datos = sheet.get_all_records()
+        if not datos:
+            return pd.DataFrame(columns=columnas)
+        return pd.DataFrame(datos)
+    except Exception as e:
+        return pd.DataFrame(columns=columnas)
 
-def guardar_db(df, archivo):
-    df.to_excel(archivo, index=False)
+def guardar_db(df, hoja_nombre):
+    try:
+        df_limpio = df.fillna("") # Google Sheets no acepta valores nulos
+        sheet = client.open(NOMBRE_DEL_EXCEL).worksheet(hoja_nombre)
+        sheet.clear()
+        datos_a_subir = [df_limpio.columns.values.tolist()] + df_limpio.values.tolist()
+        sheet.update(values=datos_a_subir, range_name="A1")
+    except Exception as e:
+        st.error(f"Error guardando en {hoja_nombre}: {e}")
 
 # --- CARGA GLOBAL Y EXTRACCIÓN DE DATOS ---
-df_obras = cargar_db(ARCHIVO_OBRAS, ["Predio", "Empresa", "Delegado", "Obreros", "Estado", "Latitud", "Longitud", "Jurisdiccion"])
-df_delegados = cargar_db(ARCHIVO_DELEGADOS, ["Nombre", "CUIL", "Celular", "Domicilio", "Nacimiento", "Correo", "Observacion"])
-df_contactos = cargar_db(ARCHIVO_CONTACTOS, ["Nombre", "Cargo", "Empresa", "Observaciones"])
-df_reclamos = cargar_db(ARCHIVO_RECLAMOS, ["Nombre", "Empresa", "Motivo", "Ingreso", "Estado", "Finalizacion", "Respuesta", "Observaciones"])
+df_obras = cargar_db("Obras", ["Predio", "Empresa", "Delegado", "Obreros", "Estado", "Latitud", "Longitud", "Jurisdiccion"])
+df_delegados = cargar_db("Delegados", ["Nombre", "CUIL", "Celular", "Domicilio", "Nacimiento", "Correo", "Observacion"])
+df_contactos = cargar_db("Contactos", ["Nombre", "Cargo", "Empresa", "Observaciones"])
+df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "Estado", "Finalizacion", "Respuesta", "Observaciones"])
 
 lista_predios_historicos = sorted(list(set(df_obras['Predio'].dropna().astype(str).tolist())))
 lista_empresas_historicas = sorted(list(set(pd.concat([df_obras['Empresa'], df_contactos['Empresa'], df_reclamos['Empresa']]).dropna().astype(str).tolist())))
@@ -33,7 +55,7 @@ lista_delegados_nombres = df_delegados['Nombre'].tolist() if not df_delegados.em
 lista_jurisdicciones = ["Esteban Echeverría", "Ezeiza", "Cañuelas", "Roque Pérez", "Lobos", "Saladillo", "Monte", "General Belgrano", "Las Heras", "Navarro"]
 lista_estados = ["Activa", "Intervenida", "Finalizada", "Interrumpida"]
 
-# --- BARRA LATERAL (MENÚ PRINCIPAL REDISEÑADO) ---
+# --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 st.sidebar.image("images.jfif", width=150)
 st.sidebar.title("Menú Principal")
 
@@ -119,7 +141,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     if not p_fin: st.error("❌ Falta Predio.")
                     else:
                         df_obras = pd.concat([df_obras, pd.DataFrame([{"Predio": p_fin, "Empresa": e_fin, "Delegado": ", ".join(d_sel), "Obreros": obr, "Estado": est, "Jurisdiccion": jur, "Latitud": float(lat) if lat else None, "Longitud": float(lon) if lon else None}])], ignore_index=True)
-                        guardar_db(df_obras, ARCHIVO_OBRAS); st.success("Registrada!"); st.rerun()
+                        guardar_db(df_obras, "Obras"); st.success("Registrada!"); st.rerun()
 
         elif acc_obras == "✏️ Modificar Obra":
             if not df_obras.empty:
@@ -146,7 +168,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                         
                         if st.form_submit_button("🔄 Actualizar"):
                             df_obras.loc[idx] = [np, ne, ", ".join(nd), no, ne_est, float(nlat) if nlat else None, float(nlon) if nlon else None, nj]
-                            guardar_db(df_obras, ARCHIVO_OBRAS); st.success("Actualizada!"); st.rerun()
+                            guardar_db(df_obras, "Obras"); st.success("Actualizada!"); st.rerun()
 
         elif acc_obras == "🗑️ Eliminar Obra":
             if not df_obras.empty:
@@ -155,7 +177,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                 if st.button("🗑️ Eliminar") and obra_el != "":
                     idx_el = opciones_obras_el.index(obra_el) - 1
                     df_obras = df_obras.drop(df_obras.index[idx_el])
-                    guardar_db(df_obras, ARCHIVO_OBRAS); st.success("Eliminada."); st.rerun()
+                    guardar_db(df_obras, "Obras"); st.success("Eliminada."); st.rerun()
 
     with tab_delegados:
         acc_del = st.radio("Acción Delegados:", ["➕ Nuevo", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
@@ -174,7 +196,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     obs = st.text_area("Obs:")
                 if st.form_submit_button("💾 Guardar") and nom:
                     df_delegados = pd.concat([df_delegados, pd.DataFrame([{"Nombre": nom, "CUIL": cuil, "Celular": cel, "Domicilio": dom, "Nacimiento": nac.strftime("%d/%m/%Y"), "Correo": corr, "Observacion": obs}])], ignore_index=True)
-                    guardar_db(df_delegados, ARCHIVO_DELEGADOS); st.success("Agregado!"); st.rerun()
+                    guardar_db(df_delegados, "Delegados"); st.success("Agregado!"); st.rerun()
 
         elif acc_del == "✏️ Modificar":
             if not df_delegados.empty:
@@ -198,14 +220,14 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             nob = st.text_area("Obs:", value=str(dat.get('Observacion','')))
                         if st.form_submit_button("🔄 Actualizar"):
                             df_delegados.loc[idx] = [nn, ncu, nce, ndo, nna.strftime("%d/%m/%Y"), nco, nob]
-                            guardar_db(df_delegados, ARCHIVO_DELEGADOS); st.success("Actualizado!"); st.rerun()
+                            guardar_db(df_delegados, "Delegados"); st.success("Actualizado!"); st.rerun()
 
         elif acc_del == "🗑️ Eliminar":
             if not df_delegados.empty:
                 del_el = st.selectbox("Borrar:", [""] + df_delegados['Nombre'].tolist())
                 if st.button("🗑️ Eliminar") and del_el:
                     df_delegados = df_delegados[df_delegados['Nombre'] != del_el]
-                    guardar_db(df_delegados, ARCHIVO_DELEGADOS); st.success("Eliminado."); st.rerun()
+                    guardar_db(df_delegados, "Delegados"); st.success("Eliminado."); st.rerun()
 
     with tab_contactos:
         acc_con = st.radio("Acción Contactos:", ["➕ Nuevo", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
@@ -224,7 +246,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     cemp_f = cemp_n.strip() if cemp_sel == "➕ Nueva..." else cemp_sel
                     if cemp_f:
                         df_contactos = pd.concat([df_contactos, pd.DataFrame([{"Nombre": cnom, "Cargo": ccar, "Empresa": cemp_f, "Observaciones": cobs}])], ignore_index=True)
-                        guardar_db(df_contactos, ARCHIVO_CONTACTOS); st.success("Guardado!"); st.rerun()
+                        guardar_db(df_contactos, "Contactos"); st.success("Guardado!"); st.rerun()
 
         elif acc_con == "✏️ Modificar":
             if not df_contactos.empty:
@@ -243,7 +265,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             no = st.text_area("Obs:", value=str(dat.get('Observaciones','')))
                         if st.form_submit_button("🔄 Actualizar"):
                             df_contactos.loc[idx] = [nn, nc, ne, no]
-                            guardar_db(df_contactos, ARCHIVO_CONTACTOS); st.success("Actualizado!"); st.rerun()
+                            guardar_db(df_contactos, "Contactos"); st.success("Actualizado!"); st.rerun()
 
         elif acc_con == "🗑️ Eliminar":
             if not df_contactos.empty:
@@ -252,7 +274,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                 if st.button("🗑️ Eliminar") and con_el:
                     idx = ops_el.index(con_el) - 1
                     df_contactos = df_contactos.drop(df_contactos.index[idx])
-                    guardar_db(df_contactos, ARCHIVO_CONTACTOS); st.success("Eliminado."); st.rerun()
+                    guardar_db(df_contactos, "Contactos"); st.success("Eliminado."); st.rerun()
 
 # ==========================================
 # MÓDULO 3: NÓMINAS
@@ -364,7 +386,7 @@ elif opcion == "4. 🧮 Calculadoras":
                 if not motivo_recibo: st.error("Escriba un motivo.")
                 else:
                     df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": st.session_state.rec_nombre, "Empresa": st.session_state.rec_empresa, "Motivo": motivo_recibo, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": "Generado Automáticamente desde Calculadora."}])], ignore_index=True)
-                    guardar_db(df_reclamos, ARCHIVO_RECLAMOS); st.success("✅ Reclamo enviado!")
+                    guardar_db(df_reclamos, "Reclamos"); st.success("✅ Reclamo enviado!")
 
     with tab_ieric:
         st.write("Carga de quincenas históricas para cálculo de aportes.")
@@ -403,7 +425,7 @@ elif opcion == "4. 🧮 Calculadoras":
                 elif not motivo_ieric: st.error("❌ Escriba un motivo.")
                 else:
                     df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": ieric_nombre, "Empresa": ieric_emp, "Motivo": motivo_ieric, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": "Generado Auto desde IERIC."}])], ignore_index=True)
-                    guardar_db(df_reclamos, ARCHIVO_RECLAMOS); st.success("✅ Reclamo enviado!")
+                    guardar_db(df_reclamos, "Reclamos"); st.success("✅ Reclamo enviado!")
             
             if c_btn2.button("🗑️ Borrar Última Quincena"): st.session_state.quincenas.pop(); st.rerun()
 
@@ -433,7 +455,7 @@ elif opcion == "5. ⚠️ Repositorio de Reclamos":
                 if not rn or not rm or not re_fin: st.error("❌ Nombre, Empresa y Motivo obligatorios.")
                 else:
                     df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": rn, "Empresa": re_fin, "Motivo": rm, "Ingreso": fi.strftime("%d/%m/%Y"), "Estado": "Activo" if ract else "Finalizado", "Finalizacion": "En proceso" if ract else ff.strftime("%d/%m/%Y"), "Respuesta": rresp, "Observaciones": robs}])], ignore_index=True)
-                    guardar_db(df_reclamos, ARCHIVO_RECLAMOS); st.success("Reclamo asentado!"); st.rerun()
+                    guardar_db(df_reclamos, "Reclamos"); st.success("Reclamo asentado!"); st.rerun()
 
     with tab_r_bd:
         st.dataframe(df_reclamos, use_container_width=True)
@@ -442,4 +464,4 @@ elif opcion == "5. ⚠️ Repositorio de Reclamos":
             rel = st.selectbox("Eliminar:", [""] + ops.tolist())
             if st.button("🗑️ Eliminar") and rel:
                 df_reclamos = df_reclamos.drop(df_reclamos.index[ops.tolist().index(rel) - 1])
-                guardar_db(df_reclamos, ARCHIVO_RECLAMOS); st.success("Eliminado."); st.rerun()
+                guardar_db(df_reclamos, "Reclamos"); st.success("Eliminado."); st.rerun()
