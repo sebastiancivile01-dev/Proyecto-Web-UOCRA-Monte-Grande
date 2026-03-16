@@ -21,10 +21,10 @@ if st.session_state.usuario_rol is None:
     clave = st.text_input("Contraseña:", type="password")
     
     if st.button("Ingresar"):
-        if clave == "morelli2026":  # Clave para ustedes 4 (acceso total)
+        if clave == "Civile2026":  # Clave para ustedes 4 (acceso total)
             st.session_state.usuario_rol = "Admin"
             st.rerun()
-        elif clave == "visita2026": # Clave para el usuario número 5
+        elif clave == "Morelli2026": # Clave para el usuario número 5
             st.session_state.usuario_rol = "Restringido"
             st.rerun()
         else:
@@ -90,8 +90,17 @@ if st.sidebar.button("🚪 Cerrar Sesión"):
     st.rerun()
 
 with st.sidebar.expander("🏛️ Comisión Directiva", expanded=False):
-    st.markdown("**1- Sec. Gral:** R. Morelli\n**2- Sec. Adj:** A. Benitez\n**3- Sec. Org:** R. Civile\n**4- Sec. Actas:** R. Fernandez\n**5- Sec. Finanzas:** R. Oviedo")
-
+    st.markdown("""
+    **1- Sec. Gral:** R. Morelli
+    
+    **2- Sec. Adj:** A. Benitez
+    
+    **3- Sec. Org:** R. Civile
+    
+    **4- Sec. Actas:** R. Fernandez
+    
+    **5- Sec. Finanzas:** R. Oviedo
+    """)
 # MAGIA DEL LOGIN: Filtramos los botones según quién entró
 opciones_totales = [
     "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
