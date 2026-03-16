@@ -97,6 +97,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
 
     with tab_obras:
         acc_obras = st.radio("Acción Obras:", ["➕ Nueva Obra", "✏️ Modificar Obra", "🗑️ Eliminar Obra"], horizontal=True)
+        
         if acc_obras == "➕ Nueva Obra":
             with st.form("f_n_obra", clear_on_submit=True):
                 col1, col2 = st.columns(2)
@@ -122,11 +123,14 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
 
         elif acc_obras == "✏️ Modificar Obra":
             if not df_obras.empty:
-                obra_ed = st.selectbox("Obra a modificar:", df_obras['Predio'].tolist())
+                opciones_obras = df_obras['Predio'].astype(str) + " (" + df_obras['Empresa'].astype(str) + ")"
+                obra_ed = st.selectbox("Obra a modificar:", opciones_obras.tolist())
+                
                 if obra_ed:
-                    idx = df_obras[df_obras['Predio'] == obra_ed].index[0]
+                    idx = opciones_obras[opciones_obras == obra_ed].index[0]
                     dat = df_obras.loc[idx]
                     del_v = [d for d in str(dat.get('Delegado','')).split(", ") if d in lista_delegados_nombres]
+                    
                     with st.form("f_e_obra"):
                         col1, col2 = st.columns(2)
                         with col1:
@@ -139,27 +143,35 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             ne_est = st.selectbox("Estado:", lista_estados, index=lista_estados.index(dat['Estado']) if dat.get('Estado') in lista_estados else 0)
                             nlat = st.text_input("Latitud:", value="" if pd.isna(dat.get('Latitud')) else str(dat['Latitud']))
                             nlon = st.text_input("Longitud:", value="" if pd.isna(dat.get('Longitud')) else str(dat['Longitud']))
+                        
                         if st.form_submit_button("🔄 Actualizar"):
                             df_obras.loc[idx] = [np, ne, ", ".join(nd), no, ne_est, float(nlat) if nlat else None, float(nlon) if nlon else None, nj]
                             guardar_db(df_obras, ARCHIVO_OBRAS); st.success("Actualizada!"); st.rerun()
 
         elif acc_obras == "🗑️ Eliminar Obra":
             if not df_obras.empty:
-                obra_el = st.selectbox("Borrar:", [""] + df_obras['Predio'].tolist())
-                if st.button("🗑️ Eliminar") and obra_el:
-                    df_obras = df_obras[df_obras['Predio'] != obra_el]
+                opciones_obras_el = [""] + (df_obras['Predio'].astype(str) + " (" + df_obras['Empresa'].astype(str) + ")").tolist()
+                obra_el = st.selectbox("Borrar:", opciones_obras_el)
+                if st.button("🗑️ Eliminar") and obra_el != "":
+                    idx_el = opciones_obras_el.index(obra_el) - 1
+                    df_obras = df_obras.drop(df_obras.index[idx_el])
                     guardar_db(df_obras, ARCHIVO_OBRAS); st.success("Eliminada."); st.rerun()
 
     with tab_delegados:
         acc_del = st.radio("Acción Delegados:", ["➕ Nuevo", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
+        
         if acc_del == "➕ Nuevo":
             with st.form("f_n_del", clear_on_submit=True):
                 col1, col2 = st.columns(2)
                 with col1:
-                    nom, cuil, cel, dom = st.text_input("Nombre:*"), st.text_input("CUIL:"), st.text_input("Celular:"), st.text_input("Domicilio:")
+                    nom = st.text_input("Nombre:*")
+                    cuil = st.text_input("CUIL:")
+                    cel = st.text_input("Celular:")
+                    dom = st.text_input("Domicilio:")
                 with col2:
                     nac = st.date_input("Nacimiento:", min_value=datetime(1900, 1, 1), format="DD/MM/YYYY")
-                    corr, obs = st.text_input("Correo:"), st.text_area("Obs:")
+                    corr = st.text_input("Correo:")
+                    obs = st.text_area("Obs:")
                 if st.form_submit_button("💾 Guardar") and nom:
                     df_delegados = pd.concat([df_delegados, pd.DataFrame([{"Nombre": nom, "CUIL": cuil, "Celular": cel, "Domicilio": dom, "Nacimiento": nac.strftime("%d/%m/%Y"), "Correo": corr, "Observacion": obs}])], ignore_index=True)
                     guardar_db(df_delegados, ARCHIVO_DELEGADOS); st.success("Agregado!"); st.rerun()
@@ -172,13 +184,18 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     dat = df_delegados.loc[idx]
                     try: f_obj = datetime.strptime(str(dat.get('Nacimiento', '01/01/2000')), "%d/%m/%Y").date()
                     except: f_obj = datetime(2000, 1, 1).date()
+                    
                     with st.form("f_e_del"):
                         col1, col2 = st.columns(2)
                         with col1:
-                            nn, ncu, nce, ndo = st.text_input("Nombre:*", value=str(dat.get('Nombre',''))), st.text_input("CUIL:", value=str(dat.get('CUIL',''))), st.text_input("Celular:", value=str(dat.get('Celular',''))), st.text_input("Domicilio:", value=str(dat.get('Domicilio','')))
+                            nn = st.text_input("Nombre:*", value=str(dat.get('Nombre','')))
+                            ncu = st.text_input("CUIL:", value=str(dat.get('CUIL','')))
+                            nce = st.text_input("Celular:", value=str(dat.get('Celular','')))
+                            ndo = st.text_input("Domicilio:", value=str(dat.get('Domicilio','')))
                         with col2:
                             nna = st.date_input("Nacimiento:", value=f_obj, min_value=datetime(1900, 1, 1), format="DD/MM/YYYY")
-                            nco, nob = st.text_input("Correo:", value=str(dat.get('Correo',''))), st.text_area("Obs:", value=str(dat.get('Observacion','')))
+                            nco = st.text_input("Correo:", value=str(dat.get('Correo','')))
+                            nob = st.text_area("Obs:", value=str(dat.get('Observacion','')))
                         if st.form_submit_button("🔄 Actualizar"):
                             df_delegados.loc[idx] = [nn, ncu, nce, ndo, nna.strftime("%d/%m/%Y"), nco, nob]
                             guardar_db(df_delegados, ARCHIVO_DELEGADOS); st.success("Actualizado!"); st.rerun()
@@ -192,6 +209,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
 
     with tab_contactos:
         acc_con = st.radio("Acción Contactos:", ["➕ Nuevo", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
+        
         if acc_con == "➕ Nuevo":
             with st.form("f_n_con", clear_on_submit=True):
                 col1, col2 = st.columns(2)
@@ -200,7 +218,8 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     cemp_sel = st.selectbox("Empresa:", ["➕ Nueva..."] + lista_empresas_historicas)
                     cemp_n = st.text_input("Si es Nueva, escríbala:")
                 with col2:
-                    ccar, cobs = st.text_input("Cargo:"), st.text_area("Obs:")
+                    ccar = st.text_input("Cargo:")
+                    cobs = st.text_area("Obs:")
                 if st.form_submit_button("💾 Guardar") and cnom:
                     cemp_f = cemp_n.strip() if cemp_sel == "➕ Nueva..." else cemp_sel
                     if cemp_f:
@@ -236,7 +255,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     guardar_db(df_contactos, ARCHIVO_CONTACTOS); st.success("Eliminado."); st.rerun()
 
 # ==========================================
-# MÓDULO 3: NÓMINAS (AHORA CON BUSCADOR INTELIGENTE)
+# MÓDULO 3: NÓMINAS
 # ==========================================
 elif opcion == "3. 📋 Nóminas Consolidadas":
     st.title("📋 Repositorio de Bases de Datos")
@@ -274,7 +293,6 @@ elif opcion == "4. 🧮 Calculadoras":
     tab_recibo, tab_ieric = st.tabs(["🧾 Calculadora de Recibos", "💰 Fondo Cese (IERIC)"])
     
     with tab_recibo:
-        # AHORA EL FORMATO LIQUIDATIVO VIVE SOLO ADENTRO DEL RECIBO
         formato_liq = st.selectbox("📝 Formato Liquidativo (Convenio de Empresa):", ["AESA"])
         st.markdown("---")
 
@@ -306,7 +324,7 @@ elif opcion == "4. 🧮 Calculadoras":
                 vh = st.session_state.paritarias[cat_map[cat]]
                 
                 st.markdown("**Horas Trabajadas**")
-                hn, h50, h100, hc, df = st.number_input("Hs Norm:", min_value=0.0), st.number_input("Hs 50%:", min_value=0.0), st.number_input("Hs 100%:", min_value=0.0), st.number_input("Hs Comp:", min_value=0.0), st.number_input("Días Fer:", min_value=0.0)
+                hn, h50, h100, hc, df_f = st.number_input("Hs Norm:", min_value=0.0), st.number_input("Hs 50%:", min_value=0.0), st.number_input("Hs 100%:", min_value=0.0), st.number_input("Hs Comp:", min_value=0.0), st.number_input("Días Fer:", min_value=0.0)
                 ha, hnoc = st.number_input("Hs Altura:", min_value=0.0), st.number_input("Hs Nocturnas:", min_value=0.0)
                 cpres, pesp, pnr = st.selectbox("Presentismo (20%):", ["Sí", "No"]), st.number_input("% Especialidad:", min_value=0.0), st.number_input("Plus NR (%):", min_value=0.0)
 
@@ -319,9 +337,9 @@ elif opcion == "4. 🧮 Calculadoras":
                 ds, dg = st.number_input("Seguro:", min_value=0.0), st.number_input("Ganancias (+/-):", value=0.0)
 
             if st.form_submit_button("▶ Generar Recibo Teórico", use_container_width=True):
-                subtot = (hn*vh) + (h50*vh*1.5) + (h100*vh*2.0) + (hc*vh) + (df*9.0*vh)
+                subtot = (hn*vh) + (h50*vh*1.5) + (h100*vh*2.0) + (hc*vh) + (df_f*9.0*vh)
                 mha, mhnoc = ha*vh*0.15, hnoc*vh*(8/60)
-                mpres = ((hn+h50+h100+hc+(df*9.0))*vh*0.20) if cpres == "Sí" else 0.0
+                mpres = ((hn+h50+h100+hc+(df_f*9.0))*vh*0.20) if cpres == "Sí" else 0.0
                 mesp = (hn+h50+h100)*vh*(pesp/100)
                 mvac = ((sb/25)-(sb/30))*dv if sb>0 and dv>0 else 0.0
                 msac_val = (mr/2)*(msac/6) if mr>0 else 0.0
