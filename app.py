@@ -10,6 +10,28 @@ import json
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(page_title="Gestión UOCRA - Seccional Monte Grande", layout="wide", page_icon="🏗️")
 
+# --- SISTEMA DE LOGIN (CANDADO) ---
+if 'usuario_rol' not in st.session_state:
+    st.session_state.usuario_rol = None
+
+if st.session_state.usuario_rol is None:
+    st.title("🔒 Acceso Restringido - UOCRA Monte Grande")
+    st.markdown("Por favor, ingrese su clave para acceder al sistema operativo.")
+    
+    clave = st.text_input("Contraseña:", type="password")
+    
+    if st.button("Ingresar"):
+        if clave == "morelli2026":  # Clave para ustedes 4 (acceso total)
+            st.session_state.usuario_rol = "Admin"
+            st.rerun()
+        elif clave == "visita2026": # Clave para el usuario número 5
+            st.session_state.usuario_rol = "Restringido"
+            st.rerun()
+        else:
+            st.error("❌ Contraseña incorrecta.")
+    
+    st.stop() # Esto es clave: frena la página acá y no carga nada de lo que sigue
+
 # --- CONEXIÓN A GOOGLE SHEETS ---
 scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 try:
@@ -62,13 +84,28 @@ lista_estados = ["Activa", "Intervenida", "Finalizada", "Interrumpida"]
 st.sidebar.image("images.jfif", width=150)
 st.sidebar.title("Menú Principal")
 
+# Botón para cerrar sesión si alguien le presta el celular a otro
+if st.sidebar.button("🚪 Cerrar Sesión"):
+    st.session_state.usuario_rol = None
+    st.rerun()
+
 with st.sidebar.expander("🏛️ Comisión Directiva", expanded=False):
     st.markdown("**1- Sec. Gral:** R. Morelli\n**2- Sec. Adj:** A. Benitez\n**3- Sec. Org:** R. Civile\n**4- Sec. Actas:** R. Fernandez\n**5- Sec. Finanzas:** R. Oviedo")
 
-opcion = st.sidebar.radio("Navegación:", [
+# MAGIA DEL LOGIN: Filtramos los botones según quién entró
+opciones_totales = [
     "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
     "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "5. ⚠️ Repositorio de Reclamos"
-])
+]
+
+if st.session_state.usuario_rol == "Restringido":
+    # Acá le borramos de la lista las opciones que NO querés que vea
+    opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas"]
+else:
+    # Si es Admin, ve todo
+    opciones_permitidas = opciones_totales
+
+opcion = st.sidebar.radio("Navegación:", opciones_permitidas)
 
 # ==========================================
 # MÓDULO 1: MAPA TERRITORIAL
