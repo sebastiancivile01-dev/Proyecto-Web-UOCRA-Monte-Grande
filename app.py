@@ -91,13 +91,13 @@ if st.sidebar.button("🚪 Cerrar Sesión"):
 
 with st.sidebar.expander("🏛️ Comisión Directiva", expanded=False):
     st.markdown("""
-    **1- Sec. Gral:** R. Morelli
+    **1- Sec. Gral:** Roberto Morelli
     
-    **2- Sec. Adj:** A. Benitez
+    **2- Sec. Adj:** Alejandro Benitez
     
-    **3- Sec. Org:** R. Civile
+    **3- Sec. Org:** Rolando Civile
     
-    **4- Sec. Actas:** R. Fernandez
+    **4- Sec. Actas:** Ruben Fernandez
     
     **5- Sec. Finanzas:** R. Oviedo
     """)
