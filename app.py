@@ -16,7 +16,11 @@ try:
     creds_dict = json.loads(st.secrets["gcp_service_account"])
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     client = gspread.authorize(creds)
-    NOMBRE_DEL_EXCEL = "Base_Datos_UOCRA" # Debe llamarse exactamente así en tu Google Drive
+    
+    # 👇 ACÁ PEGA EL LINK COMPLETO DE TU GOOGLE SHEETS 👇
+    URL_DEL_EXCEL = "https://docs.google.com/spreadsheets/d/15_0fpPr90DAJsivWACnFNaGXB1Eb1GaOFh4j-OfDnDU/edit?pli=1&gid=0#gid=0" 
+    
+    DOC = client.open_by_url(URL_DEL_EXCEL)
 except Exception as e:
     st.error("⚠️ Error de conexión. Verificá los Secrets en Streamlit.")
     st.stop()
@@ -24,7 +28,7 @@ except Exception as e:
 # --- FUNCIONES DE BASE DE DATOS EN LA NUBE ---
 def cargar_db(hoja_nombre, columnas):
     try:
-        sheet = client.open(NOMBRE_DEL_EXCEL).worksheet(hoja_nombre)
+        sheet = DOC.worksheet(hoja_nombre)
         datos = sheet.get_all_records()
         if not datos:
             return pd.DataFrame(columns=columnas)
@@ -35,13 +39,12 @@ def cargar_db(hoja_nombre, columnas):
 def guardar_db(df, hoja_nombre):
     try:
         df_limpio = df.fillna("") # Google Sheets no acepta valores nulos
-        sheet = client.open(NOMBRE_DEL_EXCEL).worksheet(hoja_nombre)
+        sheet = DOC.worksheet(hoja_nombre)
         sheet.clear()
         datos_a_subir = [df_limpio.columns.values.tolist()] + df_limpio.values.tolist()
         sheet.update(values=datos_a_subir, range_name="A1")
     except Exception as e:
-        st.error(f"Error guardando en {hoja_nombre}: {e}")
-
+        st.error(f"Error técnico guardando en {hoja_nombre}: {e}")
 # --- CARGA GLOBAL Y EXTRACCIÓN DE DATOS ---
 df_obras = cargar_db("Obras", ["Predio", "Empresa", "Delegado", "Obreros", "Estado", "Latitud", "Longitud", "Jurisdiccion"])
 df_delegados = cargar_db("Delegados", ["Nombre", "CUIL", "Celular", "Domicilio", "Nacimiento", "Correo", "Observacion"])
