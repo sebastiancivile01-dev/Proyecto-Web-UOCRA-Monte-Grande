@@ -9,7 +9,15 @@ import json
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(page_title="Gestión UOCRA - Seccional Monte Grande", layout="wide", page_icon="🏗️")
-
+st.markdown("""
+    <style>
+    /* Colores institucionales UOCRA */
+    h1, h2, h3 { color: #0033A0 !important; }
+    div.stButton > button:first-child { background-color: #0033A0; color: white; border-radius: 5px; border: 1px solid #0033A0; }
+    div.stButton > button:hover { background-color: #002277; color: white; border: 1px solid #002277; }
+    [data-testid="stSidebar"] { background-color: #F8F9FA; border-right: 2px solid #E9ECEF; }
+    </style>
+""", unsafe_allow_html=True)
 # --- SISTEMA DE LOGIN (CANDADO) ---
 if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
@@ -86,10 +94,11 @@ df_delegados = cargar_db("Delegados", ["Nombre", "CUIL", "Celular", "Domicilio",
 df_contactos = cargar_db("Contactos", ["Nombre", "Cargo", "Empresa", "Observaciones"])
 df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "Estado", "Finalizacion", "Respuesta", "Observaciones"])
 df_eventos = cargar_db("Mujeres_Eventos", ["Titulo", "Fecha", "Observaciones"]) # Sincronizado con tu pestaña
+df_convenios = cargar_db("Convenios", ["Empresa", "Detalle_Convenio", "monto $", "Monto %", "Vigencia"])
 
 # La lista de predios ahora se alimenta de la base maestra oficial
 lista_predios_historicos = sorted(df_predios['Nombre'].dropna().astype(str).tolist()) if not df_predios.empty else []
-lista_empresas_historicas = sorted(list(set(pd.concat([df_obras['Empresa'], df_contactos['Empresa'], df_reclamos['Empresa']]).dropna().astype(str).tolist())))
+lista_empresas_historicas = sorted(list(set(pd.concat([df_obras['Empresa'], df_contactos['Empresa'], df_reclamos['Empresa'], df_convenios['Empresa']]).dropna().astype(str).tolist())))
 lista_delegados_nombres = df_delegados['Nombre'].tolist() if not df_delegados.empty else []
 
 lista_jurisdicciones = ["Esteban Echeverría", "Ezeiza", "Cañuelas", "Roque Pérez", "Lobos", "Saladillo", "Monte", "General Belgrano", "Las Heras", "Navarro"]
@@ -121,7 +130,7 @@ with st.sidebar.expander("🏛️ Comisión Directiva", expanded=False):
 opciones_totales = [
     "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
     "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "5. ⚠️ Repositorio de Reclamos",
-    "6. 💜 UOCRA Mujeres"
+    "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios por Empresa"
 ]
 
 if st.session_state.usuario_rol == "Restringido":
@@ -139,8 +148,11 @@ opcion = st.sidebar.radio("Navegación:", opciones_permitidas)
 if opcion == "1. 🗺️ Mapa Territorial":
     st.title("📍 Control Territorial - Jurisdicción Completa")
     st.markdown("### 👁️ Panel de Visualización")
-    modo_mapa = st.selectbox("Seleccione el enfoque del mapa:", ["🗺️ Vista General", "👤 Foco en Delegados", "🟢 Solo Activas", "🔴 Con Problemas (Interv/Interr)", "⚪ Finalizadas"])
-    st.markdown("---")
+    opciones_mapa = ["🗺️ Vista General", "👤 Foco en Delegados", "🟢 Solo Activas", "🔴 Con Problemas (Interv/Interr)", "⚪ Finalizadas"]
+    if st.session_state.usuario_rol == "Admin":
+        opciones_mapa.append("🔒 Solo Jurisdicción R")
+        
+    modo_mapa = st.selectbox("Seleccione el enfoque del mapa:", opciones_mapa)
 
     m = folium.Map(location=[-35.15, -58.8], zoom_start=8, tiles="CartoDB positron")
     url_geojson = "https://raw.githubusercontent.com/mgaitan/departamentos_argentina/master/departamentos-buenos_aires.json"
@@ -174,6 +186,7 @@ if opcion == "1. 🗺️ Mapa Territorial":
         if "Activas" in modo_mapa: df_mapa = df_mapa[df_mapa['Estado'] == 'Activa']
         elif "Problemas" in modo_mapa: df_mapa = df_mapa[df_mapa['Estado'].isin(['Intervenida', 'Interrumpida'])]
         elif "Finalizadas" in modo_mapa: df_mapa = df_mapa[df_mapa['Estado'] == 'Finalizada']
+        elif "Jurisdicción R" in modo_mapa: df_mapa = df_mapa[df_mapa['Jurisdiccion_R'].astype(str).str.strip().str.upper().isin(['SI', 'SÍ'])]
 
         for _, row in df_mapa.iterrows():
             lat, lon = row.get('Latitud'), row.get('Longitud')
@@ -784,3 +797,85 @@ elif opcion == "6. 💜 UOCRA Mujeres":
         st.markdown("---")
         if not df_eventos.empty:
             st.dataframe(df_eventos, use_container_width=True)
+# ==========================================
+# MÓDULO 7: CONVENIOS POR EMPRESA (FASE 5)
+# ==========================================
+elif opcion == "7. 🤝 Convenios por Empresa":
+    st.title("🤝 Repositorio de Convenios y Paritarias")
+    st.markdown("Módulo exclusivo para la Comisión Directiva.")
+    
+    tab_n_conv, tab_ver_conv = st.tabs(["➕ Gestionar Convenio", "📋 Ver Convenios Cargados"])
+    
+    with tab_n_conv:
+        acc_conv = st.radio("Acción:", ["➕ Nuevo Convenio", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
+        
+        if acc_conv == "➕ Nuevo Convenio":
+            with st.form("f_n_conv", clear_on_submit=True):
+                col1, col2 = st.columns(2)
+                with col1:
+                    c_emp = st.selectbox("Empresa:*", [""] + lista_empresas_historicas)
+                    c_cct = st.text_input("Vigencia (Ej: Marzo 2026 - Mayo 2026):")
+                with col2:
+                    c_monto = st.text_input("Monto Extra $:")
+                    c_porc = st.text_input("Monto Extra %:")
+                
+                c_det = st.text_area("Detalles de Escala / CCT (Descripción):*")
+                
+                if st.form_submit_button("💾 Guardar Convenio"):
+                    if not c_emp or not c_det:
+                        st.error("❌ Empresa y Detalles son campos obligatorios.")
+                    else:
+                        nuevo_conv = pd.DataFrame([{
+                            "Empresa": c_emp, "Detalle_Convenio": c_det, 
+                            "monto $": c_monto, "Monto %": c_porc, "Vigencia": c_vig
+                        }])
+                        df_convenios = pd.concat([df_convenios, nuevo_conv], ignore_index=True)
+                        guardar_db(df_convenios, "Convenios")
+                        st.success("✅ Convenio registrado.")
+                        st.rerun()
+                        
+        elif acc_conv == "✏️ Modificar":
+            if not df_convenios.empty:
+                opciones_c = df_convenios['Empresa'] + " - " + df_convenios['Vigencia']
+                c_ed = st.selectbox("Seleccione el Convenio:", opciones_c.tolist())
+                if c_ed:
+                    idx = opciones_c.tolist().index(c_ed)
+                    dat = df_convenios.loc[idx]
+                    with st.form("f_e_conv"):
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            e_emp = st.text_input("Empresa:*", value=str(dat.get('Empresa', '')))
+                            e_vig = st.text_input("Vigencia:", value=str(dat.get('Vigencia', '')))
+                        with col2:
+                            e_monto = st.text_input("Monto Extra $:", value=str(dat.get('monto $', '')))
+                            e_porc = st.text_input("Monto Extra %:", value=str(dat.get('Monto %', '')))
+                        e_det = st.text_area("Detalles de Escala / CCT:*", value=str(dat.get('Detalle_Convenio', '')))
+                        
+                        if st.form_submit_button("🔄 Actualizar"):
+                            df_convenios.at[idx, 'Empresa'] = e_emp
+                            df_convenios.at[idx, 'Detalle_Convenio'] = e_det
+                            df_convenios.at[idx, 'monto $'] = e_monto
+                            df_convenios.at[idx, 'Monto %'] = e_porc
+                            df_convenios.at[idx, 'Vigencia'] = e_vig
+                            guardar_db(df_convenios, "Convenios")
+                            st.success("✅ Actualizado.")
+                            st.rerun()
+                            
+        elif acc_conv == "🗑️ Eliminar":
+            if not df_convenios.empty:
+                opciones_el = [""] + (df_convenios['Empresa'] + " - " + df_convenios['Vigencia']).tolist()
+                c_el = st.selectbox("Borrar:", opciones_el)
+                if st.button("🗑️ Eliminar") and c_el != "":
+                    idx_el = opciones_el.index(c_el) - 1
+                    df_convenios = df_convenios.drop(df_convenios.index[idx_el])
+                    guardar_db(df_convenios, "Convenios")
+                    st.success("Eliminado.")
+                    st.rerun()
+
+    with tab_ver_conv:
+        st.write("Buscador de convenios por empresa.")
+        busq_c = st.text_input("🔍 Buscar Empresa:", key="b_conv")
+        df_mostrar_conv = df_convenios.copy()
+        if busq_c:
+            df_mostrar_conv = df_mostrar_conv[df_mostrar_conv['Empresa'].str.contains(busq_c, case=False, na=False)]
+        st.dataframe(df_mostrar_conv, use_container_width=True)
