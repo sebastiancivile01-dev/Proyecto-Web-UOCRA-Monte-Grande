@@ -8,8 +8,6 @@ from google.oauth2.service_account import Credentials
 import json
 import requests
 
-# --- CONFIGURACIÓN DE LA PÁGINA ---
-st.set_page_config(page_title="Gestión UOCRA - Seccional Monte Grande", layout="wide", page_icon="🏗️")
 st.markdown("""
     <style>
     /* Colores institucionales UOCRA */
@@ -17,8 +15,26 @@ st.markdown("""
     div.stButton > button:first-child { background-color: #0033A0; color: white; border-radius: 5px; border: 1px solid #0033A0; }
     div.stButton > button:hover { background-color: #002277; color: white; border: 1px solid #002277; }
     [data-testid="stSidebar"] { background-color: #F8F9FA; border-right: 2px solid #E9ECEF; }
+    
+    /* Sistema de Tarjetas KPI Profesionales */
+    .tarjeta-kpi {
+        background-color: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08);
+        border-left: 6px solid #0033A0;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .tarjeta-kpi.verde { border-left-color: #28a745; }
+    .tarjeta-kpi.naranja { border-left-color: #fd7e14; }
+    .tarjeta-kpi.violeta { border-left-color: #8A2BE2; }
+    .tarjeta-kpi.rojo { border-left-color: #dc3545; }
+    .kpi-titulo { color: #6c757d; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+    .kpi-valor { color: #212529; font-size: 2.2rem; font-weight: 900; margin: 0; }
     </style>
 """, unsafe_allow_html=True)
+
 # --- SISTEMA DE LOGIN (CANDADO) ---
 if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
@@ -517,8 +533,18 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
 # ==========================================
 elif opcion == "3. 📋 Nóminas Consolidadas":
     st.title("📋 Repositorio de Bases de Datos")
-    st.write("Buscador en tiempo real. Escriba para filtrar los resultados automáticamente.")
     
+    # 1. Tarjetas de Resumen
+    c1, c2, c3 = st.columns(3)
+    emp_totales = len(df_obras['Empresa'].unique()) if not df_obras.empty else 0
+    del_totales = len(df_delegados) if not df_delegados.empty else 0
+    con_totales = len(df_contactos) if not df_contactos.empty else 0
+    
+    with c1: st.markdown(f'<div class="tarjeta-kpi"><div class="kpi-titulo">🏢 Empresas Activas</div><div class="kpi-valor">{emp_totales}</div></div>', unsafe_allow_html=True)
+    with c2: st.markdown(f'<div class="tarjeta-kpi verde"><div class="kpi-titulo">👥 Delegados Registrados</div><div class="kpi-valor">{del_totales}</div></div>', unsafe_allow_html=True)
+    with c3: st.markdown(f'<div class="tarjeta-kpi naranja"><div class="kpi-titulo">📞 Contactos Agenda</div><div class="kpi-valor">{con_totales}</div></div>', unsafe_allow_html=True)
+    
+    st.write("Buscador en tiempo real. Escriba para filtrar los resultados automáticamente.")
     t1, t2, t3 = st.tabs(["🏗️ Obras y Empresas", "👥 Padrón de Delegados", "🏢 Agenda de Contactos"])
     
     with t1: 
@@ -793,12 +819,11 @@ elif opcion == "6. 💜 UOCRA Mujeres":
     
     tab_cupo, tab_eventos = st.tabs(["👷‍♀️ Cupo Femenino en Obras", "📅 Eventos y Participaciones"])
     
-    with tab_cupo:
+   with tab_cupo:
         st.subheader("Asignación de Cupo Femenino")
         if df_obras.empty:
             st.warning("Aún no hay obras registradas en la base de datos.")
         else:
-            # Lista de obras disponibles para asignar cupo
             opciones_obras_m = df_obras['Predio'].astype(str) + " (" + df_obras['Empresa'].astype(str) + ")"
             obra_m_sel = st.selectbox("Seleccione la Obra activa:", opciones_obras_m.tolist())
             
@@ -807,20 +832,16 @@ elif opcion == "6. 💜 UOCRA Mujeres":
                 dat_m = df_obras.loc[idx_m]
                 tot_obreros = int(dat_m.get('Obreros', 0))
                 mujeres_actual = int(dat_m.get('Mujeres', 0))
+                porcentaje = (mujeres_actual / tot_obreros * 100) if tot_obreros > 0 else 0.0
                 
-                st.info(f"👥 **Total de operarios registrados en esta obra:** {tot_obreros}")
+                # Tarjetas Visuales de la Obra Seleccionada
+                c_m1, c_m2, c_m3 = st.columns(3)
+                with c_m1: st.markdown(f'<div class="tarjeta-kpi"><div class="kpi-titulo">Operarios Totales</div><div class="kpi-valor">{tot_obreros}</div></div>', unsafe_allow_html=True)
+                with c_m2: st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">Mujeres Asignadas</div><div class="kpi-valor">{mujeres_actual}</div></div>', unsafe_allow_html=True)
+                with c_m3: st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">% de Participación</div><div class="kpi-valor">{porcentaje:.1f}%</div></div>', unsafe_allow_html=True)
                 
                 with st.form("f_cupo"):
-                    n_mujeres = st.number_input("Cantidad de Mujeres asignadas (Cupo):", min_value=0, step=1, value=mujeres_actual)
-                    
-                    # Cálculo automático de participación
-                    if tot_obreros > 0:
-                        porcentaje = (n_mujeres / tot_obreros) * 100
-                    else:
-                        porcentaje = 0.0
-                        
-                    st.markdown(f"### 📊 Porcentaje de Participación Femenina: **{porcentaje:.2f}%**")
-                    
+                    n_mujeres = st.number_input("Modificar Cantidad de Mujeres (Cupo):", min_value=0, step=1, value=mujeres_actual)
                     if st.form_submit_button("💾 Guardar / Actualizar Cupo"):
                         df_obras.at[idx_m, 'Mujeres'] = n_mujeres
                         guardar_db(df_obras, "Obras")
@@ -831,11 +852,8 @@ elif opcion == "6. 💜 UOCRA Mujeres":
         st.markdown("### 📋 Listado de Cumplimiento por Obra")
         if not df_obras.empty:
             df_cupo_view = df_obras[['Predio', 'Empresa', 'Obreros', 'Mujeres']].copy()
-            # Evitamos dividir por cero en la tabla visual
             df_cupo_view['% Participación'] = (df_cupo_view['Mujeres'] / df_cupo_view['Obreros'].replace(0, 1) * 100).round(2).astype(str) + "%"
-            # Mostramos solo las que tienen compañeras cargadas
             st.dataframe(df_cupo_view[df_cupo_view['Mujeres'] > 0], use_container_width=True)
-
     with tab_eventos:
         st.subheader("Agenda de Participaciones")
         acc_ev = st.radio("Acción Eventos:", ["➕ Nuevo Evento", "🗑️ Eliminar Evento"], horizontal=True)
