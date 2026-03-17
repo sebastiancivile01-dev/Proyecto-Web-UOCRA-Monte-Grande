@@ -170,7 +170,7 @@ opciones_totales = [
 ]
 
 if st.session_state.usuario_rol == "Restringido":
-    opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres"]
+    opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Tablero de Control"]
 else:
     opciones_permitidas = opciones_totales
 
