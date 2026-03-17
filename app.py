@@ -166,7 +166,7 @@ with st.sidebar.expander("🏛️ Comisión Directiva", expanded=False):
 opciones_totales = [
     "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
     "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "5. ⚠️ Repositorio de Reclamos",
-    "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios por Empresa"
+    "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios por Empresa", "8. 📊 Tablero de Control"
 ]
 
 if st.session_state.usuario_rol == "Restringido":
@@ -946,3 +946,70 @@ elif opcion == "7. 🤝 Convenios por Empresa":
         if busq_c:
             df_mostrar_conv = df_mostrar_conv[df_mostrar_conv['Empresa'].str.contains(busq_c, case=False, na=False)]
         st.dataframe(df_mostrar_conv, use_container_width=True)
+
+# ==========================================
+# MÓDULO 8: TABLERO DE CONTROL
+# ==========================================
+elif opcion == "8. 📊 Tablero de Control":
+    st.title("📊 Tablero de Control y Estadísticas")
+    st.markdown("Visión analítica general de la Jurisdicción Esteban Echeverría.")
+    
+    st.markdown("---")
+    
+    # 1. MÉTRICAS PRINCIPALES (TARJETAS)
+    col1, col2, col3, col4 = st.columns(4)
+    
+    total_obras = len(df_obras) if not df_obras.empty else 0
+    obras_activas = len(df_obras[df_obras['Estado'] == 'Activa']) if not df_obras.empty else 0
+    total_obreros = int(df_obras['Obreros'].sum()) if not df_obras.empty else 0
+    reclamos_activos = len(df_reclamos[df_reclamos['Estado'] == 'Activo']) if not df_reclamos.empty else 0
+    
+    col1.metric("🏗️ Total Obras Registradas", total_obras)
+    col2.metric("🟢 Obras Activas", obras_activas)
+    col3.metric("👷‍♂️ Compañeros Activos", total_obreros)
+    col4.metric("🚨 Reclamos Abiertos", reclamos_activos)
+    
+    st.markdown("---")
+    
+    # 2. GRÁFICOS DE ANÁLISIS
+    c_graf1, c_graf2 = st.columns(2)
+    
+    with c_graf1:
+        st.subheader("Compañeros por Empresa (Top 5)")
+        if not df_obras.empty and total_obreros > 0:
+            # Agrupamos obreros por empresa
+            df_obreros_emp = df_obras.groupby('Empresa')['Obreros'].sum().sort_values(ascending=False).head(5)
+            st.bar_chart(df_obreros_emp, color="#0033A0")
+        else:
+            st.info("No hay datos suficientes para graficar.")
+
+    with c_graf2:
+        st.subheader("Estado de las Obras")
+        if not df_obras.empty:
+            # Contamos cantidad de obras por estado
+            df_estados = df_obras['Estado'].value_counts()
+            st.bar_chart(df_estados, color="#FF8C00")
+        else:
+            st.info("No hay datos suficientes para graficar.")
+            
+    st.markdown("---")
+    
+    # 3. ANÁLISIS DE CUPO FEMENINO
+    st.subheader("💜 Desempeño de Cupo Femenino")
+    if not df_obras.empty:
+        total_mujeres = int(df_obras['Mujeres'].sum())
+        
+        col_m1, col_m2 = st.columns(2)
+        col_m1.metric("👷‍♀️ Total Compañeras Asignadas", total_mujeres)
+        
+        if total_obreros > 0:
+            porc_general = (total_mujeres / total_obreros) * 100
+            col_m2.metric("📊 Porcentaje General de Inclusión", f"{porc_general:.2f}%")
+            
+        # Obras con mayor cupo
+        df_cupo_top = df_obras[df_obras['Mujeres'] > 0].sort_values(by='Mujeres', ascending=False)[['Predio', 'Empresa', 'Mujeres']].head(5)
+        if not df_cupo_top.empty:
+            st.markdown("**Top 5 Obras con mayor inclusión:**")
+            st.dataframe(df_cupo_top, use_container_width=True, hide_index=True)
+        else:
+            st.info("Aún no se ha registrado cupo femenino en las obras.")
