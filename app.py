@@ -40,22 +40,56 @@ if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
 
 if st.session_state.usuario_rol is None:
-    st.title("🔒 Acceso Restringido - UOCRA Monte Grande")
-    st.markdown("Por favor, ingrese su clave para acceder al sistema operativo.")
+    # 1. CSS para inyectar la imagen de fondo y la caja transparente
+    st.markdown("""
+        <style>
+        .stApp {
+            background-image: url("https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/refs/heads/main/UOCRA.jfif");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        [data-testid="stHeader"], [data-testid="stAppViewContainer"] { background: rgba(0,0,0,0) !important; }
+        [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"] {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0px 8px 25px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
     
-    clave = st.text_input("Contraseña:", type="password")
+    # 2. Interfaz Visual Centrada
+    st.write("<br><br><br>", unsafe_allow_html=True)
+    col_izq, col_centro, col_der = st.columns([1, 1.5, 1])
     
-    if st.button("Ingresar"):
-        if clave == "Civile2026":  # Clave para ustedes 4 (acceso total)
-            st.session_state.usuario_rol = "Admin"
-            st.rerun()
-        elif clave == "Morelli2026": # Clave para el usuario número 5
-            st.session_state.usuario_rol = "Restringido"
-            st.rerun()
-        else:
-            st.error("❌ Contraseña incorrecta.")
-    
-    st.stop() # Esto es clave: frena la página acá y no carga nada de lo que sigue
+    with col_centro:
+        try:
+            st.image("images.jfif", width=150) 
+        except:
+            pass
+            
+        st.markdown("<h2 style='text-align: center; margin-top: 10px; font-weight: 900; color: #0033A0;'>🔒 Acceso Restringido</h2>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #0033A0; font-size: 1.2rem; font-weight: 900; margin-top: -10px;'>UOCRA Monte Grande</h3>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; font-weight: bold; font-size: 1.1rem; color: #333;'>Ingrese sus credenciales operativas.</p>", unsafe_allow_html=True)
+        
+        clave = st.text_input("Contraseña:", type="password")
+        
+        if st.button("Ingresar al Sistema Operativo", use_container_width=True):
+            if clave == "Civile2026": 
+                st.session_state.usuario_rol = "Admin"
+                st.rerun()
+            elif clave == "Morelli2026":
+                st.session_state.usuario_rol = "Restringido"
+                st.rerun()
+            else:
+                st.error("❌ Contraseña incorrecta.")
+                
+    st.stop()
 
 # --- CONEXIÓN A GOOGLE SHEETS ---
 scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
