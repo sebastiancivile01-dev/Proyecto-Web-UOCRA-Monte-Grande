@@ -50,10 +50,12 @@ if st.session_state.usuario_rol is None:
         except:
             st.warning("⚠️ No se encontró la imagen 'images.jfif' en GitHub")
             
-        # Títulos Visuales
-        st.markdown("<h2 style='text-align: center; margin-top: 10px;'>🔒 Acceso Restringido</h2>", unsafe_allow_html=True)
-        st.markdown("<h3 style='text-align: center; color: #6c757d; font-size: 1.1rem; margin-top: -10px;'>UOCRA Monte Grande</h3>", unsafe_allow_html=True)
-        st.write("Ingrese sus credenciales operativas.")
+        # Títulos Visuales en NEGRITA (font-weight: 900 y bold)
+        st.markdown("<h2 style='text-align: center; margin-top: 10px; font-weight: 900;'>🔒 Acceso Restringido</h2>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #0033A0; font-size: 1.2rem; font-weight: 900; margin-top: -10px;'>UOCRA Monte Grande</h3>", unsafe_allow_html=True)
+        
+        # Texto descriptivo en NEGRITA
+        st.markdown("<p style='text-align: center; font-weight: bold; font-size: 1.1rem; color: #333;'>Ingrese sus credenciales operativas.</p>", unsafe_allow_html=True)
         
         # El formulario nativo de Streamlit
         clave = st.text_input("Contraseña:", type="password")
@@ -71,7 +73,7 @@ if st.session_state.usuario_rol is None:
     st.stop() # Frena la página acá
 
 # 3. Pantalla de Éxito (solo se ve si pasás el login)
-st.success("✅ ¡Login Exitoso! El diseño funciona perfecto, la caja está centrada y el fondo se ve.")
+st.success("✅ ¡Login Exitoso! El diseño funciona perfecto.")
 if st.button("Cerrar Sesión para probar de nuevo"):
     st.session_state.usuario_rol = None
     st.rerun()
