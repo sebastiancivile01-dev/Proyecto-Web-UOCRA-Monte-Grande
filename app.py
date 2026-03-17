@@ -69,7 +69,7 @@ def guardar_db(df, hoja_nombre):
         st.error(f"Error técnico guardando en {hoja_nombre}: {e}")
 
 # --- CARGA GLOBAL Y EXTRACCIÓN DE DATOS ---
-df_obras = cargar_db("Obras", ["Predio", "Empresa", "Delegado", "Obreros", "Estado", "Latitud", "Longitud", "Jurisdiccion"])
+df_obras = cargar_db("Obras", ["Predio", "Empresa", "Delegado", "Obreros", "Estado", "Latitud", "Longitud", "Jurisdiccion", "Jurisdiccion_R"])
 
 # --- CARGA DE PREDIOS Y CONVERSIÓN NUMÉRICA ---
 df_predios = cargar_db("Predios", ["Nombre", "Latitud", "Longitud", "Radio_KM", "Observaciones"])
@@ -179,8 +179,13 @@ if opcion == "1. 🗺️ Mapa Territorial":
                     html = f"<div style='text-align: center;'><h3 style='color: #1a5a8a;'>👤 {txt_d}</h3><hr><b>Obra:</b> {txt_p}<br><b>Estado:</b> {est}</div>"
                     icon = folium.Icon(color="darkblue", icon="users", prefix="fa")
                 else:
-                    html = f"<div><h4 style='color: #3186cc;'>🏗️ {txt_p}</h4><hr><b>Empresa:</b> {empresa}<br><b>Estado:</b> {est}<br><b>Compañeros:</b> {row.get('Obreros', 0)}<hr><b>Delegado/s:</b><br>{txt_d}</div>"
+                    # Si es Admin y es Jurisdicción R, le agregamos una marca roja
+                    es_r = str(row.get('Jurisdiccion_R', '')) == 'Sí'
+                    marca_r = " 🔴 [JUR R]" if es_r and st.session_state.usuario_rol == "Admin" else ""
+                    
+                    html = f"<div><h4 style='color: #3186cc;'>🏗️ {txt_p}{marca_r}</h4><hr><b>Empresa:</b> {empresa}<br><b>Estado:</b> {est}<br><b>Compañeros:</b> {row.get('Obreros', 0)}<hr><b>Delegado/s:</b><br>{txt_d}</div>"
                     icon = folium.Icon(color=color, icon="hard-hat", prefix="fa")
+                
                 folium.Marker([lat, lon], tooltip=folium.Tooltip(html), icon=icon).add_to(m)
                 
     folium_static(m, width=1000, height=600)
@@ -262,6 +267,10 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     obr = st.number_input("Obreros:", min_value=0, step=1)
                     est = st.selectbox("Estado:", lista_estados)
                     lat, lon = st.text_input("Latitud:"), st.text_input("Longitud:")
+                    
+                    jur_r = False
+                    if st.session_state.usuario_rol == "Admin":
+                        jur_r = st.checkbox("🔒 Marca Especial: Jurisdicción R")
                 
                 if st.form_submit_button("💾 Guardar"):
                     p_fin = p_sel 
@@ -270,7 +279,13 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     if not p_fin: 
                         st.error("❌ Falta seleccionar un Predio/Polo Base.")
                     else:
-                        df_obras = pd.concat([df_obras, pd.DataFrame([{"Predio": p_fin, "Empresa": e_fin, "Delegado": ", ".join(d_sel), "Obreros": obr, "Estado": est, "Jurisdiccion": jur, "Latitud": float(lat) if lat else None, "Longitud": float(lon) if lon else None}])], ignore_index=True)
+                        df_obras = pd.concat([df_obras, pd.DataFrame([{
+                            "Predio": p_fin, "Empresa": e_fin, "Delegado": ", ".join(d_sel), 
+                            "Obreros": obr, "Estado": est, "Jurisdiccion": jur, 
+                            "Latitud": float(lat) if lat else None, 
+                            "Longitud": float(lon) if lon else None, 
+                            "Jurisdiccion_R": "Sí" if jur_r else ""
+                        }])], ignore_index=True)
                         guardar_db(df_obras, "Obras")
                         st.success("Registrada!")
                         st.rerun()
@@ -282,7 +297,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                 
                 if obra_ed:
                     idx = opciones_obras[opciones_obras == obra_ed].index[0]
-                    dat = df_obras.loc[idx]
+                    dat = df_obras.loc[idx] 
                     del_v = [d for d in str(dat.get('Delegado','')).split(", ") if d in lista_delegados_nombres]
                     
                     with st.form("f_e_obra"):
@@ -297,9 +312,14 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             ne_est = st.selectbox("Estado:", lista_estados, index=lista_estados.index(dat['Estado']) if dat.get('Estado') in lista_estados else 0)
                             nlat = st.text_input("Latitud:", value="" if pd.isna(dat.get('Latitud')) else str(dat['Latitud']))
                             nlon = st.text_input("Longitud:", value="" if pd.isna(dat.get('Longitud')) else str(dat['Longitud']))
+                            
+                            if st.session_state.usuario_rol == "Admin":
+                                nj_r = st.checkbox("🔒 Marca Especial: Jurisdicción R", value=(str(dat.get('Jurisdiccion_R', '')) == 'Sí'))
+                            else:
+                                nj_r = (str(dat.get('Jurisdiccion_R', '')) == 'Sí') # Mantiene el valor en silencio
                         
                         if st.form_submit_button("🔄 Actualizar"):
-                            df_obras.loc[idx] = [np, ne, ", ".join(nd), no, ne_est, float(nlat) if nlat else None, float(nlon) if nlon else None, nj]
+                            df_obras.loc[idx] = [np, ne, ", ".join(nd), no, ne_est, float(nlat) if nlat else None, float(nlon) if nlon else None, nj, "Sí" if nj_r else ""]
                             guardar_db(df_obras, "Obras")
                             st.success("Actualizada!")
                             st.rerun()
@@ -404,7 +424,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     with st.form("f_e_con"):
                         col1, col2 = st.columns(2)
                         with col1:
-                            nn = st.text_input("Nombre:*", value=str(dat.get('Nombre','')))
+                            nn = text_input("Nombre:*", value=str(dat.get('Nombre','')))
                             ne = st.text_input("Empresa:*", value=str(dat.get('Empresa','')))
                         with col2:
                             nc = st.text_input("Cargo:", value=str(dat.get('Cargo','')))
@@ -437,9 +457,17 @@ elif opcion == "3. 📋 Nóminas Consolidadas":
     
     with t1: 
         busq_obra = st.text_input("🔍 Buscar por Predio o Empresa:", key="b_obras")
-        df_mostrar_o = df_obras
+        df_mostrar_o = df_obras.copy()
+        
+        # MAGIA FASE 2: Borramos la columna si existe (limpiando espacios por si acaso)
+        if st.session_state.usuario_rol == "Restringido":
+            # Busca si hay alguna columna que contenga "Jurisdiccion_R" (sin importar espacios)
+            cols_a_borrar = [col for col in df_mostrar_o.columns if "Jurisdiccion_R" in str(col)]
+            if cols_a_borrar:
+                df_mostrar_o = df_mostrar_o.drop(columns=cols_a_borrar)
+            
         if busq_obra:
-            df_mostrar_o = df_obras[df_obras['Predio'].str.contains(busq_obra, case=False, na=False) | df_obras['Empresa'].str.contains(busq_obra, case=False, na=False)]
+            df_mostrar_o = df_mostrar_o[df_mostrar_o['Predio'].str.contains(busq_obra, case=False, na=False) | df_mostrar_o['Empresa'].str.contains(busq_obra, case=False, na=False)]
         st.dataframe(df_mostrar_o, use_container_width=True)
         
     with t2: 
