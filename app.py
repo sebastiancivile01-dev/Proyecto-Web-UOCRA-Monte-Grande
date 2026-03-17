@@ -57,6 +57,8 @@ except Exception as e:
     st.stop()
 
 # --- FUNCIONES DE BASE DE DATOS EN LA NUBE ---
+# --- FUNCIONES DE BASE DE DATOS CON CACHÉ (PARA EVITAR ERROR 429) ---
+@st.cache_data(ttl=600) # Guarda los datos en memoria por 10 minutos
 def cargar_db(hoja_nombre, columnas):
     try:
         sheet = DOC.worksheet(hoja_nombre)
@@ -143,6 +145,10 @@ def obtener_cer(fecha_str=None):
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 st.sidebar.image("images.jfif", width=150)
 st.sidebar.title("Menú Principal")
+# Botón para forzar la actualización de datos
+if st.sidebar.button("🔄 Actualizar Datos"):
+    st.cache_data.clear()
+    st.rerun()
 
 # Botón para cerrar sesión
 if st.sidebar.button("🚪 Cerrar Sesión"):
