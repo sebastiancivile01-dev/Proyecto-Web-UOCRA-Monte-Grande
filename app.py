@@ -819,7 +819,7 @@ elif opcion == "6. 💜 UOCRA Mujeres":
     
     tab_cupo, tab_eventos = st.tabs(["👷‍♀️ Cupo Femenino en Obras", "📅 Eventos y Participaciones"])
     
-   with tab_cupo:
+    with tab_cupo:
         st.subheader("Asignación de Cupo Femenino")
         if df_obras.empty:
             st.warning("Aún no hay obras registradas en la base de datos.")
