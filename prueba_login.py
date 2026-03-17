@@ -1,14 +1,14 @@
 import streamlit as st
 
-# Configuración de la página
-st.set_page_config(page_title="Prueba de Login UOCRA", layout="wide")
+# --- CONFIGURACIÓN DE LA PÁGINA ---
+st.set_page_config(page_title="Prueba de Login UOCRA", layout="wide", page_icon="🏗️")
 
-# --- SISTEMA DE LOGIN (CANDADO) --- 
+# --- SISTEMA DE LOGIN (CANDADO) ---
 if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
 
 if st.session_state.usuario_rol is None:
-    # 1. CSS Global para Fondo en la Raíz y Caja Centrada
+    # 1. CSS Global para Fondo en la Raíz, Caja Centrada y Botón UOCRA
     st.markdown("""
         <style>
         /* Inyección de Fondo en la Raíz Absoluta de Streamlit */
@@ -35,6 +35,20 @@ if st.session_state.usuario_rol is None:
             justify-content: center;
             text-align: center !important;
         }
+        
+        /* Estilo idéntico a tu app original para el botón de Ingresar */
+        div.stButton > button:first-child { 
+            background-color: #0033A0; 
+            color: white; 
+            border-radius: 5px; 
+            border: 1px solid #0033A0; 
+            font-weight: bold; 
+        }
+        div.stButton > button:hover { 
+            background-color: #002277; 
+            color: white; 
+            border: 1px solid #002277; 
+        }
         </style>
     """, unsafe_allow_html=True)
     
@@ -43,18 +57,17 @@ if st.session_state.usuario_rol is None:
     col_izq, col_centro, col_der = st.columns([1, 1.5, 1])
     
     with col_centro:
-        # Usamos Puro HTML para el Logo y los Títulos para control absoluto
+        # Logo
         try:
-            # Ponemos el logo nativo (images.jfif)
             st.image("images.jfif", width=150) 
         except:
-            st.warning("⚠️ No se encontró la imagen 'images.jfif' en GitHub")
+            st.warning("⚠️ Logo no encontrado")
             
-        # Títulos Visuales en NEGRITA (font-weight: 900 y bold)
-        st.markdown("<h2 style='text-align: center; margin-top: 10px; font-weight: 900;'>🔒 Acceso Restringido</h2>", unsafe_allow_html=True)
+        # Títulos Visuales en NEGRITA y COLOR UOCRA
+        st.markdown("<h2 style='text-align: center; margin-top: 10px; font-weight: 900; color: #0033A0;'>🔒 Acceso Restringido</h2>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #0033A0; font-size: 1.2rem; font-weight: 900; margin-top: -10px;'>UOCRA Monte Grande</h3>", unsafe_allow_html=True)
         
-        # Texto descriptivo en NEGRITA
+        # Texto descriptivo
         st.markdown("<p style='text-align: center; font-weight: bold; font-size: 1.1rem; color: #333;'>Ingrese sus credenciales operativas.</p>", unsafe_allow_html=True)
         
         # El formulario nativo de Streamlit
@@ -70,10 +83,15 @@ if st.session_state.usuario_rol is None:
             else:
                 st.error("❌ Contraseña incorrecta.")
                 
-    st.stop() # Frena la página acá
+    st.stop() # Frena la página acá y no carga el resto
 
-# 3. Pantalla de Éxito (solo se ve si pasás el login)
-st.success("✅ ¡Login Exitoso! El diseño funciona perfecto.")
-if st.button("Cerrar Sesión para probar de nuevo"):
+# --- LO QUE SE VE DESPUÉS DE PASAR EL CANDADO ---
+# Le sacamos la foto de fondo para que la app "simulada" se vea limpia
+st.markdown("<style>.stApp { background-image: none; background-color: #F8F9FA; }</style>", unsafe_allow_html=True)
+
+st.success(f"✅ ¡El candado funcionó perfecto! Entraste con el rol: **{st.session_state.usuario_rol}**")
+st.info("🏗️ Acá es donde cargarían todos los módulos pesados (Mapa, Excel, BCRA) en la app principal.")
+
+if st.button("Cerrar Sesión para probar el candado de nuevo"):
     st.session_state.usuario_rol = None
     st.rerun()
