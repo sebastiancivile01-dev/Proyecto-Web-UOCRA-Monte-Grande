@@ -6,6 +6,7 @@ from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
 import json
+import requests
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(page_title="Gestión UOCRA - Seccional Monte Grande", layout="wide", page_icon="🏗️")
@@ -103,6 +104,38 @@ lista_delegados_nombres = df_delegados['Nombre'].tolist() if not df_delegados.em
 
 lista_jurisdicciones = ["Esteban Echeverría", "Ezeiza", "Cañuelas", "Roque Pérez", "Lobos", "Saladillo", "Monte", "General Belgrano", "Las Heras", "Navarro"]
 lista_estados = ["Activa", "Intervenida", "Finalizada", "Interrumpida"]
+
+# --- FASE 4: CONEXIÓN API BCRA (CÁLCULO CER) ---
+@st.cache_data(ttl=86400) # Cacheamos por 24hs
+def obtener_cer(fecha_str=None):
+    """Busca el valor del CER en la API Comunitaria del BCRA"""
+    try:
+        token = st.secrets["BCRA_TOKEN"]
+        headers = {'Authorization': f'Bearer {token}'}
+        
+        # Endpoint de la API Comunitaria
+        url = "https://api.estadisticasbcra.com/cer"
+            
+        respuesta = requests.get(url, headers=headers, timeout=10)
+        
+        if respuesta.status_code == 200:
+            datos = respuesta.json() # Devuelve una lista de fechas y valores: [{'d': '2024-01-01', 'v': 150.5}, ...]
+            if not datos: return None
+            
+            if fecha_str:
+                # Buscamos la fecha específica en la lista (recorremos de atrás para adelante que es más rápido)
+                for item in reversed(datos):
+                    if item['d'] == fecha_str:
+                        return float(item['v'])
+                # Si justo ese día no hay CER (ej. feriado), tomamos el último disponible antes de esa fecha
+                return None 
+            else:
+                # Si no se le pasa fecha, devuelve el CER de hoy (el último de la lista)
+                return float(datos[-1]['v'])
+                
+        return None
+    except Exception as e:
+        return None    
 
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 st.sidebar.image("images.jfif", width=150)
@@ -614,7 +647,14 @@ elif opcion == "4. 🧮 Calculadoras":
                     st.success("✅ Reclamo enviado!")
 
     with tab_ieric:
-        st.write("Carga de quincenas históricas para cálculo de aportes.")
+        st.write("Carga de quincenas históricas para cálculo de aportes y actualización por CER.")
+        
+        # 1. Intentamos traer el CER de hoy
+        cer_actual = obtener_cer()
+        if cer_actual:
+            st.success(f"🏦 Conexión BCRA Exitosa: Índice CER Actual = {cer_actual}")
+        else:
+            st.warning("⚠️ No se pudo conectar con el BCRA. Se calcularán montos nominales sin indexar.")
         
         col_i1, col_i2 = st.columns(2)
         ieric_nombre = col_i1.text_input("Nombre del Compañero (Para Registro/Reclamo):")
@@ -625,23 +665,48 @@ elif opcion == "4. 🧮 Calculadoras":
 
         with st.form("form_q"):
             c1, c2 = st.columns(2)
-            fp = c1.date_input("Fecha de Pago")
+            fp = c1.date_input("Fecha de Pago Original")
             bru = c2.number_input("Sueldo Bruto Quincenal ($):", min_value=0.0, step=1000.0)
             if st.form_submit_button("➕ Agregar Quincena") and bru > 0:
                 nro = len(st.session_state.quincenas) + 1
                 tasa = 0.12 if nro <= 24 else 0.08
-                st.session_state.quincenas.append({"Quincena #": f"Q-{nro:02d}", "Fecha": fp.strftime("%d/%m/%Y"), "Bruto": bru, "Tasa Ley": f"{int(tasa*100)}%", "Aporte Cese": bru * tasa})
+                aporte_base = bru * tasa
+                
+                # 2. Buscamos el CER del día de pago en el BCRA
+                fecha_formato_api = fp.strftime("%Y-%m-%d")
+                cer_historico = obtener_cer(fecha_formato_api)
+                
+                # 3. Lógica de Capitalización (Fórmula de Indexación)
+                aporte_actualizado = aporte_base
+                if cer_historico and cer_actual:
+                    aporte_actualizado = aporte_base * (cer_actual / cer_historico)
+                
+                st.session_state.quincenas.append({
+                    "Quincena #": f"Q-{nro:02d}", 
+                    "Fecha Pago": fp.strftime("%d/%m/%Y"), 
+                    "Bruto": bru, 
+                    "Aporte Nominal": aporte_base,
+                    "CER Hist.": round(cer_historico, 2) if cer_historico else "N/A",
+                    "Aporte Actualizado (CER)": aporte_actualizado
+                })
                 st.rerun()
 
         if st.session_state.quincenas:
             df_q = pd.DataFrame(st.session_state.quincenas)
             df_m = df_q.copy()
             df_m["Bruto"] = df_m["Bruto"].apply(lambda x: f"$ {x:,.2f}")
-            df_m["Aporte Cese"] = df_m["Aporte Cese"].apply(lambda x: f"$ {x:,.2f}")
+            df_m["Aporte Nominal"] = df_m["Aporte Nominal"].apply(lambda x: f"$ {x:,.2f}")
+            df_m["Aporte Actualizado (CER)"] = df_m["Aporte Actualizado (CER)"].apply(lambda x: f"$ {x:,.2f}")
+            
             st.dataframe(df_m, use_container_width=True)
+            
             col_tot1, col_tot2 = st.columns(2)
-            col_tot1.metric("Suma Bruta", f"$ {sum(q['Bruto'] for q in st.session_state.quincenas):,.2f}")
-            col_tot2.metric("TOTAL FONDO", f"$ {sum(q['Aporte Cese'] for q in st.session_state.quincenas):,.2f}")
+            # Mostramos la diferencia entre la plata vieja y la plata indexada
+            suma_nominal = sum(q['Aporte Nominal'] for q in st.session_state.quincenas)
+            suma_actualizada = sum(q['Aporte Actualizado (CER)'] for q in st.session_state.quincenas)
+            
+            col_tot1.metric("Deuda Original (Histórica)", f"$ {suma_nominal:,.2f}")
+            col_tot2.metric("DEUDA REAL ACTUALIZADA", f"$ {suma_actualizada:,.2f}", delta=f"+$ {(suma_actualizada - suma_nominal):,.2f} por inflación")
             
             st.markdown("---")
             st.markdown("### ⚠️ Iniciar Reclamo de IERIC")
@@ -653,14 +718,16 @@ elif opcion == "4. 🧮 Calculadoras":
                 elif not motivo_ieric: 
                     st.error("❌ Escriba un motivo.")
                 else:
-                    df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": ieric_nombre, "Empresa": ieric_emp, "Motivo": motivo_ieric, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": "Generado Auto desde IERIC."}])], ignore_index=True)
+                    # Guardamos el reclamo con el monto actualizado
+                    motivo_final = f"{motivo_ieric} | Deuda Actualizada: $ {suma_actualizada:,.2f}"
+                    df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": ieric_nombre, "Empresa": ieric_emp, "Motivo": motivo_final, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": "Generado Auto desde IERIC (Con CER)."}])], ignore_index=True)
                     guardar_db(df_reclamos, "Reclamos")
                     st.success("✅ Reclamo enviado!")
             
             if c_btn2.button("🗑️ Borrar Última Quincena"): 
                 st.session_state.quincenas.pop()
                 st.rerun()
-
+                
 # ==========================================
 # MÓDULO 5: REPOSITORIO DE RECLAMOS
 # ==========================================
