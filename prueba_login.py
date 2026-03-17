@@ -13,7 +13,7 @@ if st.session_state.usuario_rol is None:
         <style>
         /* Fondo Global */
         [data-testid="stAppViewContainer"] {
-            background-image: url("https://acercandonaciones.com/img/1594911762_2601.jpg");
+            background-image: url("https://raw.githubusercontent.com/TU_USUARIO/TU_REPO/main/fondo_uocra.jpg");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
