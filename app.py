@@ -948,26 +948,85 @@ elif opcion == "7. 🤝 Convenios por Empresa":
         st.dataframe(df_mostrar_conv, use_container_width=True)
 
 # ==========================================
-# MÓDULO 8: TABLERO DE CONTROL
+# MÓDULO 8: TABLERO DE CONTROL (VERSIÓN WEB HTML/CSS)
 # ==========================================
 elif opcion == "8. 📊 Tablero de Control":
     st.title("📊 Tablero de Control y Estadísticas")
     st.markdown("Visión analítica general de la Jurisdicción Esteban Echeverría.")
     
+    # Inyectamos el CSS para las tarjetas HTML
+    st.markdown("""
+        <style>
+        .card-metric {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-left: 6px solid #0033A0;
+            margin-bottom: 20px;
+        }
+        .card-green { border-left-color: #28a745; }
+        .card-orange { border-left-color: #fd7e14; }
+        .card-purple { border-left-color: #8A2BE2; }
+        
+        .card-title {
+            color: #6c757d;
+            font-size: 1rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .card-value {
+            color: #212529;
+            font-size: 2.5rem;
+            margin: 0;
+            font-weight: 700;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
     st.markdown("---")
     
-    # 1. MÉTRICAS PRINCIPALES (TARJETAS)
-    col1, col2, col3, col4 = st.columns(4)
-    
+    # 1. MÉTRICAS PRINCIPALES (TARJETAS HTML)
     total_obras = len(df_obras) if not df_obras.empty else 0
     obras_activas = len(df_obras[df_obras['Estado'] == 'Activa']) if not df_obras.empty else 0
     total_obreros = int(df_obras['Obreros'].sum()) if not df_obras.empty else 0
     reclamos_activos = len(df_reclamos[df_reclamos['Estado'] == 'Activo']) if not df_reclamos.empty else 0
     
-    col1.metric("🏗️ Total Obras Registradas", total_obras)
-    col2.metric("🟢 Obras Activas", obras_activas)
-    col3.metric("👷‍♂️ Compañeros Activos", total_obreros)
-    col4.metric("🚨 Reclamos Abiertos", reclamos_activos)
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown(f"""
+            <div class="card-metric">
+                <p class="card-title">🏗️ Obras Totales</p>
+                <p class="card-value">{total_obras}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+    with col2:
+        st.markdown(f"""
+            <div class="card-metric card-green">
+                <p class="card-title">🟢 Obras Activas</p>
+                <p class="card-value">{obras_activas}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+    with col3:
+        st.markdown(f"""
+            <div class="card-metric">
+                <p class="card-title">👷‍♂️ Compañeros</p>
+                <p class="card-value">{total_obreros}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+    with col4:
+        st.markdown(f"""
+            <div class="card-metric card-orange">
+                <p class="card-title">🚨 Reclamos Abiertos</p>
+                <p class="card-value">{reclamos_activos}</p>
+            </div>
+        """, unsafe_allow_html=True)
     
     st.markdown("---")
     
@@ -977,7 +1036,6 @@ elif opcion == "8. 📊 Tablero de Control":
     with c_graf1:
         st.subheader("Compañeros por Empresa (Top 5)")
         if not df_obras.empty and total_obreros > 0:
-            # Agrupamos obreros por empresa
             df_obreros_emp = df_obras.groupby('Empresa')['Obreros'].sum().sort_values(ascending=False).head(5)
             st.bar_chart(df_obreros_emp, color="#0033A0")
         else:
@@ -986,7 +1044,6 @@ elif opcion == "8. 📊 Tablero de Control":
     with c_graf2:
         st.subheader("Estado de las Obras")
         if not df_obras.empty:
-            # Contamos cantidad de obras por estado
             df_estados = df_obras['Estado'].value_counts()
             st.bar_chart(df_estados, color="#FF8C00")
         else:
@@ -998,18 +1055,27 @@ elif opcion == "8. 📊 Tablero de Control":
     st.subheader("💜 Desempeño de Cupo Femenino")
     if not df_obras.empty:
         total_mujeres = int(df_obras['Mujeres'].sum())
+        porc_general = (total_mujeres / total_obreros * 100) if total_obreros > 0 else 0.0
         
         col_m1, col_m2 = st.columns(2)
-        col_m1.metric("👷‍♀️ Total Compañeras Asignadas", total_mujeres)
-        
-        if total_obreros > 0:
-            porc_general = (total_mujeres / total_obreros) * 100
-            col_m2.metric("📊 Porcentaje General de Inclusión", f"{porc_general:.2f}%")
+        with col_m1:
+            st.markdown(f"""
+                <div class="card-metric card-purple">
+                    <p class="card-title">👷‍♀️ Compañeras Asignadas</p>
+                    <p class="card-value">{total_mujeres}</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+        with col_m2:
+            st.markdown(f"""
+                <div class="card-metric card-purple">
+                    <p class="card-title">📊 Porcentaje Global</p>
+                    <p class="card-value">{porc_general:.2f}%</p>
+                </div>
+            """, unsafe_allow_html=True)
             
         # Obras con mayor cupo
         df_cupo_top = df_obras[df_obras['Mujeres'] > 0].sort_values(by='Mujeres', ascending=False)[['Predio', 'Empresa', 'Mujeres']].head(5)
         if not df_cupo_top.empty:
             st.markdown("**Top 5 Obras con mayor inclusión:**")
             st.dataframe(df_cupo_top, use_container_width=True, hide_index=True)
-        else:
-            st.info("Aún no se ha registrado cupo femenino en las obras.")
