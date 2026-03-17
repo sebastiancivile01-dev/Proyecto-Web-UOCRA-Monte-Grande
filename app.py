@@ -167,14 +167,11 @@ opciones_totales = [
 ]
 
 if st.session_state.usuario_rol == "Restringido":
-    # Morelli también puede ver UOCRA Mujeres y las nóminas (sin la jur_R)
-    opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "6. 💜 UOCRA Mujeres"]
+    opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres"]
 else:
-    # Si es Admin, ve todo
     opciones_permitidas = opciones_totales
 
 opcion = st.sidebar.radio("Navegación:", opciones_permitidas)
-
 # ==========================================
 # MÓDULO 1: MAPA TERRITORIAL
 # ==========================================
