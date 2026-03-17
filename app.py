@@ -113,30 +113,33 @@ def obtener_cer(fecha_str=None):
         token = st.secrets["BCRA_TOKEN"]
         headers = {'Authorization': f'Bearer {token}'}
         
-        # Endpoint de la API Comunitaria
+        # Endpoint de la API Comunitaria para el CER
         url = "https://api.estadisticasbcra.com/cer"
             
         respuesta = requests.get(url, headers=headers, timeout=10)
         
         if respuesta.status_code == 200:
-            datos = respuesta.json() # Devuelve una lista de fechas y valores: [{'d': '2024-01-01', 'v': 150.5}, ...]
+            datos = respuesta.json() # La API comunitaria devuelve una lista de diccionarios: [{'d': '2024-01-01', 'v': 150.5}, ...]
             if not datos: return None
             
             if fecha_str:
-                # Buscamos la fecha específica en la lista (recorremos de atrás para adelante que es más rápido)
+                fecha_buscada = datetime.strptime(fecha_str, "%Y-%m-%d").date()
+                
+                # Recorremos la lista de atrás para adelante (desde lo más reciente a lo más viejo)
                 for item in reversed(datos):
-                    if item['d'] == fecha_str:
+                    fecha_item = datetime.strptime(item['d'], "%Y-%m-%d").date()
+                    # Buscamos la fecha exacta o la más cercana anterior (por si es feriado o fin de semana)
+                    if fecha_item <= fecha_buscada:
                         return float(item['v'])
-                # Si justo ese día no hay CER (ej. feriado), tomamos el último disponible antes de esa fecha
                 return None 
             else:
-                # Si no se le pasa fecha, devuelve el CER de hoy (el último de la lista)
+                # Si no se le pasa fecha, devuelve el CER más actual disponible (el último de la lista)
                 return float(datos[-1]['v'])
                 
         return None
     except Exception as e:
-        return None    
-
+        return None
+    
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 st.sidebar.image("images.jfif", width=150)
 st.sidebar.title("Menú Principal")
