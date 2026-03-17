@@ -39,8 +39,8 @@ try:
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     client = gspread.authorize(creds)
     
-    # 👇 ACÁ PEGA EL LINK COMPLETO DE TU GOOGLE SHEETS 👇
-    URL_DEL_EXCEL = "https://docs.google.com/spreadsheets/d/15_0fpPr90DAJsivWACnFNaGXB1Eb1GaOFh4j-OfDnDU/edit?pli=1&gid=0#gid=0" 
+    # 👇 LINK COMPLETO DEL GOOGLE SHEETS 👇
+    URL_DEL_EXCEL = "https://docs.google.com/spreadsheets/d/15_0fpPr90DAJsivWACnFNaGXB1Eb1GaOFh4j-OfDnDU/edit?gid=1143014109#gid=1143014109" 
     
     DOC = client.open_by_url(URL_DEL_EXCEL)
 except Exception as e:
@@ -69,9 +69,14 @@ def guardar_db(df, hoja_nombre):
         st.error(f"Error técnico guardando en {hoja_nombre}: {e}")
 
 # --- CARGA GLOBAL Y EXTRACCIÓN DE DATOS ---
-df_obras = cargar_db("Obras", ["Predio", "Empresa", "Delegado", "Obreros", "Estado", "Latitud", "Longitud", "Jurisdiccion", "Jurisdiccion_R"])
+# Sincronizado con tus columnas exactas, incluyendo Obra_ID
+df_obras = cargar_db("Obras", ["Obra_ID", "Predio", "Empresa", "Delegado", "Obreros", "Estado", "Latitud", "Longitud", "Jurisdiccion", "Jurisdiccion_R", "Mujeres"])
+if 'Mujeres' in df_obras.columns: 
+    df_obras['Mujeres'] = pd.to_numeric(df_obras['Mujeres'], errors='coerce').fillna(0)
+if 'Obreros' in df_obras.columns: 
+    df_obras['Obreros'] = pd.to_numeric(df_obras['Obreros'], errors='coerce').fillna(0)
 
-# --- CARGA DE PREDIOS Y CONVERSIÓN NUMÉRICA ---
+# CARGA DE PREDIOS Y CONVERSIÓN NUMÉRICA
 df_predios = cargar_db("Predios", ["Nombre", "Latitud", "Longitud", "Radio_KM", "Observaciones"])
 for col in ['Latitud', 'Longitud', 'Radio_KM']:
     if col in df_predios.columns:
@@ -80,6 +85,7 @@ for col in ['Latitud', 'Longitud', 'Radio_KM']:
 df_delegados = cargar_db("Delegados", ["Nombre", "CUIL", "Celular", "Domicilio", "Nacimiento", "Correo", "Observacion"])
 df_contactos = cargar_db("Contactos", ["Nombre", "Cargo", "Empresa", "Observaciones"])
 df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "Estado", "Finalizacion", "Respuesta", "Observaciones"])
+df_eventos = cargar_db("Mujeres_Eventos", ["Titulo", "Fecha", "Observaciones"]) # Sincronizado con tu pestaña
 
 # La lista de predios ahora se alimenta de la base maestra oficial
 lista_predios_historicos = sorted(df_predios['Nombre'].dropna().astype(str).tolist()) if not df_predios.empty else []
@@ -93,7 +99,7 @@ lista_estados = ["Activa", "Intervenida", "Finalizada", "Interrumpida"]
 st.sidebar.image("images.jfif", width=150)
 st.sidebar.title("Menú Principal")
 
-# Botón para cerrar sesión si alguien le presta el celular a otro
+# Botón para cerrar sesión
 if st.sidebar.button("🚪 Cerrar Sesión"):
     st.session_state.usuario_rol = None
     st.rerun()
@@ -114,12 +120,13 @@ with st.sidebar.expander("🏛️ Comisión Directiva", expanded=False):
 # MAGIA DEL LOGIN: Filtramos los botones según quién entró
 opciones_totales = [
     "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
-    "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "5. ⚠️ Repositorio de Reclamos"
+    "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "5. ⚠️ Repositorio de Reclamos",
+    "6. 💜 UOCRA Mujeres"
 ]
 
 if st.session_state.usuario_rol == "Restringido":
-    # Acá le borramos de la lista las opciones que NO querés que vea
-    opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas"]
+    # Morelli también puede ver UOCRA Mujeres y las nóminas (sin la jur_R)
+    opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "6. 💜 UOCRA Mujeres"]
 else:
     # Si es Admin, ve todo
     opciones_permitidas = opciones_totales
@@ -146,15 +153,15 @@ if opcion == "1. 🗺️ Mapa Territorial":
 
     folium.GeoJson(url_geojson, name="Límites", style_function=filtrar_partidos).add_to(m)
 
-    # DIBUJAR RADIOS DE PREDIOS/POLOS (Fase 1)
+    # DIBUJAR RADIOS DE PREDIOS/POLOS
     if not df_predios.empty:
         for _, p in df_predios.iterrows():
             lat_p, lon_p, rad_p = p.get('Latitud', 0), p.get('Longitud', 0), p.get('Radio_KM', 0)
             if pd.notna(lat_p) and pd.notna(lon_p) and rad_p > 0:
                 folium.Circle(
                     location=[lat_p, lon_p],
-                    radius=rad_p * 1000, # Folium pide el radio en metros
-                    color="#FF8C00",     # Naranja oscuro
+                    radius=rad_p * 1000,
+                    color="#FF8C00",
                     weight=2,
                     fill=True,
                     fill_color="#FFA500",
@@ -179,8 +186,8 @@ if opcion == "1. 🗺️ Mapa Territorial":
                     html = f"<div style='text-align: center;'><h3 style='color: #1a5a8a;'>👤 {txt_d}</h3><hr><b>Obra:</b> {txt_p}<br><b>Estado:</b> {est}</div>"
                     icon = folium.Icon(color="darkblue", icon="users", prefix="fa")
                 else:
-                    # Si es Admin y es Jurisdicción R, le agregamos una marca roja
-                    es_r = str(row.get('Jurisdiccion_R', '')) == 'Sí'
+                    # Si es Admin y es Jurisdicción R (Soporta "SI" y "Sí"), le agregamos una marca roja
+                    es_r = str(row.get('Jurisdiccion_R', '')).strip().upper() in ['SI', 'SÍ']
                     marca_r = " 🔴 [JUR R]" if es_r and st.session_state.usuario_rol == "Admin" else ""
                     
                     html = f"<div><h4 style='color: #3186cc;'>🏗️ {txt_p}{marca_r}</h4><hr><b>Empresa:</b> {empresa}<br><b>Estado:</b> {est}<br><b>Compañeros:</b> {row.get('Obreros', 0)}<hr><b>Delegado/s:</b><br>{txt_d}</div>"
@@ -196,7 +203,6 @@ if opcion == "1. 🗺️ Mapa Territorial":
 elif opcion == "2. 📥 Carga de Datos (ABM)":
     st.title("📥 Ingreso y Modificación de Datos")
     
-    # Agregamos la nueva pestaña de Predios al principio
     tab_predios, tab_obras, tab_delegados, tab_contactos = st.tabs(["🗺️ Predios/Polos", "🏗️ Obras y Empresas", "👥 Delegados y Colab.", "🏢 Contactos"])
 
     with tab_predios:
@@ -279,12 +285,18 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     if not p_fin: 
                         st.error("❌ Falta seleccionar un Predio/Polo Base.")
                     else:
+                        # Auto-generar Obra_ID
+                        nuevo_id = 1
+                        if not df_obras.empty and 'Obra_ID' in df_obras.columns:
+                            nuevo_id = int(pd.to_numeric(df_obras['Obra_ID'], errors='coerce').max() + 1)
+
                         df_obras = pd.concat([df_obras, pd.DataFrame([{
-                            "Predio": p_fin, "Empresa": e_fin, "Delegado": ", ".join(d_sel), 
+                            "Obra_ID": nuevo_id, "Predio": p_fin, "Empresa": e_fin, "Delegado": ", ".join(d_sel), 
                             "Obreros": obr, "Estado": est, "Jurisdiccion": jur, 
                             "Latitud": float(lat) if lat else None, 
                             "Longitud": float(lon) if lon else None, 
-                            "Jurisdiccion_R": "Sí" if jur_r else ""
+                            "Jurisdiccion_R": "SI" if jur_r else "", # Se guarda como SI
+                            "Mujeres": 0  # Inicia en 0 para UOCRA Mujeres
                         }])], ignore_index=True)
                         guardar_db(df_obras, "Obras")
                         st.success("Registrada!")
@@ -314,12 +326,14 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             nlon = st.text_input("Longitud:", value="" if pd.isna(dat.get('Longitud')) else str(dat['Longitud']))
                             
                             if st.session_state.usuario_rol == "Admin":
-                                nj_r = st.checkbox("🔒 Marca Especial: Jurisdicción R", value=(str(dat.get('Jurisdiccion_R', '')) == 'Sí'))
+                                es_jur_r = str(dat.get('Jurisdiccion_R', '')).strip().upper() in ['SI', 'SÍ']
+                                nj_r = st.checkbox("🔒 Marca Especial: Jurisdicción R", value=es_jur_r)
                             else:
-                                nj_r = (str(dat.get('Jurisdiccion_R', '')) == 'Sí') # Mantiene el valor en silencio
+                                nj_r = str(dat.get('Jurisdiccion_R', '')).strip().upper() in ['SI', 'SÍ']
                         
                         if st.form_submit_button("🔄 Actualizar"):
-                            df_obras.loc[idx] = [np, ne, ", ".join(nd), no, ne_est, float(nlat) if nlat else None, float(nlon) if nlon else None, nj, "Sí" if nj_r else ""]
+                            obra_id_actual = dat.get('Obra_ID', '')
+                            df_obras.loc[idx] = [obra_id_actual, np, ne, ", ".join(nd), no, ne_est, float(nlat) if nlat else None, float(nlon) if nlon else None, nj, "SI" if nj_r else "", dat.get('Mujeres', 0)]
                             guardar_db(df_obras, "Obras")
                             st.success("Actualizada!")
                             st.rerun()
@@ -424,7 +438,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     with st.form("f_e_con"):
                         col1, col2 = st.columns(2)
                         with col1:
-                            nn = text_input("Nombre:*", value=str(dat.get('Nombre','')))
+                            nn = st.text_input("Nombre:*", value=str(dat.get('Nombre','')))
                             ne = st.text_input("Empresa:*", value=str(dat.get('Empresa','')))
                         with col2:
                             nc = st.text_input("Cargo:", value=str(dat.get('Cargo','')))
@@ -459,9 +473,8 @@ elif opcion == "3. 📋 Nóminas Consolidadas":
         busq_obra = st.text_input("🔍 Buscar por Predio o Empresa:", key="b_obras")
         df_mostrar_o = df_obras.copy()
         
-        # MAGIA FASE 2: Borramos la columna si existe (limpiando espacios por si acaso)
+        # MAGIA FASE 2: Borramos la columna si existe
         if st.session_state.usuario_rol == "Restringido":
-            # Busca si hay alguna columna que contenga "Jurisdiccion_R" (sin importar espacios)
             cols_a_borrar = [col for col in df_mostrar_o.columns if "Jurisdiccion_R" in str(col)]
             if cols_a_borrar:
                 df_mostrar_o = df_mostrar_o.drop(columns=cols_a_borrar)
@@ -673,7 +686,101 @@ elif opcion == "5. ⚠️ Repositorio de Reclamos":
             ops = df_reclamos['Nombre'] + " - " + df_reclamos['Motivo']
             rel = st.selectbox("Eliminar:", [""] + ops.tolist())
             if st.button("🗑️ Eliminar") and rel:
-                df_reclamos = df_reclamos.drop(df_reclamos.index[ops.tolist().index(rel) - 1])
+                df_reclamos = df_reclamos.drop(df_reclamos.index[ops.tolist().index(rel)])
                 guardar_db(df_reclamos, "Reclamos")
                 st.success("Eliminado.")
                 st.rerun()
+
+# ==========================================
+# MÓDULO 6: UOCRA MUJERES (FASE 3)
+# ==========================================
+elif opcion == "6. 💜 UOCRA Mujeres":
+    # Inyectamos CSS para pintar el módulo de violeta sin romper el resto
+    st.markdown("""
+        <style>
+        div.stTabs [data-baseweb="tab-list"] button {color: #4B0082;}
+        div.stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {border-bottom-color: #8A2BE2; color: #8A2BE2;}
+        </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<h1 style='color: #8A2BE2;'>💜 Departamento UOCRA Mujeres</h1>", unsafe_allow_html=True)
+    
+    tab_cupo, tab_eventos = st.tabs(["👷‍♀️ Cupo Femenino en Obras", "📅 Eventos y Participaciones"])
+    
+    with tab_cupo:
+        st.subheader("Asignación de Cupo Femenino")
+        if df_obras.empty:
+            st.warning("Aún no hay obras registradas en la base de datos.")
+        else:
+            # Lista de obras disponibles para asignar cupo
+            opciones_obras_m = df_obras['Predio'].astype(str) + " (" + df_obras['Empresa'].astype(str) + ")"
+            obra_m_sel = st.selectbox("Seleccione la Obra activa:", opciones_obras_m.tolist())
+            
+            if obra_m_sel:
+                idx_m = opciones_obras_m[opciones_obras_m == obra_m_sel].index[0]
+                dat_m = df_obras.loc[idx_m]
+                tot_obreros = int(dat_m.get('Obreros', 0))
+                mujeres_actual = int(dat_m.get('Mujeres', 0))
+                
+                st.info(f"👥 **Total de operarios registrados en esta obra:** {tot_obreros}")
+                
+                with st.form("f_cupo"):
+                    n_mujeres = st.number_input("Cantidad de Mujeres asignadas (Cupo):", min_value=0, step=1, value=mujeres_actual)
+                    
+                    # Cálculo automático de participación
+                    if tot_obreros > 0:
+                        porcentaje = (n_mujeres / tot_obreros) * 100
+                    else:
+                        porcentaje = 0.0
+                        
+                    st.markdown(f"### 📊 Porcentaje de Participación Femenina: **{porcentaje:.2f}%**")
+                    
+                    if st.form_submit_button("💾 Guardar / Actualizar Cupo"):
+                        df_obras.at[idx_m, 'Mujeres'] = n_mujeres
+                        guardar_db(df_obras, "Obras")
+                        st.success("✅ Cupo femenino actualizado exitosamente.")
+                        st.rerun()
+                        
+        st.markdown("---")
+        st.markdown("### 📋 Listado de Cumplimiento por Obra")
+        if not df_obras.empty:
+            df_cupo_view = df_obras[['Predio', 'Empresa', 'Obreros', 'Mujeres']].copy()
+            # Evitamos dividir por cero en la tabla visual
+            df_cupo_view['% Participación'] = (df_cupo_view['Mujeres'] / df_cupo_view['Obreros'].replace(0, 1) * 100).round(2).astype(str) + "%"
+            # Mostramos solo las que tienen compañeras cargadas
+            st.dataframe(df_cupo_view[df_cupo_view['Mujeres'] > 0], use_container_width=True)
+
+    with tab_eventos:
+        st.subheader("Agenda de Participaciones")
+        acc_ev = st.radio("Acción Eventos:", ["➕ Nuevo Evento", "🗑️ Eliminar Evento"], horizontal=True)
+        
+        if acc_ev == "➕ Nuevo Evento":
+            with st.form("f_n_evento", clear_on_submit=True):
+                e_tit = st.text_input("Título de la Actividad / Evento:*")
+                e_fec = st.date_input("Fecha del Evento:", format="DD/MM/YYYY")
+                e_obs = st.text_area("Observaciones y Detalle:")
+                
+                if st.form_submit_button("💾 Guardar en Agenda"):
+                    if not e_tit:
+                        st.error("❌ El título de la actividad es obligatorio.")
+                    else:
+                        nuevo_ev = pd.DataFrame([{"Titulo": e_tit, "Fecha": e_fec.strftime("%d/%m/%Y"), "Observaciones": e_obs}])
+                        df_eventos = pd.concat([df_eventos, nuevo_ev], ignore_index=True)
+                        guardar_db(df_eventos, "Mujeres_Eventos")
+                        st.success("✅ Evento agendado correctamente.")
+                        st.rerun()
+                        
+        elif acc_ev == "🗑️ Eliminar Evento":
+            if not df_eventos.empty:
+                ops_ev = df_eventos['Titulo'] + " (" + df_eventos['Fecha'] + ")"
+                ev_el = st.selectbox("Seleccione Evento a borrar:", [""] + ops_ev.tolist())
+                if st.button("🗑️ Eliminar") and ev_el != "":
+                    idx_el = ops_ev.tolist().index(ev_el)
+                    df_eventos = df_eventos.drop(df_eventos.index[idx_el])
+                    guardar_db(df_eventos, "Mujeres_Eventos")
+                    st.success("Evento borrado.")
+                    st.rerun()
+        
+        st.markdown("---")
+        if not df_eventos.empty:
+            st.dataframe(df_eventos, use_container_width=True)
