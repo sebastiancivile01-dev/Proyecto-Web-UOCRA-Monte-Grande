@@ -1,3 +1,8 @@
+import streamlit as st
+
+# Configuración de la página
+st.set_page_config(page_title="Prueba de Login UOCRA", layout="wide")
+
 # --- SISTEMA DE LOGIN (CANDADO) --- (Corrección Maestra de Desfase Visual)
 if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
@@ -18,36 +23,27 @@ if st.session_state.usuario_rol is None:
 
         /* Hack CSS para forzar la alineación central absoluta de los elementos nativos */
         [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"] {
+            background-color: rgba(255, 255, 255, 0.92);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center !important;
         }
-
-        /* Caja semi-transparente para que el login se lea perfecto */
-        .caja-login-pro {
-            background-color: rgba(255, 255, 255, 0.92);
-            padding: 3rem;
-            border-radius: 15px;
-            box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
-            text-align: center;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
         </style>
     """, unsafe_allow_html=True)
     
     # 2. Interfaz Visual Centrada (Usamos Columnas sin divs HTML para no romper renderizado)
-    # Centramos usando columnas nativas [izq, centro, der]
-    col_izq, col_centro, col_der = st.columns([1, 1.8, 1])
+    st.write("<br><br><br>", unsafe_allow_html=True) # Espacio desde el techo
+    col_izq, col_centro, col_der = st.columns([1, 1.5, 1])
     
     with col_centro:
         # Usamos Puro HTML para el Logo y los Títulos para control absoluto
         try:
             # Ponemos el logo nativo (images.jfif)
-            st.image("images.jfif", width=160) 
+            st.image("images.jfif", width=150) 
         except:
             st.warning("⚠️ No se encontró la imagen 'images.jfif' en GitHub")
             
@@ -70,3 +66,9 @@ if st.session_state.usuario_rol is None:
                 st.error("❌ Contraseña incorrecta.")
                 
     st.stop() # Frena la página acá
+
+# 3. Pantalla de Éxito (solo se ve si pasás el login)
+st.success("✅ ¡Login Exitoso! El diseño funciona perfecto y la caja está centrada.")
+if st.button("Cerrar Sesión para probar de nuevo"):
+    st.session_state.usuario_rol = None
+    st.rerun()
