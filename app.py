@@ -44,7 +44,7 @@ try:
     
     DOC = client.open_by_url(URL_DEL_EXCEL)
 except Exception as e:
-    st.error("⚠️ Error de conexión. Verificá los Secrets en Streamlit.")
+    st.error(f"⚠️ Error técnico real: {e}")
     st.stop()
 
 # --- FUNCIONES DE BASE DE DATOS EN LA NUBE ---
@@ -67,13 +67,22 @@ def guardar_db(df, hoja_nombre):
         sheet.update(values=datos_a_subir, range_name="A1")
     except Exception as e:
         st.error(f"Error técnico guardando en {hoja_nombre}: {e}")
+
 # --- CARGA GLOBAL Y EXTRACCIÓN DE DATOS ---
 df_obras = cargar_db("Obras", ["Predio", "Empresa", "Delegado", "Obreros", "Estado", "Latitud", "Longitud", "Jurisdiccion"])
+
+# --- CARGA DE PREDIOS Y CONVERSIÓN NUMÉRICA ---
+df_predios = cargar_db("Predios", ["Nombre", "Latitud", "Longitud", "Radio_KM", "Observaciones"])
+for col in ['Latitud', 'Longitud', 'Radio_KM']:
+    if col in df_predios.columns:
+        df_predios[col] = pd.to_numeric(df_predios[col], errors='coerce').fillna(0.0)
+
 df_delegados = cargar_db("Delegados", ["Nombre", "CUIL", "Celular", "Domicilio", "Nacimiento", "Correo", "Observacion"])
 df_contactos = cargar_db("Contactos", ["Nombre", "Cargo", "Empresa", "Observaciones"])
 df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "Estado", "Finalizacion", "Respuesta", "Observaciones"])
 
-lista_predios_historicos = sorted(list(set(df_obras['Predio'].dropna().astype(str).tolist())))
+# La lista de predios ahora se alimenta de la base maestra oficial
+lista_predios_historicos = sorted(df_predios['Nombre'].dropna().astype(str).tolist()) if not df_predios.empty else []
 lista_empresas_historicas = sorted(list(set(pd.concat([df_obras['Empresa'], df_contactos['Empresa'], df_reclamos['Empresa']]).dropna().astype(str).tolist())))
 lista_delegados_nombres = df_delegados['Nombre'].tolist() if not df_delegados.empty else []
 
@@ -101,6 +110,7 @@ with st.sidebar.expander("🏛️ Comisión Directiva", expanded=False):
     
     **5- Sec. Finanzas:** R. Oviedo
     """)
+
 # MAGIA DEL LOGIN: Filtramos los botones según quién entró
 opciones_totales = [
     "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
@@ -136,6 +146,22 @@ if opcion == "1. 🗺️ Mapa Territorial":
 
     folium.GeoJson(url_geojson, name="Límites", style_function=filtrar_partidos).add_to(m)
 
+    # DIBUJAR RADIOS DE PREDIOS/POLOS (Fase 1)
+    if not df_predios.empty:
+        for _, p in df_predios.iterrows():
+            lat_p, lon_p, rad_p = p.get('Latitud', 0), p.get('Longitud', 0), p.get('Radio_KM', 0)
+            if pd.notna(lat_p) and pd.notna(lon_p) and rad_p > 0:
+                folium.Circle(
+                    location=[lat_p, lon_p],
+                    radius=rad_p * 1000, # Folium pide el radio en metros
+                    color="#FF8C00",     # Naranja oscuro
+                    weight=2,
+                    fill=True,
+                    fill_color="#FFA500",
+                    fill_opacity=0.25,
+                    tooltip=f"<div style='text-align:center;'><b>📍 Polo/Predio:</b> {p.get('Nombre', 'S/N')}<br><b>Radio de control:</b> {rad_p} KM</div>"
+                ).add_to(m)
+
     df_mapa = df_obras.copy()
     if not df_mapa.empty:
         if "Activas" in modo_mapa: df_mapa = df_mapa[df_mapa['Estado'] == 'Activa']
@@ -164,7 +190,61 @@ if opcion == "1. 🗺️ Mapa Territorial":
 # ==========================================
 elif opcion == "2. 📥 Carga de Datos (ABM)":
     st.title("📥 Ingreso y Modificación de Datos")
-    tab_obras, tab_delegados, tab_contactos = st.tabs(["🏗️ Obras y Empresas", "👥 Delegados y Colab.", "🏢 Contactos de Empresas"])
+    
+    # Agregamos la nueva pestaña de Predios al principio
+    tab_predios, tab_obras, tab_delegados, tab_contactos = st.tabs(["🗺️ Predios/Polos", "🏗️ Obras y Empresas", "👥 Delegados y Colab.", "🏢 Contactos"])
+
+    with tab_predios:
+        st.subheader("Configuración de Polos Industriales")
+        acc_predio = st.radio("Acción Predio:", ["➕ Nuevo Polo", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
+
+        if acc_predio == "➕ Nuevo Polo":
+            with st.form("f_n_predio", clear_on_submit=True):
+                p_nom = st.text_input("Nombre del Predio/Polo:*")
+                c1, c2, c3 = st.columns(3)
+                p_lat = c1.text_input("Latitud (Ej: -34.812):")
+                p_lon = c2.text_input("Longitud (Ej: -58.531):")
+                p_rad = c3.number_input("Radio de influencia (KM):", min_value=0.1, step=0.1, value=1.0)
+                p_obs = st.text_area("Observaciones:")
+
+                if st.form_submit_button("💾 Guardar Polo"):
+                    if not p_nom:
+                        st.error("❌ El nombre es obligatorio.")
+                    else:
+                        nuevo_predio = pd.DataFrame([{"Nombre": p_nom, "Latitud": float(p_lat) if p_lat else 0.0, "Longitud": float(p_lon) if p_lon else 0.0, "Radio_KM": p_rad, "Observaciones": p_obs}])
+                        df_predios = pd.concat([df_predios, nuevo_predio], ignore_index=True)
+                        guardar_db(df_predios, "Predios")
+                        st.success("✅ Polo registrado exitosamente.")
+                        st.rerun()
+
+        elif acc_predio == "✏️ Modificar":
+            if not df_predios.empty:
+                predio_ed = st.selectbox("Seleccione el Polo a modificar:", df_predios['Nombre'].tolist())
+                if predio_ed:
+                    idx = df_predios[df_predios['Nombre'] == predio_ed].index[0]
+                    dat = df_predios.loc[idx]
+                    with st.form("f_e_predio"):
+                        nn = st.text_input("Nombre:*", value=str(dat.get('Nombre','')))
+                        c1, c2, c3 = st.columns(3)
+                        nlat = c1.text_input("Latitud:", value=str(dat.get('Latitud','')))
+                        nlon = c2.text_input("Longitud:", value=str(dat.get('Longitud','')))
+                        nrad = c3.number_input("Radio (KM):", min_value=0.1, step=0.1, value=float(dat.get('Radio_KM', 1.0)))
+                        nobs = st.text_area("Observaciones:", value=str(dat.get('Observaciones','')))
+
+                        if st.form_submit_button("🔄 Actualizar"):
+                            df_predios.loc[idx] = [nn, float(nlat) if nlat else 0.0, float(nlon) if nlon else 0.0, nrad, nobs]
+                            guardar_db(df_predios, "Predios")
+                            st.success("✅ Polo actualizado.")
+                            st.rerun()
+
+        elif acc_predio == "🗑️ Eliminar":
+            if not df_predios.empty:
+                predio_el = st.selectbox("Seleccione el Polo a borrar:", [""] + df_predios['Nombre'].tolist())
+                if st.button("🗑️ Eliminar Definitivamente") and predio_el:
+                    df_predios = df_predios[df_predios['Nombre'] != predio_el]
+                    guardar_db(df_predios, "Predios")
+                    st.success("✅ Polo eliminado.")
+                    st.rerun()
 
     with tab_obras:
         acc_obras = st.radio("Acción Obras:", ["➕ Nueva Obra", "✏️ Modificar Obra", "🗑️ Eliminar Obra"], horizontal=True)
@@ -173,8 +253,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
             with st.form("f_n_obra", clear_on_submit=True):
                 col1, col2 = st.columns(2)
                 with col1:
-                    p_sel = st.selectbox("Predio:", ["➕ Nuevo..."] + lista_predios_historicos)
-                    p_nuevo = st.text_input("Si es Nuevo, escríbalo:")
+                    p_sel = st.selectbox("Predio/Polo Base:*", [""] + lista_predios_historicos, help="Si no está en la lista, créelo primero en la pestaña 'Predios/Polos'.")
                     e_sel = st.selectbox("Empresa:", ["➕ Nueva..."] + lista_empresas_historicas)
                     e_nueva = st.text_input("Si es Nueva, escríbala:")
                     d_sel = st.multiselect("Delegado/s:", lista_delegados_nombres)
@@ -185,12 +264,16 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     lat, lon = st.text_input("Latitud:"), st.text_input("Longitud:")
                 
                 if st.form_submit_button("💾 Guardar"):
-                    p_fin = p_nuevo.strip() if p_sel == "➕ Nuevo..." else p_sel
+                    p_fin = p_sel 
                     e_fin = e_nueva.strip() if e_sel == "➕ Nueva..." else e_sel
-                    if not p_fin: st.error("❌ Falta Predio.")
+                    
+                    if not p_fin: 
+                        st.error("❌ Falta seleccionar un Predio/Polo Base.")
                     else:
                         df_obras = pd.concat([df_obras, pd.DataFrame([{"Predio": p_fin, "Empresa": e_fin, "Delegado": ", ".join(d_sel), "Obreros": obr, "Estado": est, "Jurisdiccion": jur, "Latitud": float(lat) if lat else None, "Longitud": float(lon) if lon else None}])], ignore_index=True)
-                        guardar_db(df_obras, "Obras"); st.success("Registrada!"); st.rerun()
+                        guardar_db(df_obras, "Obras")
+                        st.success("Registrada!")
+                        st.rerun()
 
         elif acc_obras == "✏️ Modificar Obra":
             if not df_obras.empty:
@@ -217,7 +300,9 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                         
                         if st.form_submit_button("🔄 Actualizar"):
                             df_obras.loc[idx] = [np, ne, ", ".join(nd), no, ne_est, float(nlat) if nlat else None, float(nlon) if nlon else None, nj]
-                            guardar_db(df_obras, "Obras"); st.success("Actualizada!"); st.rerun()
+                            guardar_db(df_obras, "Obras")
+                            st.success("Actualizada!")
+                            st.rerun()
 
         elif acc_obras == "🗑️ Eliminar Obra":
             if not df_obras.empty:
@@ -226,8 +311,10 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                 if st.button("🗑️ Eliminar") and obra_el != "":
                     idx_el = opciones_obras_el.index(obra_el) - 1
                     df_obras = df_obras.drop(df_obras.index[idx_el])
-                    guardar_db(df_obras, "Obras"); st.success("Eliminada."); st.rerun()
-
+                    guardar_db(df_obras, "Obras")
+                    st.success("Eliminada.")
+                    st.rerun()
+    
     with tab_delegados:
         acc_del = st.radio("Acción Delegados:", ["➕ Nuevo", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
         
@@ -245,7 +332,9 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     obs = st.text_area("Obs:")
                 if st.form_submit_button("💾 Guardar") and nom:
                     df_delegados = pd.concat([df_delegados, pd.DataFrame([{"Nombre": nom, "CUIL": cuil, "Celular": cel, "Domicilio": dom, "Nacimiento": nac.strftime("%d/%m/%Y"), "Correo": corr, "Observacion": obs}])], ignore_index=True)
-                    guardar_db(df_delegados, "Delegados"); st.success("Agregado!"); st.rerun()
+                    guardar_db(df_delegados, "Delegados")
+                    st.success("Agregado!")
+                    st.rerun()
 
         elif acc_del == "✏️ Modificar":
             if not df_delegados.empty:
@@ -253,8 +342,10 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                 if del_ed:
                     idx = df_delegados[df_delegados['Nombre'] == del_ed].index[0]
                     dat = df_delegados.loc[idx]
-                    try: f_obj = datetime.strptime(str(dat.get('Nacimiento', '01/01/2000')), "%d/%m/%Y").date()
-                    except: f_obj = datetime(2000, 1, 1).date()
+                    try: 
+                        f_obj = datetime.strptime(str(dat.get('Nacimiento', '01/01/2000')), "%d/%m/%Y").date()
+                    except: 
+                        f_obj = datetime(2000, 1, 1).date()
                     
                     with st.form("f_e_del"):
                         col1, col2 = st.columns(2)
@@ -269,14 +360,18 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             nob = st.text_area("Obs:", value=str(dat.get('Observacion','')))
                         if st.form_submit_button("🔄 Actualizar"):
                             df_delegados.loc[idx] = [nn, ncu, nce, ndo, nna.strftime("%d/%m/%Y"), nco, nob]
-                            guardar_db(df_delegados, "Delegados"); st.success("Actualizado!"); st.rerun()
+                            guardar_db(df_delegados, "Delegados")
+                            st.success("Actualizado!")
+                            st.rerun()
 
         elif acc_del == "🗑️ Eliminar":
             if not df_delegados.empty:
                 del_el = st.selectbox("Borrar:", [""] + df_delegados['Nombre'].tolist())
                 if st.button("🗑️ Eliminar") and del_el:
                     df_delegados = df_delegados[df_delegados['Nombre'] != del_el]
-                    guardar_db(df_delegados, "Delegados"); st.success("Eliminado."); st.rerun()
+                    guardar_db(df_delegados, "Delegados")
+                    st.success("Eliminado.")
+                    st.rerun()
 
     with tab_contactos:
         acc_con = st.radio("Acción Contactos:", ["➕ Nuevo", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
@@ -295,7 +390,9 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     cemp_f = cemp_n.strip() if cemp_sel == "➕ Nueva..." else cemp_sel
                     if cemp_f:
                         df_contactos = pd.concat([df_contactos, pd.DataFrame([{"Nombre": cnom, "Cargo": ccar, "Empresa": cemp_f, "Observaciones": cobs}])], ignore_index=True)
-                        guardar_db(df_contactos, "Contactos"); st.success("Guardado!"); st.rerun()
+                        guardar_db(df_contactos, "Contactos")
+                        st.success("Guardado!")
+                        st.rerun()
 
         elif acc_con == "✏️ Modificar":
             if not df_contactos.empty:
@@ -314,7 +411,9 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             no = st.text_area("Obs:", value=str(dat.get('Observaciones','')))
                         if st.form_submit_button("🔄 Actualizar"):
                             df_contactos.loc[idx] = [nn, nc, ne, no]
-                            guardar_db(df_contactos, "Contactos"); st.success("Actualizado!"); st.rerun()
+                            guardar_db(df_contactos, "Contactos")
+                            st.success("Actualizado!")
+                            st.rerun()
 
         elif acc_con == "🗑️ Eliminar":
             if not df_contactos.empty:
@@ -323,7 +422,9 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                 if st.button("🗑️ Eliminar") and con_el:
                     idx = ops_el.index(con_el) - 1
                     df_contactos = df_contactos.drop(df_contactos.index[idx])
-                    guardar_db(df_contactos, "Contactos"); st.success("Eliminado."); st.rerun()
+                    guardar_db(df_contactos, "Contactos")
+                    st.success("Eliminado.")
+                    st.rerun()
 
 # ==========================================
 # MÓDULO 3: NÓMINAS
@@ -395,21 +496,40 @@ elif opcion == "4. 🧮 Calculadoras":
                 vh = st.session_state.paritarias[cat_map[cat]]
                 
                 st.markdown("**Horas Trabajadas**")
-                hn, h50, h100, hc, df_f = st.number_input("Hs Norm:", min_value=0.0), st.number_input("Hs 50%:", min_value=0.0), st.number_input("Hs 100%:", min_value=0.0), st.number_input("Hs Comp:", min_value=0.0), st.number_input("Días Fer:", min_value=0.0)
-                ha, hnoc = st.number_input("Hs Altura:", min_value=0.0), st.number_input("Hs Nocturnas:", min_value=0.0)
-                cpres, pesp, pnr = st.selectbox("Presentismo (20%):", ["Sí", "No"]), st.number_input("% Especialidad:", min_value=0.0), st.number_input("Plus NR (%):", min_value=0.0)
+                hn = st.number_input("Hs Norm:", min_value=0.0)
+                h50 = st.number_input("Hs 50%:", min_value=0.0)
+                h100 = st.number_input("Hs 100%:", min_value=0.0)
+                hc = st.number_input("Hs Comp:", min_value=0.0)
+                df_f = st.number_input("Días Fer:", min_value=0.0)
+                
+                ha = st.number_input("Hs Altura:", min_value=0.0)
+                hnoc = st.number_input("Hs Nocturnas:", min_value=0.0)
+                cpres = st.selectbox("Presentismo (20%):", ["Sí", "No"])
+                pesp = st.number_input("% Especialidad:", min_value=0.0)
+                pnr = st.number_input("Plus NR (%):", min_value=0.0)
 
             with col2:
                 st.markdown("**Ajustes Extras**")
-                dv, sb, msac, mr = st.number_input("Días Vac:", min_value=0.0), st.number_input("Sueldo Base (Vac/SAC):", min_value=0.0), st.number_input("Meses (SAC):", min_value=0.0, max_value=6.0), st.number_input("Mejor Rem:", min_value=0.0)
+                dv = st.number_input("Días Vac:", min_value=0.0)
+                sb = st.number_input("Sueldo Base (Vac/SAC):", min_value=0.0)
+                msac = st.number_input("Meses (SAC):", min_value=0.0, max_value=6.0)
+                mr = st.number_input("Mejor Rem:", min_value=0.0)
+                
                 st.markdown("**Eventuales**")
-                rr, rnr, er, enr, dvi = st.number_input("Retro Rem:", min_value=0.0), st.number_input("Retro NR:", min_value=0.0), st.number_input("Ev Rem:", min_value=0.0), st.number_input("Ev NR:", min_value=0.0), st.number_input("Días Viático:", min_value=0.0)
+                rr = st.number_input("Retro Rem:", min_value=0.0)
+                rnr = st.number_input("Retro NR:", min_value=0.0)
+                er = st.number_input("Ev Rem:", min_value=0.0)
+                enr = st.number_input("Ev NR:", min_value=0.0)
+                dvi = st.number_input("Días Viático:", min_value=0.0)
+                
                 st.markdown("**Deducciones**")
-                ds, dg = st.number_input("Seguro:", min_value=0.0), st.number_input("Ganancias (+/-):", value=0.0)
+                ds = st.number_input("Seguro:", min_value=0.0)
+                dg = st.number_input("Ganancias (+/-):", value=0.0)
 
             if st.form_submit_button("▶ Generar Recibo Teórico", use_container_width=True):
                 subtot = (hn*vh) + (h50*vh*1.5) + (h100*vh*2.0) + (hc*vh) + (df_f*9.0*vh)
-                mha, mhnoc = ha*vh*0.15, hnoc*vh*(8/60)
+                mha = ha*vh*0.15
+                mhnoc = hnoc*vh*(8/60)
                 mpres = ((hn+h50+h100+hc+(df_f*9.0))*vh*0.20) if cpres == "Sí" else 0.0
                 mesp = (hn+h50+h100)*vh*(pesp/100)
                 mvac = ((sb/25)-(sb/30))*dv if sb>0 and dv>0 else 0.0
@@ -432,10 +552,12 @@ elif opcion == "4. 🧮 Calculadoras":
             st.markdown("### ⚠️ Iniciar Reclamo por Liquidación")
             motivo_recibo = st.text_input("Motivo de la Diferencia/Reclamo:")
             if st.button("🚨 Enviar al Repositorio de Reclamos", key="btn_recibo"):
-                if not motivo_recibo: st.error("Escriba un motivo.")
+                if not motivo_recibo: 
+                    st.error("Escriba un motivo.")
                 else:
                     df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": st.session_state.rec_nombre, "Empresa": st.session_state.rec_empresa, "Motivo": motivo_recibo, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": "Generado Automáticamente desde Calculadora."}])], ignore_index=True)
-                    guardar_db(df_reclamos, "Reclamos"); st.success("✅ Reclamo enviado!")
+                    guardar_db(df_reclamos, "Reclamos")
+                    st.success("✅ Reclamo enviado!")
 
     with tab_ieric:
         st.write("Carga de quincenas históricas para cálculo de aportes.")
@@ -444,7 +566,8 @@ elif opcion == "4. 🧮 Calculadoras":
         ieric_nombre = col_i1.text_input("Nombre del Compañero (Para Registro/Reclamo):")
         ieric_emp = col_i2.selectbox("Empresa:", ["➕ Nueva..."] + lista_empresas_historicas, key="ieric_e")
 
-        if 'quincenas' not in st.session_state: st.session_state.quincenas = []
+        if 'quincenas' not in st.session_state: 
+            st.session_state.quincenas = []
 
         with st.form("form_q"):
             c1, c2 = st.columns(2)
@@ -459,7 +582,8 @@ elif opcion == "4. 🧮 Calculadoras":
         if st.session_state.quincenas:
             df_q = pd.DataFrame(st.session_state.quincenas)
             df_m = df_q.copy()
-            df_m["Bruto"] = df_m["Bruto"].apply(lambda x: f"$ {x:,.2f}"); df_m["Aporte Cese"] = df_m["Aporte Cese"].apply(lambda x: f"$ {x:,.2f}")
+            df_m["Bruto"] = df_m["Bruto"].apply(lambda x: f"$ {x:,.2f}")
+            df_m["Aporte Cese"] = df_m["Aporte Cese"].apply(lambda x: f"$ {x:,.2f}")
             st.dataframe(df_m, use_container_width=True)
             col_tot1, col_tot2 = st.columns(2)
             col_tot1.metric("Suma Bruta", f"$ {sum(q['Bruto'] for q in st.session_state.quincenas):,.2f}")
@@ -470,13 +594,18 @@ elif opcion == "4. 🧮 Calculadoras":
             motivo_ieric = st.text_input("Motivo del Reclamo (Ej: Falta de pago libretas):")
             c_btn1, c_btn2 = st.columns(2)
             if c_btn1.button("🚨 Enviar al Repositorio de Reclamos", key="btn_ieric"):
-                if not ieric_nombre or ieric_emp == "➕ Nueva...": st.error("❌ Complete Nombre y Empresa arriba.")
-                elif not motivo_ieric: st.error("❌ Escriba un motivo.")
+                if not ieric_nombre or ieric_emp == "➕ Nueva...": 
+                    st.error("❌ Complete Nombre y Empresa arriba.")
+                elif not motivo_ieric: 
+                    st.error("❌ Escriba un motivo.")
                 else:
                     df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": ieric_nombre, "Empresa": ieric_emp, "Motivo": motivo_ieric, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": "Generado Auto desde IERIC."}])], ignore_index=True)
-                    guardar_db(df_reclamos, "Reclamos"); st.success("✅ Reclamo enviado!")
+                    guardar_db(df_reclamos, "Reclamos")
+                    st.success("✅ Reclamo enviado!")
             
-            if c_btn2.button("🗑️ Borrar Última Quincena"): st.session_state.quincenas.pop(); st.rerun()
+            if c_btn2.button("🗑️ Borrar Última Quincena"): 
+                st.session_state.quincenas.pop()
+                st.rerun()
 
 # ==========================================
 # MÓDULO 5: REPOSITORIO DE RECLAMOS
@@ -498,13 +627,17 @@ elif opcion == "5. ⚠️ Repositorio de Reclamos":
                 ract = st.checkbox("🟢 Reclamo Activo (Anula fecha de fin)", value=True)
                 ff = st.date_input("Fecha Finalización:", disabled=ract, format="DD/MM/YYYY")
             
-            rresp, robs = st.text_area("Respuesta/Resolución:"), st.text_area("Obs:")
+            rresp = st.text_area("Respuesta/Resolución:")
+            robs = st.text_area("Obs:")
             if st.form_submit_button("💾 Guardar Reclamo"):
                 re_fin = re_n.strip() if re_sel == "➕ Nueva..." else re_sel
-                if not rn or not rm or not re_fin: st.error("❌ Nombre, Empresa y Motivo obligatorios.")
+                if not rn or not rm or not re_fin: 
+                    st.error("❌ Nombre, Empresa y Motivo obligatorios.")
                 else:
                     df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": rn, "Empresa": re_fin, "Motivo": rm, "Ingreso": fi.strftime("%d/%m/%Y"), "Estado": "Activo" if ract else "Finalizado", "Finalizacion": "En proceso" if ract else ff.strftime("%d/%m/%Y"), "Respuesta": rresp, "Observaciones": robs}])], ignore_index=True)
-                    guardar_db(df_reclamos, "Reclamos"); st.success("Reclamo asentado!"); st.rerun()
+                    guardar_db(df_reclamos, "Reclamos")
+                    st.success("Reclamo asentado!")
+                    st.rerun()
 
     with tab_r_bd:
         st.dataframe(df_reclamos, use_container_width=True)
@@ -513,4 +646,6 @@ elif opcion == "5. ⚠️ Repositorio de Reclamos":
             rel = st.selectbox("Eliminar:", [""] + ops.tolist())
             if st.button("🗑️ Eliminar") and rel:
                 df_reclamos = df_reclamos.drop(df_reclamos.index[ops.tolist().index(rel) - 1])
-                guardar_db(df_reclamos, "Reclamos"); st.success("Eliminado."); st.rerun()
+                guardar_db(df_reclamos, "Reclamos")
+                st.success("Eliminado.")
+                st.rerun()
