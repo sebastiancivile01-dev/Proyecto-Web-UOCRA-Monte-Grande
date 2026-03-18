@@ -126,6 +126,11 @@ def guardar_db(df, hoja_nombre):
         sheet.clear()
         datos_a_subir = [df_limpio.columns.values.tolist()] + df_limpio.values.tolist()
         sheet.update(values=datos_a_subir, range_name="A1")
+        
+        # 👇 ESTA LÍNEA ES LA MAGIA 👇
+        # Borra la memoria RAM para que el cambio se vea al instante
+        st.cache_data.clear() 
+        
     except Exception as e:
         st.error(f"Error técnico guardando en {hoja_nombre}: {e}")
 
