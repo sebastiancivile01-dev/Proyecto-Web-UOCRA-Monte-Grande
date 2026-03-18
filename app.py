@@ -220,7 +220,7 @@ with st.sidebar.expander("🏛️ Comisión Directiva", expanded=False):
     
     **4- Sec. Actas:** Ruben Fernandez
     
-    **5- Sec. Finanzas:** R. Oviedo
+    **5- Sec. Finanzas:** Roberto Oviedo
     """)
 
 # MAGIA DEL LOGIN: Filtramos los botones según quién entró
