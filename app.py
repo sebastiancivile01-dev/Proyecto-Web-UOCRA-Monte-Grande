@@ -882,10 +882,17 @@ elif opcion == "6. 💜 UOCRA Mujeres":
                 with st.form("f_cupo"):
                     n_mujeres = st.number_input("Modificar Cantidad de Mujeres (Cupo):", min_value=0, step=1, value=mujeres_actual)
                     if st.form_submit_button("💾 Guardar / Actualizar Cupo"):
-                        df_obras.at[idx_m, 'Mujeres'] = n_mujeres
-                        guardar_db(df_obras, "Obras")
-                        st.success("✅ Cupo femenino actualizado exitosamente.")
-                        st.rerun()
+                        import time # Importamos el reloj para hacer una pausa visual
+                        try:
+                            # Forzamos que el dato sea entero para que Google Sheets lo tome perfecto
+                            df_obras.at[idx_m, 'Mujeres'] = int(n_mujeres)
+                            guardar_db(df_obras, "Obras")
+                            
+                            st.success("✅ ¡Dato guardado en Google Sheets! Actualizando tablero...")
+                            time.sleep(1.5) # Frena la web 1.5 segundos para que leas el cartel
+                            st.rerun() # Ahora sí, recarga para actualizar el gráfico
+                        except Exception as e:
+                            st.error(f"❌ Ocurrió un error al intentar guardar: {e}")
                         
         st.markdown("---")
         st.markdown("### 📋 Listado de Cumplimiento por Obra")
