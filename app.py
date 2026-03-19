@@ -302,6 +302,18 @@ if opcion == "1. 🗺️ Mapa Territorial":
                 
                 folium.Marker([lat, lon], tooltip=folium.Tooltip(html), icon=icon).add_to(m)
                 
+    # Inyectamos CSS para enmarcar el mapa con bordes negros
+    st.markdown("""
+        <style>
+        /* Apuntamos al contenedor del mapa (iframe) */
+        iframe {
+            border: 3px solid #000000 !important; /* Borde negro grueso */
+            border-radius: 8px; /* Apenas redondeado para que quede más moderno */
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.3); /* Sombreado para que despegue del fondo */
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
     folium_static(m, width=1000, height=600)
 
 # ==========================================
