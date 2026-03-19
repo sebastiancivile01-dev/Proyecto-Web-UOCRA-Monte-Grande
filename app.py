@@ -14,7 +14,7 @@ st.markdown("""
     h1, h2, h3 { color: #0033A0 !important; }
     div.stButton > button:first-child { background-color: #0033A0; color: white; border-radius: 5px; border: 1px solid #0033A0; }
     div.stButton > button:hover { background-color: #002277; color: white; border: 1px solid #002277; }
-    [data-testid="stSidebar"] { background-color: #F8F9FA; border-right: 2px solid #E9ECEF; }
+    [data-testid="stSidebar"] { background-color: #EAEAEA !important; border-right: 2px solid #CCCCCC !important; }
     
     /* Sistema de Tarjetas KPI Profesionales */
     .tarjeta-kpi {
