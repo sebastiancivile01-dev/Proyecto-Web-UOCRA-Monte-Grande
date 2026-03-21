@@ -659,7 +659,12 @@ elif opcion == "3. 📋 Nóminas Consolidadas":
 elif opcion == "4. 🧮 Calculadoras":
     st.title("🧮 Módulo de Cálculos Gremiales")
 
-    tab_recibo, tab_ieric = st.tabs(["🧾 Calculadora de Recibos", "💰 Fondo Cese (IERIC)"])
+    tab_recibo, tab_ieric, tab_vacaciones, tab_sac = st.tabs([
+        "🧾 Calculadora de Recibos", 
+        "💰 Fondo Cese (IERIC)", 
+        "🏖️ Vacaciones", 
+        "🎄 SAC (Aguinaldo)"
+    ])
     
     with tab_recibo:
         formato_liq = st.selectbox("📝 Formato Liquidativo (Convenio de Empresa):", ["AESA"])
@@ -837,7 +842,16 @@ elif opcion == "4. 🧮 Calculadoras":
             if c_btn2.button("🗑️ Borrar Última Quincena"): 
                 st.session_state.quincenas.pop()
                 st.rerun()
-                
+
+    # 👇 ACÁ AGREGAMOS EL CONTENIDO DE LAS PESTAÑAS NUEVAS 👇
+    with tab_vacaciones:
+        st.subheader("🏖️ Calculadora de Vacaciones")
+        st.info("⏳ Próximamente disponible para su utilización.")
+        
+    with tab_sac:
+        st.subheader("🎄 Cálculo de Sueldo Anual Complementario (SAC)")
+        st.info("⏳ Próximamente disponible para su utilización.")
+
 # ==========================================
 # MÓDULO 5: REPOSITORIO DE RECLAMOS
 # ==========================================
