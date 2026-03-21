@@ -254,14 +254,15 @@ with st.sidebar.expander("🏛️ Comisión Directiva", expanded=False):
 opciones_totales = [
     "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
     "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "5. ⚠️ Repositorio de Reclamos",
-    "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios por Empresa", "8. 📊 Tablero de Control"
+    "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios por Empresa", "8. 📊 Tablero de Control",
+    "9. 📸 Galería Multimedia" # <--- ESTA ES LA LÍNEA NUEVA
 ]
 
 if st.session_state.usuario_rol == "Restringido":
-    opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Tablero de Control"]
+    opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Tablero de Control", "9. 📸 Galería Multimedia"]
 else:
     opciones_permitidas = opciones_totales
-
+    
 opcion = st.sidebar.radio("Navegación:", opciones_permitidas)
 # ==========================================
 # MÓDULO 1: MAPA TERRITORIAL
@@ -1151,3 +1152,47 @@ elif opcion == "8. 📊 Tablero de Control":
                 st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">Compañeras</div><div class="kpi-valor">{total_mujeres}</div></div>', unsafe_allow_html=True)
             with c_m2:
                 st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">Cupo Global</div><div class="kpi-valor">{porc_general:.1f}%</div></div>', unsafe_allow_html=True)
+# ==========================================
+# MÓDULO 9: GALERÍA MULTIMEDIA
+# ==========================================
+elif opcion == "9. 📸 Galería Multimedia":
+    st.title("📸 Galería de Obras y Eventos")
+    st.markdown("Repositorio visual de la Jurisdicción Esteban Echeverría.")
+    
+    st.markdown("---")
+    
+    tab_fotos, tab_videos = st.tabs(["🖼️ Fotografías", "🎥 Videos"])
+    
+    with tab_fotos:
+        st.subheader("Álbum de Recorridas y Asambleas")
+        
+        # Armamos una "grilla" de 3 columnas para las fotos
+        col_f1, col_f2, col_f3 = st.columns(3)
+        
+        with col_f1:
+            # Ejemplo de cómo poner una foto (por ahora ponemos un recuadro de aviso)
+            st.info("Espacio reservado para Foto 1")
+            # Cuando tengas la foto subida a GitHub, borrás el st.info de arriba y descomentás la línea de abajo:
+            # st.image("https://raw.githubusercontent.com/.../foto1.jpg", caption="Asamblea Empresa X", use_container_width=True)
+            
+        with col_f2:
+            st.info("Espacio reservado para Foto 2")
+            
+        with col_f3:
+            st.info("Espacio reservado para Foto 3")
+            
+        # Podés agregar más filas de fotos simplemente copiando y pegando el bloque de col_f1, col_f2, col_f3
+            
+    with tab_videos:
+        st.subheader("Registro Audiovisual")
+        
+        # Los videos suelen ser más anchos, usamos 2 columnas
+        col_v1, col_v2 = st.columns(2)
+        
+        with col_v1:
+            st.info("Espacio reservado para Video 1")
+            # Streamlit soporta links de YouTube directo o videos MP4 subidos a GitHub
+            # st.video("https://www.youtube.com/watch?v=TU_VIDEO")
+            
+        with col_v2:
+            st.info("Espacio reservado para Video 2")
