@@ -153,6 +153,7 @@ df_contactos = cargar_db("Contactos", ["Nombre", "Cargo", "Empresa", "Observacio
 df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "Estado", "Finalizacion", "Respuesta", "Observaciones"])
 df_eventos = cargar_db("Mujeres_Eventos", ["Titulo", "Fecha", "Observaciones"]) # Sincronizado con tu pestaña
 df_convenios = cargar_db("Convenios", ["Empresa", "Detalle_Convenio", "monto $", "Monto %", "Vigencia"])
+df_propuestas = cargar_db("Propuestas", ["Fecha", "Usuario", "Propuesta", "Estado"])
 
 # La lista de predios ahora se alimenta de la base maestra oficial
 lista_predios_historicos = sorted(df_predios['Nombre'].dropna().astype(str).tolist()) if not df_predios.empty else []
@@ -204,6 +205,32 @@ st.sidebar.title("Menú Principal")
 if st.sidebar.button("🔄 Actualizar Datos"):
     st.cache_data.clear()
     st.rerun()
+
+# --- NUEVO: ANOTADOR DE PROPUESTAS ---
+with st.sidebar.expander("💡 Anotador de Propuestas", expanded=False):
+    st.markdown("<p style='font-size:0.85rem; color:#666;'>Envíe sugerencias al equipo de Sistemas.</p>", unsafe_allow_html=True)
+    with st.form("f_propuestas", clear_on_submit=True):
+        prop_texto = st.text_area("Describa su propuesta:")
+        
+        if st.form_submit_button("📤 Enviar Propuesta"):
+            if not prop_texto.strip():
+                st.error("Escriba una propuesta primero.")
+            else:
+                fecha_hoy = datetime.now().strftime("%d/%m/%Y %H:%M")
+                usuario_actual = st.session_state.usuario_rol
+                
+                nueva_prop = pd.DataFrame([{
+                    "Fecha": fecha_hoy, 
+                    "Usuario": usuario_actual, 
+                    "Propuesta": prop_texto, 
+                    "Estado": "Pendiente"
+                }])
+                
+                df_propuestas = pd.concat([df_propuestas, nueva_prop], ignore_index=True)
+                guardar_db(df_propuestas, "Propuestas")
+                st.success("✅ ¡Propuesta enviada exitosamente!")
+
+st.sidebar.markdown("---") # Una rayita separadora
 
 # Botón para cerrar sesión
 if st.sidebar.button("🚪 Cerrar Sesión"):
