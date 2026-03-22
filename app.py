@@ -999,13 +999,13 @@ elif opcion == "7. 🤝 Convenios por Empresa":
     
     with tab_n_conv:
         acc_conv = st.radio("Acción:", ["➕ Nuevo Convenio", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
-        
         if acc_conv == "➕ Nuevo Convenio":
             with st.form("f_n_conv", clear_on_submit=True):
                 col1, col2 = st.columns(2)
                 with col1:
                     c_emp = st.selectbox("Empresa:*", [""] + lista_empresas_historicas)
-                    c_cct = st.text_input("Vigencia (Ej: Marzo 2026 - Mayo 2026):")
+                    # 👇 ACÁ ESTABA EL ERROR: Decía c_cct, ahora dice c_vig 👇
+                    c_vig = st.text_input("Vigencia (Ej: Marzo 2026 - Mayo 2026):")
                 with col2:
                     c_monto = st.text_input("Monto Extra $:")
                     c_porc = st.text_input("Monto Extra %:")
@@ -1024,7 +1024,6 @@ elif opcion == "7. 🤝 Convenios por Empresa":
                         guardar_db(df_convenios, "Convenios")
                         st.success("✅ Convenio registrado.")
                         st.rerun()
-                        
         elif acc_conv == "✏️ Modificar":
             if not df_convenios.empty:
                 opciones_c = df_convenios['Empresa'] + " - " + df_convenios['Vigencia']
