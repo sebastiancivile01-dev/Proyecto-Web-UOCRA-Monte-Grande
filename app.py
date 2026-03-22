@@ -1166,33 +1166,37 @@ elif opcion == "9. 📸 Galería Multimedia":
     with tab_fotos:
         st.subheader("Álbum de Recorridas y Asambleas")
         
-        # Armamos una "grilla" de 3 columnas para las fotos
+        # --- PRIMERA FILA (3 FOTOS) ---
         col_f1, col_f2, col_f3 = st.columns(3)
         
         with col_f1:
-            # Ejemplo de cómo poner una foto (por ahora ponemos un recuadro de aviso)
-            st.info("Espacio reservado para Foto 1")
-            # Cuando tengas la foto subida a GitHub, borrás el st.info de arriba y descomentás la línea de abajo:
-            # st.image("https://raw.githubusercontent.com/.../foto1.jpg", caption="Asamblea Empresa X", use_container_width=True)
+            st.image("https://drive.google.com/uc?id=1fPEscG51uQYiUvGMSVWbh_oNECMaYcrw", use_container_width=True)
             
         with col_f2:
-            st.info("Espacio reservado para Foto 2")
+            st.image("https://drive.google.com/uc?id=1qpcz7hPiW65yBRcdy6nN_DC5kWdN8LQN", use_container_width=True)
             
         with col_f3:
-            st.info("Espacio reservado para Foto 3")
+            st.image("https://drive.google.com/uc?id=1s3ot_q1RJX5p3QA-SkprvgN3s4hW1hCY", use_container_width=True)
             
-        # Podés agregar más filas de fotos simplemente copiando y pegando el bloque de col_f1, col_f2, col_f3
+        st.write("<br>", unsafe_allow_html=True) # Un pequeño espacio entre filas
+        
+        # --- SEGUNDA FILA (2 FOTOS RESTANTES) ---
+        col_f4, col_f5, col_f6 = st.columns(3) # Usamos 3 columnas para que conserven el mismo tamaño
+        
+        with col_f4:
+            st.image("https://drive.google.com/uc?id=1-CdsMO60gIWtm0TRRguFhO7b4TwWmN0v", use_container_width=True)
+            
+        with col_f5:
+            st.image("https://drive.google.com/uc?id=1922DnTBV6ySICImt7Z4FA2rqeHhf7aY0", use_container_width=True)
+            
+        with col_f6:
+            st.empty() # Dejamos este espacio vacío para que la grilla quede perfecta
             
     with tab_videos:
         st.subheader("Registro Audiovisual")
         
-        # Los videos suelen ser más anchos, usamos 2 columnas
         col_v1, col_v2 = st.columns(2)
-        
         with col_v1:
-            st.info("Espacio reservado para Video 1")
-            # Streamlit soporta links de YouTube directo o videos MP4 subidos a GitHub
-            # st.video("https://www.youtube.com/watch?v=TU_VIDEO")
-            
+            st.info("Espacio reservado para futuros videos de asambleas.")
         with col_v2:
-            st.info("Espacio reservado para Video 2")
+            st.empty()
