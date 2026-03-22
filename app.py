@@ -1153,7 +1153,7 @@ elif opcion == "8. 📊 Tablero de Control":
             with c_m2:
                 st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">Cupo Global</div><div class="kpi-valor">{porc_general:.1f}%</div></div>', unsafe_allow_html=True)
 # ==========================================
-# MÓDULO 9: GALERÍA MULTIMEDIA
+# MÓDULO 9: GALERÍA MULTIMEDIA (PLAN B)
 # ==========================================
 elif opcion == "9. 📸 Galería Multimedia":
     st.title("📸 Galería de Obras y Eventos")
@@ -1169,14 +1169,15 @@ elif opcion == "9. 📸 Galería Multimedia":
         # --- PRIMERA FILA (3 FOTOS) ---
         col_f1, col_f2, col_f3 = st.columns(3)
         
+        # 👇 USAMOS EL FORMATO /open?id= QUE ES MÁS ROBUSTO 👇
         with col_f1:
-            st.image("https://drive.google.com/uc?id=1fPEscG51uQYiUvGMSVWbh_oNECMaYcrw", use_container_width=True)
+            st.image("https://drive.google.com/open?id=1fPEscG51uQYiUvGMSVWbh_oNECMaYcrw", use_container_width=True)
             
         with col_f2:
-            st.image("https://drive.google.com/uc?id=1qpcz7hPiW65yBRcdy6nN_DC5kWdN8LQN", use_container_width=True)
+            st.image("https://drive.google.com/open?id=1qpcz7hPiW65yBRcdy6nN_DC5kWdN8LQN", use_container_width=True)
             
         with col_f3:
-            st.image("https://drive.google.com/uc?id=1s3ot_q1RJX5p3QA-SkprvgN3s4hW1hCY", use_container_width=True)
+            st.image("https://drive.google.com/open?id=1s3ot_q1RJX5p3QA-SkprvgN3s4hW1hCY", use_container_width=True)
             
         st.write("<br>", unsafe_allow_html=True) # Un pequeño espacio entre filas
         
@@ -1184,10 +1185,10 @@ elif opcion == "9. 📸 Galería Multimedia":
         col_f4, col_f5, col_f6 = st.columns(3) # Usamos 3 columnas para que conserven el mismo tamaño
         
         with col_f4:
-            st.image("https://drive.google.com/uc?id=1-CdsMO60gIWtm0TRRguFhO7b4TwWmN0v", use_container_width=True)
+            st.image("https://drive.google.com/open?id=1-CdsMO60gIWtm0TRRguFhO7b4TwWmN0v", use_container_width=True)
             
         with col_f5:
-            st.image("https://drive.google.com/uc?id=1922DnTBV6ySICImt7Z4FA2rqeHhf7aY0", use_container_width=True)
+            st.image("https://drive.google.com/open?id=1922DnTBV6ySICImt7Z4FA2rqeHhf7aY0", use_container_width=True)
             
         with col_f6:
             st.empty() # Dejamos este espacio vacío para que la grilla quede perfecta
