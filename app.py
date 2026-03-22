@@ -1153,7 +1153,7 @@ elif opcion == "8. 📊 Tablero de Control":
             with c_m2:
                 st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">Cupo Global</div><div class="kpi-valor">{porc_general:.1f}%</div></div>', unsafe_allow_html=True)
 # ==========================================
-# MÓDULO 9: GALERÍA MULTIMEDIA (Cliqueable)
+# MÓDULO 9: GALERÍA MULTIMEDIA
 # ==========================================
 elif opcion == "9. 📸 Galería Multimedia":
     st.title("📸 Galería de Obras y Eventos")
@@ -1167,59 +1167,45 @@ elif opcion == "9. 📸 Galería Multimedia":
     with tab_fotos:
         st.subheader("Álbum de Recorridas y Asambleas")
         
-        # --- PRIMERA FILA (3 FOTOS) ---
-        col_f1, col_f2, col_f3 = st.columns(3)
+        # LISTA DE IDs: Solo tenés que agregar o quitar IDs acá adentro en el futuro.
+        fotos_ids = [
+            "12FISPzadXqVBHOAoFaq8hh-VshWV7AUY",
+            "1OJosCkzy6nf-IN2J1t0hFlz72lC5M9Er",
+            "1LBWJrOI-f5PC-lLmplOvgFy8t2-HQUeW",
+            "1qpcz7hPiW65yBRcdy6nN_DC5kWdN8LQN",
+            "1pLQAd5Jvv-BFtjyT1UV0yP-SfYRKpD9r",
+            "1sCFFciZmY1jgrKMxahFtqd5_dkbqmap6",
+            "1oQdTetQlS2zB56jzip1ZAAP22gg2QeRT",
+            "1yWUA1UgUfubgphPAAGow2orpSRN0pDxE",
+            "1-CdsMO60gIWtm0TRRguFhO7b4TwWmN0v",
+            "1922DnTBV6ySICImt7Z4FA2rqeHhf7aY0",
+            "1CsiQxdHK8RiilirqZ5lKxUuy5l3jsTSs",
+            "1oBKTFsxJQTdqg1BA0B_lrj2iQC_RT67-"
+        ]
         
-        # 👇 MAGIA TÉCNICA: Convertimos las fotos en links cliqueables 👇
-        
-        with col_f1:
-            # ID de la foto
-            id_f1 = "1fPEscG51uQYiUvGMSVWbh_oNECMaYcrw"
-            # Link para visualización directa (miniatura en la web)
-            url_miniatura_f1 = f"https://drive.google.com/thumbnail?id={id_f1}&sz=w1000"
-            # Link original de Drive (para abrir al cliquear)
-            url_drive_f1 = f"https://drive.google.com/file/d/{id_f1}/view?usp=sharing"
-            
-            # Inyectamos el HTML cliqueable
-            st.markdown(f'<a href="{url_drive_f1}" target="_blank"><img src="{url_miniatura_f1}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);"></a>', unsafe_allow_html=True)
-            
-        with col_f2:
-            id_f2 = "1qpcz7hPiW65yBRcdy6nN_DC5kWdN8LQN"
-            url_miniatura_f2 = f"https://drive.google.com/thumbnail?id={id_f2}&sz=w1000"
-            url_drive_f2 = f"https://drive.google.com/file/d/{id_f2}/view?usp=sharing"
-            st.markdown(f'<a href="{url_drive_f2}" target="_blank"><img src="{url_miniatura_f2}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);"></a>', unsafe_allow_html=True)
-            
-        with col_f3:
-            id_f3 = "1s3ot_q1RJX5p3QA-SkprvgN3s4hW1hCY"
-            url_miniatura_f3 = f"https://drive.google.com/thumbnail?id={id_f3}&sz=w1000"
-            url_drive_f3 = f"https://drive.google.com/file/d/{id_f3}/view?usp=sharing"
-            st.markdown(f'<a href="{url_drive_f3}" target="_blank"><img src="{url_miniatura_f3}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);"></a>', unsafe_allow_html=True)
-            
-        st.write("<br>", unsafe_allow_html=True) # Espacio entre filas
-        
-        # --- SEGUNDA FILA (2 FOTOS RESTANTES) ---
-        col_f4, col_f5, col_f6 = st.columns(3) 
-        
-        with col_f4:
-            id_f4 = "1-CdsMO60gIWtm0TRRguFhO7b4TwWmN0v"
-            url_miniatura_f4 = f"https://drive.google.com/thumbnail?id={id_f4}&sz=w1000"
-            url_drive_f4 = f"https://drive.google.com/file/d/{id_f4}/view?usp=sharing"
-            st.markdown(f'<a href="{url_drive_f4}" target="_blank"><img src="{url_miniatura_f4}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);"></a>', unsafe_allow_html=True)
-            
-        with col_f5:
-            id_f5 = "1922DnTBV6ySICImt7Z4FA2rqeHhf7aY0"
-            url_miniatura_f5 = f"https://drive.google.com/thumbnail?id={id_f5}&sz=w1000"
-            url_drive_f5 = f"https://drive.google.com/file/d/{id_f5}/view?usp=sharing"
-            st.markdown(f'<a href="{url_drive_f5}" target="_blank"><img src="{url_miniatura_f5}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);"></a>', unsafe_allow_html=True)
-            
-        with col_f6:
-            st.empty() 
+        # Motor que genera la grilla de 3 columnas automáticamente
+        for i in range(0, len(fotos_ids), 3):
+            cols = st.columns(3)
+            for j in range(3):
+                if i + j < len(fotos_ids):
+                    img_id = fotos_ids[i+j]
+                    url_min = f"https://drive.google.com/thumbnail?id={img_id}&sz=w1000"
+                    url_full = f"https://drive.google.com/file/d/{img_id}/view?usp=sharing"
+                    
+                    # Dibujamos la imagen con borde, sombra y espacio inferior (margin-bottom)
+                    cols[j].markdown(f'<a href="{url_full}" target="_blank"><img src="{url_min}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2); margin-bottom: 20px;"></a>', unsafe_allow_html=True)
             
     with tab_videos:
         st.subheader("Registro Audiovisual")
         
-        col_v1, col_v2 = st.columns(2)
-        with col_v1:
-            st.info("Espacio reservado para futuros videos de asambleas.")
-        with col_v2:
-            st.empty()
+        # ID del Video que me pasaste
+        video_id = "1hB31u59Blm5TlvM5RKxbls3RXdWpK-MH"
+        
+        # Usamos un iframe para que el video de Drive se pueda reproducir dentro de la app
+        st.markdown(f'''
+            <iframe src="https://drive.google.com/file/d/{video_id}/preview" 
+            width="100%" height="600" style="border-radius:15px; border:none; box-shadow: 0px 8px 20px rgba(0,0,0,0.3);">
+            </iframe>
+        ''', unsafe_allow_html=True)
+        
+        st.caption("▶️ Dele play al video para reproducirlo aquí mismo, o haga clic en el ícono de 'ventana emergente' arriba a la derecha del reproductor para verlo en pantalla completa.")
