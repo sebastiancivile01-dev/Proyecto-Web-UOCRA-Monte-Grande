@@ -1153,11 +1153,12 @@ elif opcion == "8. 📊 Tablero de Control":
             with c_m2:
                 st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">Cupo Global</div><div class="kpi-valor">{porc_general:.1f}%</div></div>', unsafe_allow_html=True)
 # ==========================================
-# MÓDULO 9: GALERÍA MULTIMEDIA
+# MÓDULO 9: GALERÍA MULTIMEDIA (Cliqueable)
 # ==========================================
 elif opcion == "9. 📸 Galería Multimedia":
     st.title("📸 Galería de Obras y Eventos")
     st.markdown("Repositorio visual de la Jurisdicción Esteban Echeverría.")
+    st.info("💡 Haga clic en cualquier imagen para verla en alta resolución en una pestaña nueva.")
     
     st.markdown("---")
     
@@ -1169,29 +1170,50 @@ elif opcion == "9. 📸 Galería Multimedia":
         # --- PRIMERA FILA (3 FOTOS) ---
         col_f1, col_f2, col_f3 = st.columns(3)
         
-        # 👇 USAMOS EL TRUCO DEL THUMBNAIL (Fuerza a Google a mostrar la imagen) 👇
+        # 👇 MAGIA TÉCNICA: Convertimos las fotos en links cliqueables 👇
+        
         with col_f1:
-            st.image("https://drive.google.com/thumbnail?id=1fPEscG51uQYiUvGMSVWbh_oNECMaYcrw&sz=w1000", use_container_width=True)
+            # ID de la foto
+            id_f1 = "1fPEscG51uQYiUvGMSVWbh_oNECMaYcrw"
+            # Link para visualización directa (miniatura en la web)
+            url_miniatura_f1 = f"https://drive.google.com/thumbnail?id={id_f1}&sz=w1000"
+            # Link original de Drive (para abrir al cliquear)
+            url_drive_f1 = f"https://drive.google.com/file/d/{id_f1}/view?usp=sharing"
+            
+            # Inyectamos el HTML cliqueable
+            st.markdown(f'<a href="{url_drive_f1}" target="_blank"><img src="{url_miniatura_f1}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);"></a>', unsafe_allow_html=True)
             
         with col_f2:
-            st.image("https://drive.google.com/thumbnail?id=1qpcz7hPiW65yBRcdy6nN_DC5kWdN8LQN&sz=w1000", use_container_width=True)
+            id_f2 = "1qpcz7hPiW65yBRcdy6nN_DC5kWdN8LQN"
+            url_miniatura_f2 = f"https://drive.google.com/thumbnail?id={id_f2}&sz=w1000"
+            url_drive_f2 = f"https://drive.google.com/file/d/{id_f2}/view?usp=sharing"
+            st.markdown(f'<a href="{url_drive_f2}" target="_blank"><img src="{url_miniatura_f2}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);"></a>', unsafe_allow_html=True)
             
         with col_f3:
-            st.image("https://drive.google.com/thumbnail?id=1s3ot_q1RJX5p3QA-SkprvgN3s4hW1hCY&sz=w1000", use_container_width=True)
+            id_f3 = "1s3ot_q1RJX5p3QA-SkprvgN3s4hW1hCY"
+            url_miniatura_f3 = f"https://drive.google.com/thumbnail?id={id_f3}&sz=w1000"
+            url_drive_f3 = f"https://drive.google.com/file/d/{id_f3}/view?usp=sharing"
+            st.markdown(f'<a href="{url_drive_f3}" target="_blank"><img src="{url_miniatura_f3}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);"></a>', unsafe_allow_html=True)
             
-        st.write("<br>", unsafe_allow_html=True) # Un pequeño espacio entre filas
+        st.write("<br>", unsafe_allow_html=True) # Espacio entre filas
         
         # --- SEGUNDA FILA (2 FOTOS RESTANTES) ---
         col_f4, col_f5, col_f6 = st.columns(3) 
         
         with col_f4:
-            st.image("https://drive.google.com/thumbnail?id=1-CdsMO60gIWtm0TRRguFhO7b4TwWmN0v&sz=w1000", use_container_width=True)
+            id_f4 = "1-CdsMO60gIWtm0TRRguFhO7b4TwWmN0v"
+            url_miniatura_f4 = f"https://drive.google.com/thumbnail?id={id_f4}&sz=w1000"
+            url_drive_f4 = f"https://drive.google.com/file/d/{id_f4}/view?usp=sharing"
+            st.markdown(f'<a href="{url_drive_f4}" target="_blank"><img src="{url_miniatura_f4}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);"></a>', unsafe_allow_html=True)
             
         with col_f5:
-            st.image("https://drive.google.com/thumbnail?id=1922DnTBV6ySICImt7Z4FA2rqeHhf7aY0&sz=w1000", use_container_width=True)
+            id_f5 = "1922DnTBV6ySICImt7Z4FA2rqeHhf7aY0"
+            url_miniatura_f5 = f"https://drive.google.com/thumbnail?id={id_f5}&sz=w1000"
+            url_drive_f5 = f"https://drive.google.com/file/d/{id_f5}/view?usp=sharing"
+            st.markdown(f'<a href="{url_drive_f5}" target="_blank"><img src="{url_miniatura_f5}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);"></a>', unsafe_allow_html=True)
             
         with col_f6:
-            st.empty() # Dejamos este espacio vacío para que la grilla quede perfecta
+            st.empty() 
             
     with tab_videos:
         st.subheader("Registro Audiovisual")
