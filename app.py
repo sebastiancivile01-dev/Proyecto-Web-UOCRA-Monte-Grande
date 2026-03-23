@@ -10,11 +10,48 @@ import requests
 
 st.markdown("""
     <style>
-    /* Colores institucionales UOCRA */
+    /* 1. FONDO GLOBAL DE LA APLICACIÓN */
+    .stApp {
+        background-image: url("https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/refs/heads/main/UOCRA.jfif"); 
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+    
+    /* 2. CAJA BLANCA SEMITRANSPARENTE (Protege la lectura de los módulos) */
+    .block-container {
+        background-color: rgba(255, 255, 255, 0.92) !important; /* 92% blanco */
+        padding: 2rem 3rem !important;
+        border-radius: 15px;
+        box-shadow: 0px 8px 25px rgba(0,0,0,0.2);
+        margin-top: 40px;
+        margin-bottom: 40px;
+    }
+
+    /* 3. COLORES INSTITUCIONALES Y BOTONES */
     h1, h2, h3 { color: #0033A0 !important; }
     div.stButton > button:first-child { background-color: #0033A0; color: white; border-radius: 5px; border: 1px solid #0033A0; }
     div.stButton > button:hover { background-color: #002277; color: white; border: 1px solid #002277; }
     [data-testid="stSidebar"] { background-color: #EAEAEA !important; border-right: 2px solid #CCCCCC !important; }
+    
+    /* 4. SISTEMA DE TARJETAS KPI PROFESIONALES */
+    .tarjeta-kpi {
+        background-color: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08);
+        border-left: 6px solid #0033A0;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .tarjeta-kpi.verde { border-left-color: #28a745; }
+    .tarjeta-kpi.naranja { border-left-color: #fd7e14; }
+    .tarjeta-kpi.violeta { border-left-color: #8A2BE2; }
+    .tarjeta-kpi.rojo { border-left-color: #dc3545; }
+    .kpi-titulo { color: #6c757d; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+    .kpi-valor { color: #212529; font-size: 2.2rem; font-weight: 900; margin: 0; }
+    </style>
+""", unsafe_allow_html=True)
     
     /* Sistema de Tarjetas KPI Profesionales */
     .tarjeta-kpi {
