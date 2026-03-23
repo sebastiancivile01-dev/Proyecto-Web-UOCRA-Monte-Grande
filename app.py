@@ -52,26 +52,8 @@ st.markdown("""
     .kpi-valor { color: #212529; font-size: 2.2rem; font-weight: 900; margin: 0; }
     </style>
 """, unsafe_allow_html=True)
-    
-    /* Sistema de Tarjetas KPI Profesionales */
-    .tarjeta-kpi {
-        background-color: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08);
-        border-left: 6px solid #0033A0;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    .tarjeta-kpi.verde { border-left-color: #28a745; }
-    .tarjeta-kpi.naranja { border-left-color: #fd7e14; }
-    .tarjeta-kpi.violeta { border-left-color: #8A2BE2; }
-    .tarjeta-kpi.rojo { border-left-color: #dc3545; }
-    .kpi-titulo { color: #6c757d; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-    .kpi-valor { color: #212529; font-size: 2.2rem; font-weight: 900; margin: 0; }
-    </style>
-""", unsafe_allow_html=True)
 
+# --- SISTEMA DE LOGIN (CANDADO) ---
 # --- SISTEMA DE LOGIN (CANDADO) ---
 if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
