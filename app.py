@@ -231,19 +231,16 @@ def obtener_cer(fecha_str=None):
     
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
-    # ==========================================
+# ==========================================
     # NUEVO: PANEL DE ACCESOS DIRECTOS (TOP)
     # ==========================================
     st.markdown("""
         <div style="text-align: center; margin-bottom: 15px;">
             <a href="https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5" target="_blank" style="text-decoration: none;">
-                <div style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); 
-                            color: white; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; 
-                            box-shadow: 0px 4px 6px rgba(0,0,0,0.1); transition: 0.3s;">
+                <div style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); transition: 0.3s;">
                     📸 Instagram Seccional
                 </div>
             </a>
-            
             <div style="font-size: 13px; background-color: white; padding: 8px; border-radius: 6px; border: 1px solid #CCCCCC;">
                 <span style="color: gray; font-size: 11px; display: block; margin-bottom: 4px;">🔗 ENLACES ÚTILES</span>
                 <a href="https://www.ieric.org.ar/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">IERIC</a> &nbsp;|&nbsp; 
