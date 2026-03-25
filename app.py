@@ -1331,57 +1331,72 @@ elif opcion == "10. 🤖 Asistente Virtual":
     st.title("🤖 Asistente Técnico Gremial")
     st.markdown("---")
 
-    # 1. Configuración de la API
+    # 1. Configuración de la API y el "Cerebro Gremial"
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         
-        # --- BLOQUE DE DIAGNÓSTICO ---
-        # Si el modelo falla, este bloque nos dirá cuáles están activos
-        modelos_vivos = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        
-        instruccion_gremial = "Eres un asistente gremial experto en convenios UOCRA y liquidaciones AESA."
-        
-        # Intentamos usar el flash estándar
+        # Contexto Ultra-Específico (Hoja de Ruta y Reglas AESA)
+        instruccion_gremial = """
+        Eres el Asistente Técnico Gremial de la UOCRA Seccional Monte Grande (Jurisdicción Esteban Echeverría - ID BAHRA 06260010).
+        Tu objetivo es asesorar sobre la gestión de Roberto Morelli y Alejandro Benítez, asegurando la correcta liquidación de los compañeros.
+
+        REGLAS DE LIQUIDACIÓN AESA (Motor de Cálculo):
+        - Categorías: Ayudante, Medio Oficial, Oficial, Oficial Especializado.
+        - Variables: Valor Hora, Viático (No Remunerativo), % Plus NR.
+        - Presentismo (20%): Σ(Hs Norm, 50%, 100%, Comp, Fer) × V.Hora × 0.20.
+        - Especialidad (%): Σ(Hs Norm, 50%, 100%) × V.Hora × %Esp.
+        - Altura: Hs Altura × V.Hora × 0.15.
+        - Nocturnas: Hs Nocturnas × V.Hora × (8/60).
+        - Retenciones Ley (19.5%): 11% Jubilación, 3% Obra Social, 3% PAMI, 2.5% Cuota Sindical.
+        - SAC: 50% de la mayor remuneración. Vacaciones: Divisor 25.
+
+        TONO DE RESPUESTA:
+        - Certero, directo y sin "divagues".
+        - Peronista en lo social, pero con rigor técnico y económico (Actuario/UBA).
+        - Enfocado en la auditoría y control de delegados en Puntos de Control (Centro Atómico Ezeiza, Aeropuerto, Polos Industriales).
+        """
+
+        # 👇 USAMOS EL MODELO QUE TU CUENTA AUTORIZÓ EXPLICITAMENTE 👇
         model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
+            model_name='models/gemini-flash-latest',
             system_instruction=instruccion_gremial
         )
-        
-        # Inicializar chat si no existe
+
+        # 2. Gestión de la sesión de Chat
         if "chat_session" not in st.session_state:
             st.session_state.chat_session = model.start_chat(history=[])
         if "mensajes_ui" not in st.session_state:
             st.session_state.mensajes_ui = []
 
-        # Mostrar historial
+        # Mostrar historial de mensajes
         for mensaje in st.session_state.mensajes_ui:
             with st.chat_message(mensaje["rol"]):
                 st.markdown(mensaje["contenido"])
 
-        # Entrada del usuario
-        if prompt := st.chat_input("Escriba su consulta gremial..."):
+        # 3. Interacción con el Usuario
+        if prompt := st.chat_input("Escriba su consulta sobre liquidación o gestión..."):
+            # Guardar y mostrar mensaje del usuario
             st.session_state.mensajes_ui.append({"rol": "user", "contenido": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
 
+            # Generar respuesta de la IA
             with st.chat_message("assistant"):
                 try:
-                    with st.spinner("Analizando..."):
+                    with st.spinner("Consultando hoja de ruta..."):
                         respuesta = st.session_state.chat_session.send_message(prompt)
                         st.markdown(respuesta.text)
                         st.session_state.mensajes_ui.append({"rol": "assistant", "contenido": respuesta.text})
                 except Exception as e_api:
-                    st.error(f"❌ Error al generar respuesta: {e_api}")
-                    st.info(f"💡 Modelos habilitados en tu cuenta: {modelos_vivos}")
+                    st.error(f"❌ Error de conexión con el motor: {e_api}")
+                    st.info("💡 Tip: Si el error persiste, probá el botón 'Actualizar Datos' en la barra lateral.")
 
     except Exception as e_config:
-        st.error(f"❌ Error de configuración: {e_config}")
-        st.info("Revisando modelos disponibles...")
-        try:
-            modelos_test = [m.name for m in genai.list_models()]
-            st.write(f"Lista de modelos detectados: {modelos_test}")
-        except:
-            st.write("No se pudo listar los modelos. Revisá si la API Key es válida.")
+        st.error("⚠️ Error en el acceso a la Inteligencia Artificial.")
+        st.info("Verificá que la GEMINI_API_KEY en los Secrets de Streamlit sea la correcta.")
+
+
+
 
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
