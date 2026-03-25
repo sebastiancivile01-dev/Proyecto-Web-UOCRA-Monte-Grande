@@ -1379,7 +1379,7 @@ elif opcion == "10. 🤖 Asistente Virtual":
             st.markdown(prompt)
         st.session_state.mensajes_ui.append({"rol": "user", "contenido": prompt})
 
-        # Llamamos a Gemini y mostramos la respuesta
+# Llamamos a Gemini y mostramos la respuesta
         with st.chat_message("assistant"):
             try:
                 with st.spinner("Analizando normativa..."):
@@ -1389,9 +1389,8 @@ elif opcion == "10. 🤖 Asistente Virtual":
                 # Guardamos la respuesta de la IA
                 st.session_state.mensajes_ui.append({"rol": "assistant", "contenido": respuesta.text})
             
-        except Exception as e:
-                        st.error(f"❌ Error técnico de la IA: {e}")
-
+            except Exception as e:
+                st.error(f"❌ Error técnico de la IA: {e}")
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
 # ==========================================
