@@ -232,30 +232,42 @@ def obtener_cer(fecha_str=None):
     
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
+   # ==========================================
+# PIE DE PÁGINA: ENLACES Y REDES
 # ==========================================
-    # NUEVO: PANEL DE ACCESOS DIRECTOS (TOP)
-    # ==========================================
+st.markdown("---") # Línea divisoria
+
+# --- Subsección ENLACES ÚTILES ---
+# Usamos HTML para achicar el texto y quitar la última | (foto 3)
+st.caption("🔗 ENLACES ÚTILES")
+st.markdown("""
+<div style='font-size: 0.9rem; font-weight: bold; text-align: center; color: #1f77b4; line-height: 1.6;'>
+    IERIC | UOCRA | CGT | MUTUAL | INFOLEG
+</div>
+""", unsafe_allow_html=True)
+
+
+st.write("#") # Espaciador
+
+
+# --- Subsección REDES SOCIALES ---
+# Usamos HTML para achicar el icono a la mitad (aprox 30px) y el texto
+st.caption("📱 REDES SOCIALES")
+
+# Suponiendo que tenías columnas, si no, lo pegas directo
+col_ig, _ = st.columns([1, 4]) # Una columna chica para el logo, otra grande vacía para empujar
+
+with col_ig:
+    # 👇 ACA USAMOS HTML PARA ACHICAR INSTAGRAM A LA MITAD 👇
+    # Reemplaza 'url_de_tu_icono_instagram' y 'tu_url_perfil_instagram'
     st.markdown("""
-        <div style="text-align: center; margin-bottom: 15px;">
-            <a href="https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5" target="_blank" style="text-decoration: none;">
-                <div style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); transition: 0.3s;">
-                    📸 Instagram Seccional
-                </div>
-            </a>
-            <div style="font-size: 13px; background-color: white; padding: 8px; border-radius: 6px; border: 1px solid #CCCCCC;">
-                <span style="color: gray; font-size: 11px; display: block; margin-bottom: 4px;">🔗 ENLACES ÚTILES</span>
-                <a href="https://www.ieric.org.ar/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">IERIC</a> &nbsp;|&nbsp; 
-                <a href="https://www.uocra.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">UOCRA</a> &nbsp;|&nbsp;   
-                <a href="https://cgtoficial.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">CGT</a> &nbsp;|&nbsp;                  
-                <a href="https://mutual.uocra.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">MUTUAL</a> &nbsp;|&nbsp;                      
-                <a href="https://servicios.infoleg.gob.ar/infolegInternet/anexos/25000-29999/27238/norma.htm" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">INFOLEG</a> &nbsp;|&nbsp; 
-            </div>
-        </div>
-        <hr style="margin-top: 10px; margin-bottom: 15px;">
+    <div style='text-align: left;'>
+        <a href='https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5' target='_blank' style='text-decoration: none;'>
+            <img src='https://www.google.com/imgres?q=icono%20instagram&imgurl=https%3A%2F%2Fimg.freepik.com%2Fvector-gratis%2Ficono-redes-sociales-vector-instagram-7-junio-2021-bangkok-tailandia_53876-136728.jpg%3Fsemt%3Dais_hybrid%26w%3D740%26q%3D80&imgrefurl=https%3A%2F%2Fwww.freepik.es%2Ffotos-vectores-gratis%2Finstagram-logo&docid=GcSO2dwCNCR-OM&tbnid=XuA7w1ZcowCRfM&vet=12ahUKEwia6uyIkryTAxX1K7kGHfiMK88QnPAOegQIGRAB..i&w=740&h=740&hcb=2&ved=2ahUKEwia6uyIkryTAxX1K7kGHfiMK88QnPAOegQIGRAB' width='30px' style='vertical-align: middle; margin-right: 5px;'>
+            <span style='font-size: 0.9rem; font-weight: bold; color: #e1306c; vertical-align: middle;'> Instagram</span>
+        </a>
+    </div>
     """, unsafe_allow_html=True)
-    
-    st.image("images.jfif", width=150)
-    st.title("Menú Principal")
     
     # Botón para forzar la actualización de datos
     if st.button("🔄 Actualizar Datos"):
@@ -1330,37 +1342,30 @@ elif opcion == "9. 📸 Galería Multimedia":
 # MÓDULO 10: ASISTENTE VIRTUAL (GEMINI API)
 # ==========================================
 elif opcion == "10. 🤖 Asistente Virtual":
-    st.title("🤖 Asistente Técnico Gremial v2")
+    # 👇 CAMBIO CLAVE: Agregamos v2 para forzar la sincronización del servidor 👇
+    st.title("🤖 Asistente Técnico Gremial v2") 
     st.markdown("Consulte sobre liquidaciones, convenios, retenciones o redacción de notas oficiales.")
     st.markdown("---")
+
     # 1. Configuración de la API y el "Cerebro Gremial"
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         
         # Le damos un rol estricto para que sepa de qué está hablando
         instruccion_gremial = """
-        Eres el Asistente Técnico Gremial de la UOCRA Seccional Monte Grande (Jurisdicción Esteban Echeverría - ID BAHRA 06260010).
-        Tu objetivo es brindar respuestas certeras sobre convenios, liquidaciones y control territorial.
-        Reglas de Liquidación AESA estandarizadas:
-        - Categorías: Ayudante, Medio Oficial, Oficial, Oficial Especializado.
-        - Presentismo: 20% calculado sobre horas normales, 50%, 100%, compensatorias y feriados.
-        - Horas Altura: 15% adicional del valor hora normal.
-        - Horas Nocturnas: Se calcula como valor hora x (8/60).
-        - Retenciones de Ley (19.5%): 11% Jubilación, 3% Obra Social, 3% PAMI, 2.5% Cuota Sindical.
-        Tus respuestas deben ser directas, sin rodeos, mostrando conocimiento macroeconómico y un fuerte enfoque en la defensa de los derechos de los compañeros de obra.
+        Eres el Asistente Técnico Gremial de la UOCRA Seccional Monte Grande.
+        Brindas respuestas certeras sobre convenios, liquidaciones AESA y control territorial.
+        Mostrando conocimiento macroeconómico y enfoque en defensa de derechos. Directo y sin rodeos.
         """
-# 👇 Apuntamos al motor Pro que no suele tener restricciones 👇
+        
         model = genai.GenerativeModel(
-            model_name='gemini-1.5-pro',
+            model_name='gemini-1.5-flash', # Aseguramos que diga flash
             system_instruction=instruccion_gremial
         )
-    
     except Exception as e:
         st.error("⚠️ El sistema está reiniciando el motor de inteligencia artificial. Verifique las credenciales.")
         st.stop()
-
-
-
+        
     # 2. Memoria de la conversación
     if "chat_session" not in st.session_state:
         st.session_state.chat_session = model.start_chat(history=[])
