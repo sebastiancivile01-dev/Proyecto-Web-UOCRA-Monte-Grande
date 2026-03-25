@@ -285,11 +285,12 @@ with st.sidebar:
         "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
         "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "5. ⚠️ Repositorio de Reclamos",
         "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios por Empresa", "8. 📊 Tablero de Control",
-        "9. 📸 Galería Multimedia"
+        "9. 📸 Galería Multimedia", "10. 🤖 Asistente Virtual"
     ]
 
     if st.session_state.usuario_rol == "Restringido":
-        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Tablero de Control", "9. 📸 Galería Multimedia"]
+        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Tablero de Control", "9. 📸 Galería Multimedia", "10. 🤖 Asistente Virtual"
+                              ]
     else:
         opciones_permitidas = opciones_totales
         
@@ -1323,6 +1324,73 @@ elif opcion == "9. 📸 Galería Multimedia":
         ''', unsafe_allow_html=True)
         
         st.caption("▶️ Dele play al video para reproducirlo aquí mismo, o haga clic en el ícono de 'ventana emergente' arriba a la derecha del reproductor para verlo en pantalla completa.")
+
+
+# ==========================================
+# MÓDULO 10: ASISTENTE VIRTUAL (GEMINI API)
+# ==========================================
+elif opcion == "10. 🤖 Asistente Virtual":
+    st.title("🤖 Asistente Técnico Gremial")
+    st.markdown("Consulte sobre liquidaciones, convenios, retenciones o redacción de notas oficiales.")
+    st.markdown("---")
+
+    # 1. Configuración de la API y el "Cerebro Gremial"
+    try:
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        
+        # Le damos un rol estricto para que sepa de qué está hablando
+        instruccion_gremial = """
+        Eres el Asistente Técnico Gremial de la UOCRA Seccional Monte Grande (Jurisdicción Esteban Echeverría - ID BAHRA 06260010).
+        Tu objetivo es brindar respuestas certeras sobre convenios, liquidaciones y control territorial.
+        Reglas de Liquidación AESA estandarizadas:
+        - Categorías: Ayudante, Medio Oficial, Oficial, Oficial Especializado.
+        - Presentismo: 20% calculado sobre horas normales, 50%, 100%, compensatorias y feriados.
+        - Horas Altura: 15% adicional del valor hora normal.
+        - Horas Nocturnas: Se calcula como valor hora x (8/60).
+        - Retenciones de Ley (19.5%): 11% Jubilación, 3% Obra Social, 3% PAMI, 2.5% Cuota Sindical.
+        Tus respuestas deben ser directas, sin rodeos, mostrando conocimiento macroeconómico y un fuerte enfoque en la defensa de los derechos de los compañeros de obra.
+        """
+        
+        model = genai.GenerativeModel(
+            model_name='gemini-1.5-flash',
+            system_instruction=instruccion_gremial
+        )
+    except Exception as e:
+        st.error("⚠️ El sistema está reiniciando el motor de inteligencia artificial. Verifique las credenciales.")
+        st.stop()
+
+    # 2. Memoria de la conversación
+    if "chat_session" not in st.session_state:
+        st.session_state.chat_session = model.start_chat(history=[])
+    
+    if "mensajes_ui" not in st.session_state:
+        st.session_state.mensajes_ui = []
+
+    # 3. Dibujar los mensajes en pantalla
+    for mensaje in st.session_state.mensajes_ui:
+        with st.chat_message(mensaje["rol"]):
+            st.markdown(mensaje["contenido"])
+
+    # 4. Caja de entrada del usuario
+    if prompt := st.chat_input("Ej: ¿Cómo se calcula el presentismo bajo norma AESA?"):
+        
+        # Mostramos lo que preguntó el usuario
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        st.session_state.mensajes_ui.append({"rol": "user", "contenido": prompt})
+
+        # Llamamos a Gemini y mostramos la respuesta
+        with st.chat_message("assistant"):
+            try:
+                with st.spinner("Analizando normativa..."):
+                    respuesta = st.session_state.chat_session.send_message(prompt)
+                    st.markdown(respuesta.text)
+                
+                # Guardamos la respuesta de la IA
+                st.session_state.mensajes_ui.append({"rol": "assistant", "contenido": respuesta.text})
+            
+            except Exception as e:
+                st.error("Ocurrió un error en el servidor de IA. Intente en unos minutos.")
 
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
