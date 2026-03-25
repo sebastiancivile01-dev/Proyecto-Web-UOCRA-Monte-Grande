@@ -244,8 +244,10 @@ with st.sidebar:
             <div style="font-size: 13px; background-color: white; padding: 8px; border-radius: 6px; border: 1px solid #CCCCCC;">
                 <span style="color: gray; font-size: 11px; display: block; margin-bottom: 4px;">🔗 ENLACES ÚTILES</span>
                 <a href="https://www.ieric.org.ar/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">IERIC</a> &nbsp;|&nbsp; 
-                <a href="https://www.uocra.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">UOCRA</a> &nbsp;|&nbsp; 
-                <a href="https://www.srt.gob.ar/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">SRT</a>
+                <a href="https://www.uocra.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">UOCRA</a> &nbsp;|&nbsp;   
+                <a href="https://cgtoficial.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">CGT</a> &nbsp;|&nbsp;                  
+                <a href="https://mutual.uocra.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">MUTUAL</a> &nbsp;|&nbsp;                      
+                <a href="https://www.infoleg.gob.ar/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">INFOLEG</a> &nbsp;|&nbsp; 
             </div>
         </div>
         <hr style="margin-top: 10px; margin-bottom: 15px;">
