@@ -1273,7 +1273,7 @@ elif opcion == "8. 📊 Tablero de Control":
 # ==========================================
 elif opcion == "9. 📸 Galería Multimedia":
     st.title("📸 Galería de Obras y Eventos")
-    st.markdown("Repositorio visual de la Jurisdicción Esteban Echeverría.")
+    st.markdown("Repositorio Audiovisual.")
     st.info("💡 Haga clic en cualquier imagen para verla en alta resolución en una pestaña nueva.")
     
     st.markdown("---")
