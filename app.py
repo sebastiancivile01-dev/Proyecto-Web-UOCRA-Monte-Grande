@@ -247,7 +247,7 @@ with st.sidebar:
                 <a href="https://www.ieric.org.ar/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">IERIC</a> &nbsp;|&nbsp; 
                 <a href="https://www.uocra.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">UOCRA</a> &nbsp;|&nbsp;   
                 <a href="https://cgtoficial.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">CGT</a> &nbsp;|&nbsp;                  
-                <a href="https://mutual.uocra.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">MUTUAL</a> &nbsp;|&nbsp;                      
+                <a href="https://mutual.uocra.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">MUTUAL</a> &nbsp;&nbsp;                      
                 <a href="https://servicios.infoleg.gob.ar/infolegInternet/anexos/25000-29999/27238/norma.htm" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">INFOLEG</a> &nbsp;|&nbsp; 
             </div>
         </div>
