@@ -50,6 +50,15 @@ st.markdown("""
     .tarjeta-kpi.rojo { border-left-color: #dc3545; }
     .kpi-titulo { color: #6c757d; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
     .kpi-valor { color: #212529; font-size: 2.2rem; font-weight: 900; margin: 0; }
+    
+    /* 5. RECUADROS PARA CAMPOS DE FORMULARIO */
+    div[data-baseweb="input"], 
+    div[data-baseweb="select"], 
+    div[data-baseweb="textarea"] {
+        border: 1px solid #000000 !important; /* Borde negro fino */
+        border-radius: 6px !important; /* Curva suave en las esquinas */
+        background-color: #ffffff !important; /* Asegura que el fondo del campo sea blanco sólido */
+    }
     </style>
 """, unsafe_allow_html=True)
 
