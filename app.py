@@ -173,6 +173,10 @@ df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "
 df_eventos = cargar_db("Mujeres_Eventos", ["Titulo", "Fecha", "Observaciones"]) # Sincronizado con tu pestaña
 df_convenios = cargar_db("Convenios", ["Empresa", "Detalle_Convenio", "monto $", "Monto %", "Vigencia"])
 df_propuestas = cargar_db("Propuestas", ["Fecha", "Usuario", "Propuesta", "Estado"])
+df_puntos_extra = cargar_db("Puntos_Extra", ["Nombre", "Latitud", "Longitud", "Color", "Observacion"])
+if not df_puntos_extra.empty:
+    df_puntos_extra['Latitud'] = pd.to_numeric(df_puntos_extra['Latitud'], errors='coerce').fillna(0.0)
+    df_puntos_extra['Longitud'] = pd.to_numeric(df_puntos_extra['Longitud'], errors='coerce').fillna(0.0)
 
 # La lista de predios ahora se alimenta de la base maestra oficial
 lista_predios_historicos = sorted(df_predios['Nombre'].dropna().astype(str).tolist()) if not df_predios.empty else []
@@ -288,6 +292,78 @@ opcion = st.sidebar.radio("Navegación:", opciones_permitidas)
 # ==========================================
 if opcion == "1. 🗺️ Mapa Territorial":
     st.title("📍 Control Territorial - Jurisdicción Completa")
+    
+    # --- NUEVO: GESTOR DE PUNTOS ESTRATÉGICOS ---
+    # Inicializamos la memoria para los puntos temporales
+    if 'puntos_custom' not in st.session_state:
+        st.session_state.puntos_custom = []
+
+    col_p1, col_p2 = st.columns(2)
+    
+    with col_p1:
+        with st.expander("📌 Añadir Punto Estratégico (Sede, Reunión, etc.)"):
+            with st.form("form_punto_custom", clear_on_submit=True):
+                p_nom = st.text_input("Nombre del Punto:*")
+                c_lat, c_lon = st.columns(2)
+                p_lat = c_lat.text_input("Latitud (Ej: -34.81):*")
+                p_lon = c_lon.text_input("Longitud (Ej: -58.46):*")
+                
+                c_col, c_tip = st.columns(2)
+                p_col = c_col.selectbox("Color del Globo:", ["gray", "blue", "green", "red", "orange", "purple", "black", "pink"])
+                p_tipo = c_tip.radio("Duración:", ["⏳ Temporal (Se borra al salir)", "💾 Permanente (Se guarda en Excel)"])
+                
+                p_obs = st.text_area("Observación / Detalle:")
+
+                if st.form_submit_button("📍 Colocar en el Mapa"):
+                    if not p_nom or not p_lat or not p_lon:
+                        st.error("❌ Nombre, Latitud y Longitud son obligatorios.")
+                    else:
+                        try:
+                            lat_f = float(p_lat)
+                            lon_f = float(p_lon)
+                            
+                            if "Temporal" in p_tipo:
+                                st.session_state.puntos_custom.append({"nombre": p_nom, "lat": lat_f, "lon": lon_f, "color": p_col, "obs": p_obs})
+                                st.success("✅ Punto Temporal agregado al mapa.")
+                            else:
+                                nuevo_punto = pd.DataFrame([{"Nombre": p_nom, "Latitud": lat_f, "Longitud": lon_f, "Color": p_col, "Observacion": p_obs}])
+                                df_puntos_extra = pd.concat([df_puntos_extra, nuevo_punto], ignore_index=True)
+                                guardar_db(df_puntos_extra, "Puntos_Extra")
+                                st.success("✅ Punto Permanente guardado en Google Sheets.")
+                            
+                            st.rerun()
+                        except ValueError:
+                            st.error("❌ Error: Latitud y Longitud deben ser números válidos.")
+
+    with col_p2:
+        with st.expander("🗑️ Borrar Puntos Estratégicos"):
+            # Borrar Temporales
+            if st.session_state.puntos_custom:
+                st.write("**Puntos Temporales Activos:**")
+                nombres_temp = [p["nombre"] for p in st.session_state.puntos_custom]
+                temp_a_borrar = st.selectbox("Seleccionar temporal para borrar:", [""] + nombres_temp, key="del_temp")
+                if st.button("🗑️ Borrar Temporal") and temp_a_borrar:
+                    st.session_state.puntos_custom = [p for p in st.session_state.puntos_custom if p["nombre"] != temp_a_borrar]
+                    st.rerun()
+            else:
+                st.info("No hay puntos temporales activos.")
+                
+            st.markdown("---")
+            
+            # Borrar Permanentes
+            if not df_puntos_extra.empty:
+                st.write("**Puntos Permanentes (Excel):**")
+                nombres_perm = df_puntos_extra["Nombre"].tolist()
+                perm_a_borrar = st.selectbox("Seleccionar permanente para borrar:", [""] + nombres_perm, key="del_perm")
+                if st.button("🗑️ Borrar Permanente") and perm_a_borrar:
+                    df_puntos_extra = df_puntos_extra[df_puntos_extra["Nombre"] != perm_a_borrar]
+                    guardar_db(df_puntos_extra, "Puntos_Extra")
+                    st.success("✅ Borrado definitivamente del Excel.")
+                    st.rerun()
+            else:
+                st.info("No hay puntos permanentes guardados.")
+
+    st.markdown("---")
     st.markdown("### 👁️ Panel de Visualización")
     opciones_mapa = ["🗺️ Vista General", "👤 Foco en Delegados", "🟢 Solo Activas", "🔴 Con Problemas (Interv/Interr)", "⚪ Finalizadas"]
     if st.session_state.usuario_rol == "Admin":
@@ -322,6 +398,18 @@ if opcion == "1. 🗺️ Mapa Territorial":
                     tooltip=f"<div style='text-align:center;'><b>📍 Polo/Predio:</b> {p.get('Nombre', 'S/N')}<br><b>Radio de control:</b> {rad_p} KM</div>"
                 ).add_to(m)
 
+    # 👇 NUEVO: DIBUJAR PUNTOS ESTRATÉGICOS (TEMPORALES) 👇
+    for pt in st.session_state.puntos_custom:
+        html_t = f"<div style='text-align:center; max-width:200px;'><h4 style='color:{pt['color']}; margin-bottom:0px;'>📍 {pt['nombre']}</h4><span style='color:gray; font-size:11px;'>[Marcador Temporal]</span><hr style='margin:5px 0;'>{pt['obs']}</div>"
+        folium.Marker([pt["lat"], pt["lon"]], tooltip=html_t, icon=folium.Icon(color=pt["color"], icon="info-sign")).add_to(m)
+
+    # 👇 NUEVO: DIBUJAR PUNTOS ESTRATÉGICOS (PERMANENTES) 👇
+    if not df_puntos_extra.empty:
+        for _, pt in df_puntos_extra.iterrows():
+            html_p = f"<div style='text-align:center; max-width:200px;'><h4 style='color:{pt['Color']}; margin-bottom:0px;'>📍 {pt['Nombre']}</h4><span style='color:#0033A0; font-size:11px;'>[Marcador Permanente]</span><hr style='margin:5px 0;'>{pt.get('Observacion', '')}</div>"
+            folium.Marker([pt["Latitud"], pt["Longitud"]], tooltip=html_p, icon=folium.Icon(color=pt["Color"], icon="star")).add_to(m)
+
+    # DIBUJAR OBRAS Y EMPRESAS (Tu lógica original intacta)
     df_mapa = df_obras.copy()
     if not df_mapa.empty:
         if "Activas" in modo_mapa: df_mapa = df_mapa[df_mapa['Estado'] == 'Activa']
@@ -340,7 +428,6 @@ if opcion == "1. 🗺️ Mapa Territorial":
                     html = f"<div style='text-align: center;'><h3 style='color: #1a5a8a;'>👤 {txt_d}</h3><hr><b>Obra:</b> {txt_p}<br><b>Estado:</b> {est}</div>"
                     icon = folium.Icon(color="darkblue", icon="users", prefix="fa")
                 else:
-                    # Si es Admin y es Jurisdicción R (Soporta "SI" y "Sí"), le agregamos una marca roja
                     es_r = str(row.get('Jurisdiccion_R', '')).strip().upper() in ['SI', 'SÍ']
                     marca_r = " 🔴 [JUR R]" if es_r and st.session_state.usuario_rol == "Admin" else ""
                     
@@ -349,7 +436,7 @@ if opcion == "1. 🗺️ Mapa Territorial":
                 
                 folium.Marker([lat, lon], tooltip=folium.Tooltip(html), icon=icon).add_to(m)
                 
-    # Inyectamos CSS para enmarcar el mapa con bordes negros
+    # Inyectamos CSS para enmarcar el mapa con bordes negros (Tu código intacto)
     st.markdown("""
         <style>
         /* Apuntamos al contenedor del mapa (iframe) */
@@ -361,9 +448,7 @@ if opcion == "1. 🗺️ Mapa Territorial":
         </style>
     """, unsafe_allow_html=True)
     
-    folium_static(m, width=1000, height=600)
-
-# ==========================================
+    folium_static(m, width=1000, height=600)# ==========================================
 # MÓDULO 2: CARGA DE DATOS (ABM)
 # ==========================================
 elif opcion == "2. 📥 Carga de Datos (ABM)":
