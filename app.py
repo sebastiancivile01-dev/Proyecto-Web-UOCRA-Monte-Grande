@@ -231,12 +231,12 @@ def obtener_cer(fecha_str=None):
     
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
-# ==========================================
+    # ==========================================
     # NUEVO: PANEL DE ACCESOS DIRECTOS (TOP)
     # ==========================================
     st.markdown("""
         <div style="text-align: center; margin-bottom: 15px;">
-            <a href="https://www.instagram.com/uocra.juventud.montegrande" target="_blank" style="text-decoration: none;">
+            <a href="https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5" target="_blank" style="text-decoration: none;">
                 <div style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); 
                             color: white; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; 
                             box-shadow: 0px 4px 6px rgba(0,0,0,0.1); transition: 0.3s;">
@@ -252,11 +252,10 @@ with st.sidebar:
             </div>
         </div>
         <hr style="margin-top: 10px; margin-bottom: 15px;">
-    """, unsafe_allow_html=True)  
+    """, unsafe_allow_html=True)
     
-    # 👇 ESTAS LÍNEAS AHORA ESTÁN ALINEADAS CORRECTAMENTE CON st.markdown 👇
     st.image("images.jfif", width=150)
-    st.title("Menú Principal")    
+    st.title("Menú Principal")
     
     # Botón para forzar la actualización de datos
     if st.button("🔄 Actualizar Datos"):
