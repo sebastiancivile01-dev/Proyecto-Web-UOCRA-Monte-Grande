@@ -1330,7 +1330,7 @@ elif opcion == "9. 📸 Galería Multimedia":
 # MÓDULO 10: ASISTENTE VIRTUAL (GEMINI API)
 # ==========================================
 elif opcion == "10. 🤖 Asistente Virtual":
-    st.title("🤖 Asistente Técnico Gremial")
+    st.title("🤖 Asistente Técnico Gremial v2")
     st.markdown("Consulte sobre liquidaciones, convenios, retenciones o redacción de notas oficiales.")
     st.markdown("---")
     # 1. Configuración de la API y el "Cerebro Gremial"
