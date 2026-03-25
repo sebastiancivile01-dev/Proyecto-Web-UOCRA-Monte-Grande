@@ -7,6 +7,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import json
 import requests
+import google.generativeai as genai
 
 st.markdown("""
     <style>
