@@ -231,7 +231,7 @@ def obtener_cer(fecha_str=None):
     
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
-    # ==========================================
+# ==========================================
     # NUEVO: PANEL DE ACCESOS DIRECTOS (TOP)
     # ==========================================
     st.markdown("""
@@ -251,16 +251,17 @@ with st.sidebar:
                 <a href="https://www.srt.gob.ar/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">SRT</a>
             </div>
         </div>
-            <hr style="margin-top: 10px; margin-bottom: 15px;">
-        """, unsafe_allow_html=True)  # <--- ESTA ES LA CLAVE PARA QUE NO SE VEA COMO TEXTO ROTO
-        
-        st.image("images.jfif", width=150)
-        st.title("Menú Principal")    
+        <hr style="margin-top: 10px; margin-bottom: 15px;">
+    """, unsafe_allow_html=True)  
+    
+    # 👇 ESTAS LÍNEAS AHORA ESTÁN ALINEADAS CORRECTAMENTE CON st.markdown 👇
+    st.image("images.jfif", width=150)
+    st.title("Menú Principal")    
+    
     # Botón para forzar la actualización de datos
     if st.button("🔄 Actualizar Datos"):
         st.cache_data.clear()
         st.rerun()
-
     # --- NUEVO: ANOTADOR DE PROPUESTAS ---
     with st.expander("💡 Anotador de Propuestas", expanded=False):
         st.markdown("<p style='font-size:0.85rem; color:#666;'>Envíe sugerencias al equipo de Sistemas.</p>", unsafe_allow_html=True)
