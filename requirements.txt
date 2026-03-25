@@ -7,4 +7,3 @@ altair<5
 gspread
 google-auth
 google-generativeai>=0.8.3
-
