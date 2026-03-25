@@ -6,3 +6,4 @@ openpyxl
 altair<5
 gspread
 google-auth
+google-generativeai
