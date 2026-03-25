@@ -1327,80 +1327,61 @@ elif opcion == "9. 📸 Galería Multimedia":
         st.caption("▶️ Dele play al video para reproducirlo aquí mismo, o haga clic en el ícono de 'ventana emergente' arriba a la derecha del reproductor para verlo en pantalla completa.")
 
 
-# ==========================================
-# MÓDULO 10: ASISTENTE VIRTUAL (GEMINI API)
 elif opcion == "10. 🤖 Asistente Virtual":
-    st.title("🤖 Asistente Técnico Gremial (Diagnóstico)")
+    st.title("🤖 Asistente Técnico Gremial")
     st.markdown("---")
 
+    # 1. Configuración de la API
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         
-        # ==========================================
-        # 🕵️‍♂️ MODO DIAGNÓSTICO: ESCÁNER DE MODELOS
-        # ==========================================
-        st.warning("Buscando modelos autorizados para tu API Key...")
+        # --- BLOQUE DE DIAGNÓSTICO ---
+        # Si el modelo falla, este bloque nos dirá cuáles están activos
+        modelos_vivos = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
         
-        modelos_disponibles = []
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                modelos_disponibles.append(m.name)
-                
-        st.success(f"✅ Google autoriza estos modelos: {modelos_disponibles}")
-        st.stop() # Frenamos la app acá para que podamos leer la lista
-        # ==========================================
+        instruccion_gremial = "Eres un asistente gremial experto en convenios UOCRA y liquidaciones AESA."
         
-        # (El resto del código de la instrucción gremial queda abajo, no hace falta que lo borres)    # 1. Configuración de la API y el "Cerebro Gremial"
-    try:
-        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        
-        # Le damos un rol estricto para que sepa de qué está hablando
-        instruccion_gremial = """
-        Eres el Asistente Técnico Gremial de la UOCRA Seccional Monte Grande.
-        Brindas respuestas certeras sobre convenios, liquidaciones AESA y control territorial.
-        Mostrando conocimiento macroeconómico y enfoque en defensa de derechos. Directo y sin rodeos.
-        """
-        
+        # Intentamos usar el flash estándar
         model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash', # Aseguramos que diga flash
+            model_name='gemini-1.5-flash',
             system_instruction=instruccion_gremial
         )
-    except Exception as e:
-        st.error("⚠️ El sistema está reiniciando el motor de inteligencia artificial. Verifique las credenciales.")
-        st.stop()
         
-    # 2. Memoria de la conversación
-    if "chat_session" not in st.session_state:
-        st.session_state.chat_session = model.start_chat(history=[])
-    
-    if "mensajes_ui" not in st.session_state:
-        st.session_state.mensajes_ui = []
+        # Inicializar chat si no existe
+        if "chat_session" not in st.session_state:
+            st.session_state.chat_session = model.start_chat(history=[])
+        if "mensajes_ui" not in st.session_state:
+            st.session_state.mensajes_ui = []
 
-    # 3. Dibujar los mensajes en pantalla
-    for mensaje in st.session_state.mensajes_ui:
-        with st.chat_message(mensaje["rol"]):
-            st.markdown(mensaje["contenido"])
+        # Mostrar historial
+        for mensaje in st.session_state.mensajes_ui:
+            with st.chat_message(mensaje["rol"]):
+                st.markdown(mensaje["contenido"])
 
-    # 4. Caja de entrada del usuario
-    if prompt := st.chat_input("Ej: ¿Cómo se calcula el presentismo bajo norma AESA?"):
-        
-        # Mostramos lo que preguntó el usuario
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        st.session_state.mensajes_ui.append({"rol": "user", "contenido": prompt})
+        # Entrada del usuario
+        if prompt := st.chat_input("Escriba su consulta gremial..."):
+            st.session_state.mensajes_ui.append({"rol": "user", "contenido": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-# Llamamos a Gemini y mostramos la respuesta
-        with st.chat_message("assistant"):
-            try:
-                with st.spinner("Analizando normativa..."):
-                    respuesta = st.session_state.chat_session.send_message(prompt)
-                    st.markdown(respuesta.text)
-                
-                # Guardamos la respuesta de la IA
-                st.session_state.mensajes_ui.append({"rol": "assistant", "contenido": respuesta.text})
-            
-            except Exception as e:
-                st.error(f"❌ Error técnico de la IA: {e}")
+            with st.chat_message("assistant"):
+                try:
+                    with st.spinner("Analizando..."):
+                        respuesta = st.session_state.chat_session.send_message(prompt)
+                        st.markdown(respuesta.text)
+                        st.session_state.mensajes_ui.append({"rol": "assistant", "contenido": respuesta.text})
+                except Exception as e_api:
+                    st.error(f"❌ Error al generar respuesta: {e_api}")
+                    st.info(f"💡 Modelos habilitados en tu cuenta: {modelos_vivos}")
+
+    except Exception as e_config:
+        st.error(f"❌ Error de configuración: {e_config}")
+        st.info("Revisando modelos disponibles...")
+        try:
+            modelos_test = [m.name for m in genai.list_models()]
+            st.write(f"Lista de modelos detectados: {modelos_test}")
+        except:
+            st.write("No se pudo listar los modelos. Revisá si la API Key es válida.")
 
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
