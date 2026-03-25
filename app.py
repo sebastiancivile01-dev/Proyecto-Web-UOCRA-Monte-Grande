@@ -1312,7 +1312,7 @@ elif opcion == "9. 📸 Galería Multimedia":
                     cols[j].markdown(f'<a href="{url_full}" target="_blank"><img src="{url_min}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2); margin-bottom: 20px;"></a>', unsafe_allow_html=True)
             
     with tab_videos:
-        st.subheader("Registro Audiovisual")
+        st.subheader("Videos")
         
         # ID del Video que me pasaste
         video_id = "1hB31u59Blm5TlvM5RKxbls3RXdWpK-MH"
