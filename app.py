@@ -1362,6 +1362,33 @@ elif opcion == "10. 🤖 Asistente Virtual":
             
             except Exception as e:
                 st.error(f"❌ Error técnico de la IA: {e}")
+
+    # ==========================================
+    # PIE DE PÁGINA: ENLACES Y REDES
+    # ==========================================
+    st.markdown("---") # Línea divisoria
+    
+    # --- Subsección ENLACES ÚTILES ---
+    st.caption("🔗 ENLACES ÚTILES")
+    st.markdown("<p style='text-align: center; font-weight: bold; color: #1f77b4; font-size: 0.9rem;'> IERIC | UOCRA | CGT | MUTUAL | INFOLEG</p>", unsafe_allow_html=True)
+    
+    st.write("#") # Espaciador
+    
+    # --- Subsección REDES SOCIALES ---
+    st.caption("📱 REDES SOCIALES")
+    
+    # 👇 VERSIÓN ORIGINAL RESTAURADA: Centrada, sin columnas y con el logo correcto 👇
+    st.markdown("""
+    <div style='text-align: center; margin-bottom: 15px;'>
+        <a href='https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5' target='_blank' style='text-decoration: none;'>
+            <img src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/600px-Instagram_icon.png' width='45px' style='vertical-align: middle; margin-right: 10px;'>
+            <span style='font-size: 1.1rem; font-weight: bold; color: #e1306c; vertical-align: middle;'>Instagram</span>
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
 # ==========================================
@@ -1392,27 +1419,4 @@ if opcion != "10. 🤖 Asistente Virtual":
                     guardar_db(df_propuestas, "Propuestas")
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
 
-  # ==========================================
-    # PIE DE PÁGINA: ENLACES Y REDES
-    # ==========================================
-    st.markdown("---") # Línea divisoria
-    
-    # --- Subsección ENLACES ÚTILES ---
-    st.caption("🔗 ENLACES ÚTILES")
-    st.markdown("<p style='text-align: center; font-weight: bold; color: #1f77b4; font-size: 0.9rem;'> IERIC | UOCRA | CGT | MUTUAL | INFOLEG</p>", unsafe_allow_html=True)
-    
-    st.write("#") # Espaciador
-    
-    # --- Subsección REDES SOCIALES ---
-    st.caption("📱 REDES SOCIALES")
-    
-    # 👇 VERSIÓN ORIGINAL RESTAURADA: Centrada, sin columnas y con el logo correcto 👇
-    st.markdown("""
-    <div style='text-align: center; margin-bottom: 15px;'>
-        <a href='https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5' target='_blank' style='text-decoration: none;'>
-            <img src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/600px-Instagram_icon.png' width='45px' style='vertical-align: middle; margin-right: 10px;'>
-            <span style='font-size: 1.1rem; font-weight: bold; color: #e1306c; vertical-align: middle;'>Instagram</span>
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
-
+  
