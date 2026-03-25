@@ -229,46 +229,42 @@ def obtener_cer(fecha_str=None):
         return None
     except Exception as e:
         return None
-    
-# --- BARRA LATERAL (MENÚ PRINCIPAL) ---
+    # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
-   # ==========================================
-# PIE DE PÁGINA: ENLACES Y REDES
-# ==========================================
-st.markdown("---") # Línea divisoria
-
-# --- Subsección ENLACES ÚTILES ---
-# Usamos HTML para achicar el texto y quitar la última | (foto 3)
-st.caption("🔗 ENLACES ÚTILES")
-st.markdown("""
-<div style='font-size: 0.9rem; font-weight: bold; text-align: center; color: #1f77b4; line-height: 1.6;'>
-    IERIC | UOCRA | CGT | MUTUAL | INFOLEG
-</div>
-""", unsafe_allow_html=True)
-
-
-st.write("#") # Espaciador
-
-
-# --- Subsección REDES SOCIALES ---
-# Usamos HTML para achicar el icono a la mitad (aprox 30px) y el texto
-st.caption("📱 REDES SOCIALES")
-
-# Suponiendo que tenías columnas, si no, lo pegas directo
-col_ig, _ = st.columns([1, 4]) # Una columna chica para el logo, otra grande vacía para empujar
-
-with col_ig:
-    # 👇 ACA USAMOS HTML PARA ACHICAR INSTAGRAM A LA MITAD 👇
-    # Reemplaza 'url_de_tu_icono_instagram' y 'tu_url_perfil_instagram'
+    # ==========================================
+    # PIE DE PÁGINA: ENLACES Y REDES
+    # ==========================================
+    st.markdown("---") # Línea divisoria
+    
+    # --- Subsección ENLACES ÚTILES ---
+    # Usamos HTML para achicar el texto y quitar la última |
+    st.caption("🔗 ENLACES ÚTILES")
     st.markdown("""
-    <div style='text-align: left;'>
-        <a href='https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5' target='_blank' style='text-decoration: none;'>
-            <img src='https://www.google.com/imgres?q=icono%20instagram&imgurl=https%3A%2F%2Fimg.freepik.com%2Fvector-gratis%2Ficono-redes-sociales-vector-instagram-7-junio-2021-bangkok-tailandia_53876-136728.jpg%3Fsemt%3Dais_hybrid%26w%3D740%26q%3D80&imgrefurl=https%3A%2F%2Fwww.freepik.es%2Ffotos-vectores-gratis%2Finstagram-logo&docid=GcSO2dwCNCR-OM&tbnid=XuA7w1ZcowCRfM&vet=12ahUKEwia6uyIkryTAxX1K7kGHfiMK88QnPAOegQIGRAB..i&w=740&h=740&hcb=2&ved=2ahUKEwia6uyIkryTAxX1K7kGHfiMK88QnPAOegQIGRAB' width='30px' style='vertical-align: middle; margin-right: 5px;'>
-            <span style='font-size: 0.9rem; font-weight: bold; color: #e1306c; vertical-align: middle;'> Instagram</span>
-        </a>
+    <div style='font-size: 0.9rem; font-weight: bold; text-align: center; color: #1f77b4; line-height: 1.6;'>
+        IERIC | UOCRA | CGT | MUTUAL | INFOLEG
     </div>
     """, unsafe_allow_html=True)
     
+    st.write("#") # Espaciador
+    
+    # --- Subsección REDES SOCIALES ---
+    # Usamos HTML para achicar el icono a la mitad (aprox 30px) y el texto
+    st.caption("📱 REDES SOCIALES")
+    
+    # Suponiendo que tenías columnas, si no, lo pegas directo
+    col_ig, _ = st.columns([1, 4]) # Una columna chica para el logo, otra grande vacía para empujar
+    
+    with col_ig:
+        # 👇 ACA USAMOS EL LINK DIRECTO AL ÍCONO OFICIAL DE INSTAGRAM 👇
+        st.markdown("""
+        <div style='text-align: left;'>
+            <a href='https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5' target='_blank' style='text-decoration: none;'>
+                <img src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/600px-Instagram_icon.png' width='30px' style='vertical-align: middle; margin-right: 5px;'>
+                <span style='font-size: 0.9rem; font-weight: bold; color: #e1306c; vertical-align: middle;'> Instagram</span>
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
+        
     # Botón para forzar la actualización de datos
     if st.button("🔄 Actualizar Datos"):
         st.cache_data.clear()
