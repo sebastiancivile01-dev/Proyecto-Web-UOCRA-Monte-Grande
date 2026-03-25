@@ -1334,7 +1334,7 @@ elif opcion == "10. 🤖 Asistente Virtual":
     st.markdown("Consulte sobre liquidaciones, convenios, retenciones o redacción de notas oficiales.")
     st.markdown("---")
 
-    # 1. Configuración de la API y el "Cerebro Gremial"
+     # 1. Configuración de la API y el "Cerebro Gremial"
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         
@@ -1351,15 +1351,15 @@ elif opcion == "10. 🤖 Asistente Virtual":
         Tus respuestas deben ser directas, sin rodeos, mostrando conocimiento macroeconómico y un fuerte enfoque en la defensa de los derechos de los compañeros de obra.
         """
         
+        # 👇 CAMBIO CLAVE: Actualizamos al motor 2.0 que exige tu nueva API Key 👇
         model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
+            model_name='gemini-2.0-flash',
             system_instruction=instruccion_gremial
         )
-
-
     except Exception as e:
         st.error("⚠️ El sistema está reiniciando el motor de inteligencia artificial. Verifique las credenciales.")
         st.stop()
+
 
     # 2. Memoria de la conversación
     if "chat_session" not in st.session_state:
