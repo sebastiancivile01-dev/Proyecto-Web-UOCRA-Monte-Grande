@@ -1349,12 +1349,13 @@ elif opcion == "10. 🤖 Asistente Virtual":
         - Retenciones de Ley (19.5%): 11% Jubilación, 3% Obra Social, 3% PAMI, 2.5% Cuota Sindical.
         Tus respuestas deben ser directas, sin rodeos, mostrando conocimiento macroeconómico y un fuerte enfoque en la defensa de los derechos de los compañeros de obra.
         """
-        
-        # 👇 CAMBIO CLAVE: Usamos la versión estable 002 que garantiza el nivel gratuito 👇
+        # 👇 Volvemos al nombre estándar y universal ahora que la llave funciona 👇
         model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash-002',
+            model_name='gemini-1.5-flash',
             system_instruction=instruccion_gremial
         )
+
+    
     except Exception as e:
         st.error("⚠️ El sistema está reiniciando el motor de inteligencia artificial. Verifique las credenciales.")
         st.stop()
