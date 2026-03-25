@@ -1389,8 +1389,8 @@ elif opcion == "10. 🤖 Asistente Virtual":
                 # Guardamos la respuesta de la IA
                 st.session_state.mensajes_ui.append({"rol": "assistant", "contenido": respuesta.text})
             
-            except Exception as e:
-                st.error("Ocurrió un error en el servidor de IA. Intente en unos minutos.")
+        except Exception as e:
+                        st.error(f"❌ Error técnico de la IA: {e}")
 
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
