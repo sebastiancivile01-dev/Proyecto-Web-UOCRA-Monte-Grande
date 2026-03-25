@@ -1329,14 +1329,28 @@ elif opcion == "9. 📸 Galería Multimedia":
 
 # ==========================================
 # MÓDULO 10: ASISTENTE VIRTUAL (GEMINI API)
-# ==========================================
 elif opcion == "10. 🤖 Asistente Virtual":
-    # 👇 CAMBIO CLAVE: Agregamos v2 para forzar la sincronización del servidor 👇
-    st.title("🤖 Asistente Técnico Gremial v2") 
-    st.markdown("Consulte sobre liquidaciones, convenios, retenciones o redacción de notas oficiales.")
+    st.title("🤖 Asistente Técnico Gremial (Diagnóstico)")
     st.markdown("---")
 
-    # 1. Configuración de la API y el "Cerebro Gremial"
+    try:
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        
+        # ==========================================
+        # 🕵️‍♂️ MODO DIAGNÓSTICO: ESCÁNER DE MODELOS
+        # ==========================================
+        st.warning("Buscando modelos autorizados para tu API Key...")
+        
+        modelos_disponibles = []
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                modelos_disponibles.append(m.name)
+                
+        st.success(f"✅ Google autoriza estos modelos: {modelos_disponibles}")
+        st.stop() # Frenamos la app acá para que podamos leer la lista
+        # ==========================================
+        
+        # (El resto del código de la instrucción gremial queda abajo, no hace falta que lo borres)    # 1. Configuración de la API y el "Cerebro Gremial"
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         
