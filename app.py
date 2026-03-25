@@ -1395,29 +1395,29 @@ elif opcion == "10. 🤖 Asistente Virtual":
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
 # ==========================================
-st.markdown("---") # Línea divisoria para separarlo del módulo que estés viendo
-
-with st.expander("💡 Buzón de Sugerencias y Propuestas", expanded=False):
-    st.markdown("<p style='font-size:0.9rem; color:#666;'>Envíe sugerencias, reporte de error o idea de mejora al equipo de desarrollo.</p>", unsafe_allow_html=True)
+if opcion != "10. 🤖 Asistente Virtual":
+    st.markdown("---") # Línea divisoria
     
-    # Le cambié el nombre al form a "f_prop_global" por seguridad
-    with st.form("f_prop_global", clear_on_submit=True):
-        prop_texto = st.text_area("Describa su propuesta o reporte:")
+    with st.expander("💡 Buzón de Sugerencias y Propuestas (Sistemas)", expanded=False):
+        st.markdown("<p style='font-size:0.9rem; color:#666;'>Envíe sugerencias, reporte de errores o ideas de mejora directamente al equipo de desarrollo.</p>", unsafe_allow_html=True)
         
-        if st.form_submit_button("📤 Enviar Propuesta"):
-            if not prop_texto.strip():
-                st.error("❌ Escriba una propuesta primero.")
-            else:
-                fecha_hoy = datetime.now().strftime("%d/%m/%Y %H:%M")
-                usuario_actual = st.session_state.usuario_rol
-                
-                nueva_prop = pd.DataFrame([{
-                    "Fecha": fecha_hoy, 
-                    "Usuario": usuario_actual, 
-                    "Propuesta": prop_texto, 
-                    "Estado": "Pendiente"
-                }])
-                
-                df_propuestas = pd.concat([df_propuestas, nueva_prop], ignore_index=True)
-                guardar_db(df_propuestas, "Propuestas")
-                st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
+        with st.form("f_prop_global", clear_on_submit=True):
+            prop_texto = st.text_area("Describa su propuesta o reporte:")
+            
+            if st.form_submit_button("📤 Enviar Propuesta al Repositorio"):
+                if not prop_texto.strip():
+                    st.error("❌ Escriba una propuesta primero.")
+                else:
+                    fecha_hoy = datetime.now().strftime("%d/%m/%Y %H:%M")
+                    usuario_actual = st.session_state.usuario_rol
+                    
+                    nueva_prop = pd.DataFrame([{
+                        "Fecha": fecha_hoy, 
+                        "Usuario": usuario_actual, 
+                        "Propuesta": prop_texto, 
+                        "Estado": "Pendiente"
+                    }])
+                    
+                    df_propuestas = pd.concat([df_propuestas, nueva_prop], ignore_index=True)
+                    guardar_db(df_propuestas, "Propuestas")
+                    st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
