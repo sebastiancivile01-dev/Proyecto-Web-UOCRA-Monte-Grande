@@ -260,31 +260,6 @@ with st.sidebar:
     if st.button("🔄 Actualizar Datos"):
         st.cache_data.clear()
         st.rerun()
-    # --- NUEVO: ANOTADOR DE PROPUESTAS ---
-    with st.expander("💡 Anotador de Propuestas", expanded=False):
-        st.markdown("<p style='font-size:0.85rem; color:#666;'>Envíe sugerencias al equipo de Sistemas.</p>", unsafe_allow_html=True)
-        with st.form("f_propuestas", clear_on_submit=True):
-            prop_texto = st.text_area("Describa su propuesta:")
-            
-            if st.form_submit_button("📤 Enviar Propuesta"):
-                if not prop_texto.strip():
-                    st.error("Escriba una propuesta primero.")
-                else:
-                    fecha_hoy = datetime.now().strftime("%d/%m/%Y %H:%M")
-                    usuario_actual = st.session_state.usuario_rol
-                    
-                    nueva_prop = pd.DataFrame([{
-                        "Fecha": fecha_hoy, 
-                        "Usuario": usuario_actual, 
-                        "Propuesta": prop_texto, 
-                        "Estado": "Pendiente"
-                    }])
-                    
-                    df_propuestas = pd.concat([df_propuestas, nueva_prop], ignore_index=True)
-                    guardar_db(df_propuestas, "Propuestas")
-                    st.success("✅ ¡Propuesta enviada exitosamente!")
-
-    st.markdown("---") # Una rayita separadora
 
     # Botón para cerrar sesión
     if st.button("🚪 Cerrar Sesión"):
@@ -1347,3 +1322,30 @@ elif opcion == "9. 📸 Galería Multimedia":
         ''', unsafe_allow_html=True)
         
         st.caption("▶️ Dele play al video para reproducirlo aquí mismo, o haga clic en el ícono de 'ventana emergente' arriba a la derecha del reproductor para verlo en pantalla completa.")
+
+
+    # --- NUEVO: ANOTADOR DE PROPUESTAS ---
+    with st.expander("💡 Anotador de Propuestas", expanded=False):
+        st.markdown("<p style='font-size:0.85rem; color:#666;'>Envíe sugerencias al equipo de Sistemas.</p>", unsafe_allow_html=True)
+        with st.form("f_propuestas", clear_on_submit=True):
+            prop_texto = st.text_area("Describa su propuesta:")
+            
+            if st.form_submit_button("📤 Enviar Propuesta"):
+                if not prop_texto.strip():
+                    st.error("Escriba una propuesta primero.")
+                else:
+                    fecha_hoy = datetime.now().strftime("%d/%m/%Y %H:%M")
+                    usuario_actual = st.session_state.usuario_rol
+                    
+                    nueva_prop = pd.DataFrame([{
+                        "Fecha": fecha_hoy, 
+                        "Usuario": usuario_actual, 
+                        "Propuesta": prop_texto, 
+                        "Estado": "Pendiente"
+                    }])
+                    
+                    df_propuestas = pd.concat([df_propuestas, nueva_prop], ignore_index=True)
+                    guardar_db(df_propuestas, "Propuestas")
+                    st.success("✅ ¡Propuesta enviada exitosamente!")
+
+    st.markdown("---") # Una rayita separadora
