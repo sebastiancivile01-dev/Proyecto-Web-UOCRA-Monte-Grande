@@ -1355,6 +1355,8 @@ elif opcion == "10. 🤖 Asistente Virtual":
             model_name='gemini-1.5-flash',
             system_instruction=instruccion_gremial
         )
+
+
     except Exception as e:
         st.error("⚠️ El sistema está reiniciando el motor de inteligencia artificial. Verifique las credenciales.")
         st.stop()
