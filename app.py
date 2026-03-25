@@ -231,40 +231,28 @@ def obtener_cer(fecha_str=None):
         return None
     # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
-    # ==========================================
-    # PIE DE PÁGINA: ENLACES Y REDES
+# ==========================================
+    # PIE DE PÁGINA: ENLACES Y REDES (VERSIÓN PROLIJA)
     # ==========================================
     st.markdown("---") # Línea divisoria
     
     # --- Subsección ENLACES ÚTILES ---
-    # Usamos HTML para achicar el texto y quitar la última |
     st.caption("🔗 ENLACES ÚTILES")
-    st.markdown("""
-    <div style='font-size: 0.9rem; font-weight: bold; text-align: center; color: #1f77b4; line-height: 1.6;'>
-        IERIC | UOCRA | CGT | MUTUAL | INFOLEG
-    </div>
-    """, unsafe_allow_html=True)
+    # Usamos markdown directo para un diseño prolijo y centralizado (sin HTML)
+    st.markdown("<p style='text-align: center; font-weight: bold; color: #1f77b4;'> IERIC | UOCRA | CGT | MUTUAL | INFOLEG</p>", unsafe_allow_html=True)
     
     st.write("#") # Espaciador
     
     # --- Subsección REDES SOCIALES ---
-    # Usamos HTML para achicar el icono a la mitad (aprox 30px) y el texto
     st.caption("📱 REDES SOCIALES")
-    
-    # Suponiendo que tenías columnas, si no, lo pegas directo
-    col_ig, _ = st.columns([1, 4]) # Una columna chica para el logo, otra grande vacía para empujar
-    
-    with col_ig:
-        # 👇 ACA USAMOS EL LINK DIRECTO AL ÍCONO OFICIAL DE INSTAGRAM 👇
-        st.markdown("""
-        <div style='text-align: left;'>
-            <a href='https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5' target='_blank' style='text-decoration: none;'>
-                <img src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/600px-Instagram_icon.png' width='30px' style='vertical-align: middle; margin-right: 5px;'>
-                <span style='font-size: 0.9rem; font-weight: bold; color: #e1306c; vertical-align: middle;'> Instagram</span>
-            </a>
-        </div>
-        """, unsafe_allow_html=True)
-        
+    # 👇 ACA ESTÁ LA MAGIA 👇
+    # Revertimos a una línea markdown simple para evitar que el texto se parta (FOTO 5)
+    # Reemplaza la URL de Instagram por la real de tu perfil
+    st.markdown("[📸 **Instagram: UOCRA Juventud EE**](https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5)")
+
+    st.write("#") # Otro pequeño espaciador
+
+    # 👇 ACA VAN TUS BOTONES COMO LOS TENIAS 👇
     # Botón para forzar la actualización de datos
     if st.button("🔄 Actualizar Datos"):
         st.cache_data.clear()
@@ -287,7 +275,7 @@ with st.sidebar:
         
         **5- Sec. Finanzas:** Roberto Oviedo
         """)
-
+        
     # MAGIA DEL LOGIN: Filtramos los botones según quién entró
     opciones_totales = [
         "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
