@@ -232,93 +232,95 @@ def obtener_cer(fecha_str=None):
     
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
-        # ==========================================
-        # NUEVO: PANEL DE ACCESOS DIRECTOS (TOP)
-        # ==========================================
-        st.markdown("""
-            <div style="text-align: center; margin-bottom: 15px;">
-                <a href="https://www.instagram.com/uocra_montegrande" target="_blank" style="text-decoration: none;">
-                    <div style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); 
-                                color: white; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; 
-                                box-shadow: 0px 4px 6px rgba(0,0,0,0.1); transition: 0.3s;">
-                        📸 Instagram Seccional
-                    </div>
-                </a>
-                
-                <div style="font-size: 13px; background-color: white; padding: 8px; border-radius: 6px; border: 1px solid #CCCCCC;">
-                    <span style="color: gray; font-size: 11px; display: block; margin-bottom: 4px;">🔗 ENLACES ÚTILES</span>
-                    <a href="https://www.ieric.org.ar/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">IERIC</a> &nbsp;|&nbsp; 
-                    <a href="https://www.uocra.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">UOCRA</a> &nbsp;|&nbsp; 
-                    <a href="https://www.srt.gob.ar/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">SRT</a>
-                </div>
-            </div>
-            <hr style="margin-top: 10px; margin-bottom: 15px;">
-        """, unsafe_allow_html=True)
-st.sidebar.image("images.jfif", width=150)
-st.sidebar.title("Menú Principal")
-# Botón para forzar la actualización de datos
-if st.sidebar.button("🔄 Actualizar Datos"):
-    st.cache_data.clear()
-    st.rerun()
-
-# --- NUEVO: ANOTADOR DE PROPUESTAS ---
-with st.sidebar.expander("💡 Anotador de Propuestas", expanded=False):
-    st.markdown("<p style='font-size:0.85rem; color:#666;'>Envíe sugerencias al equipo de Sistemas.</p>", unsafe_allow_html=True)
-    with st.form("f_propuestas", clear_on_submit=True):
-        prop_texto = st.text_area("Describa su propuesta:")
-        
-        if st.form_submit_button("📤 Enviar Propuesta"):
-            if not prop_texto.strip():
-                st.error("Escriba una propuesta primero.")
-            else:
-                fecha_hoy = datetime.now().strftime("%d/%m/%Y %H:%M")
-                usuario_actual = st.session_state.usuario_rol
-                
-                nueva_prop = pd.DataFrame([{
-                    "Fecha": fecha_hoy, 
-                    "Usuario": usuario_actual, 
-                    "Propuesta": prop_texto, 
-                    "Estado": "Pendiente"
-                }])
-                
-                df_propuestas = pd.concat([df_propuestas, nueva_prop], ignore_index=True)
-                guardar_db(df_propuestas, "Propuestas")
-                st.success("✅ ¡Propuesta enviada exitosamente!")
-
-st.sidebar.markdown("---") # Una rayita separadora
-
-# Botón para cerrar sesión
-if st.sidebar.button("🚪 Cerrar Sesión"):
-    st.session_state.usuario_rol = None
-    st.rerun()
-
-with st.sidebar.expander("🏛️ Comisión Directiva", expanded=False):
+    # ==========================================
+    # NUEVO: PANEL DE ACCESOS DIRECTOS (TOP)
+    # ==========================================
     st.markdown("""
-    **1- Sec. Gral:** Roberto Morelli
+        <div style="text-align: center; margin-bottom: 15px;">
+            <a href="https://www.instagram.com/uocra_montegrande" target="_blank" style="text-decoration: none;">
+                <div style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); 
+                            color: white; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; 
+                            box-shadow: 0px 4px 6px rgba(0,0,0,0.1); transition: 0.3s;">
+                    📸 Instagram Seccional
+                </div>
+            </a>
+            
+            <div style="font-size: 13px; background-color: white; padding: 8px; border-radius: 6px; border: 1px solid #CCCCCC;">
+                <span style="color: gray; font-size: 11px; display: block; margin-bottom: 4px;">🔗 ENLACES ÚTILES</span>
+                <a href="https://www.ieric.org.ar/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">IERIC</a> &nbsp;|&nbsp; 
+                <a href="https://www.uocra.org/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">UOCRA</a> &nbsp;|&nbsp; 
+                <a href="https://www.srt.gob.ar/" target="_blank" style="text-decoration: none; color: #0033A0; font-weight: bold;">SRT</a>
+            </div>
+        </div>
+        <hr style="margin-top: 10px; margin-bottom: 15px;">
+    """, unsafe_allow_html=True)
     
-    **2- Sec. Adj:** Alejandro Benitez
+    st.image("images.jfif", width=150)
+    st.title("Menú Principal")
     
-    **3- Sec. Org:** Rolando Civile
-    
-    **4- Sec. Actas:** Ruben Fernandez
-    
-    **5- Sec. Finanzas:** Roberto Oviedo
-    """)
+    # Botón para forzar la actualización de datos
+    if st.button("🔄 Actualizar Datos"):
+        st.cache_data.clear()
+        st.rerun()
 
-# MAGIA DEL LOGIN: Filtramos los botones según quién entró
-opciones_totales = [
-    "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
-    "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "5. ⚠️ Repositorio de Reclamos",
-    "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios por Empresa", "8. 📊 Tablero de Control",
-    "9. 📸 Galería Multimedia" # <--- ESTA ES LA LÍNEA NUEVA
-]
+    # --- NUEVO: ANOTADOR DE PROPUESTAS ---
+    with st.expander("💡 Anotador de Propuestas", expanded=False):
+        st.markdown("<p style='font-size:0.85rem; color:#666;'>Envíe sugerencias al equipo de Sistemas.</p>", unsafe_allow_html=True)
+        with st.form("f_propuestas", clear_on_submit=True):
+            prop_texto = st.text_area("Describa su propuesta:")
+            
+            if st.form_submit_button("📤 Enviar Propuesta"):
+                if not prop_texto.strip():
+                    st.error("Escriba una propuesta primero.")
+                else:
+                    fecha_hoy = datetime.now().strftime("%d/%m/%Y %H:%M")
+                    usuario_actual = st.session_state.usuario_rol
+                    
+                    nueva_prop = pd.DataFrame([{
+                        "Fecha": fecha_hoy, 
+                        "Usuario": usuario_actual, 
+                        "Propuesta": prop_texto, 
+                        "Estado": "Pendiente"
+                    }])
+                    
+                    df_propuestas = pd.concat([df_propuestas, nueva_prop], ignore_index=True)
+                    guardar_db(df_propuestas, "Propuestas")
+                    st.success("✅ ¡Propuesta enviada exitosamente!")
 
-if st.session_state.usuario_rol == "Restringido":
-    opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Tablero de Control", "9. 📸 Galería Multimedia"]
-else:
-    opciones_permitidas = opciones_totales
-    
-opcion = st.sidebar.radio("Navegación:", opciones_permitidas)
+    st.markdown("---") # Una rayita separadora
+
+    # Botón para cerrar sesión
+    if st.button("🚪 Cerrar Sesión"):
+        st.session_state.usuario_rol = None
+        st.rerun()
+
+    with st.expander("🏛️ Comisión Directiva", expanded=False):
+        st.markdown("""
+        **1- Sec. Gral:** Roberto Morelli
+        
+        **2- Sec. Adj:** Alejandro Benitez
+        
+        **3- Sec. Org:** Rolando Civile
+        
+        **4- Sec. Actas:** Ruben Fernandez
+        
+        **5- Sec. Finanzas:** Roberto Oviedo
+        """)
+
+    # MAGIA DEL LOGIN: Filtramos los botones según quién entró
+    opciones_totales = [
+        "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
+        "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "5. ⚠️ Repositorio de Reclamos",
+        "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios por Empresa", "8. 📊 Tablero de Control",
+        "9. 📸 Galería Multimedia"
+    ]
+
+    if st.session_state.usuario_rol == "Restringido":
+        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Tablero de Control", "9. 📸 Galería Multimedia"]
+    else:
+        opciones_permitidas = opciones_totales
+        
+    opcion = st.radio("Navegación:", opciones_permitidas)
 # ==========================================
 # MÓDULO 1: MAPA TERRITORIAL
 # ==========================================
