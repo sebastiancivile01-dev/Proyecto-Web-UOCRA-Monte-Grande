@@ -301,7 +301,7 @@ if opcion == "1. 🗺️ Mapa Territorial":
     col_p1, col_p2 = st.columns(2)
     
     with col_p1:
-        with st.expander("📌 Añadir Punto Estratégico (Sede, Reunión, etc.)"):
+        with st.expander("📌 Añadir Ubicación Extra"):
             with st.form("form_punto_custom", clear_on_submit=True):
                 p_nom = st.text_input("Nombre del Punto:*")
                 c_lat, c_lon = st.columns(2)
@@ -309,8 +309,8 @@ if opcion == "1. 🗺️ Mapa Territorial":
                 p_lon = c_lon.text_input("Longitud (Ej: -58.46):*")
                 
                 c_col, c_tip = st.columns(2)
-                p_col = c_col.selectbox("Color del Globo:", ["gray", "blue", "green", "red", "orange", "purple", "black", "pink"])
-                p_tipo = c_tip.radio("Duración:", ["⏳ Temporal (Se borra al salir)", "💾 Permanente (Se guarda en Excel)"])
+                p_col = c_col.selectbox("Color del Globo:", ["Gris", "Azul", "Verde", "Rojo", "Naranja", "Violeta", "Negro", "Rosa"])
+                p_tipo = c_tip.radio("Duración:", ["⏳ Temporal", "💾 Permanente"])
                 
                 p_obs = st.text_area("Observación / Detalle:")
 
@@ -336,7 +336,7 @@ if opcion == "1. 🗺️ Mapa Territorial":
                             st.error("❌ Error: Latitud y Longitud deben ser números válidos.")
 
     with col_p2:
-        with st.expander("🗑️ Borrar Puntos Estratégicos"):
+        with st.expander("🗑️ Borrar Ubicación Extra"):
             # Borrar Temporales
             if st.session_state.puntos_custom:
                 st.write("**Puntos Temporales Activos:**")
