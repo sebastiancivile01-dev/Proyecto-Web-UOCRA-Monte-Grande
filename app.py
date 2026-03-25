@@ -1281,7 +1281,7 @@ elif opcion == "9. 📸 Galería Multimedia":
     tab_fotos, tab_videos = st.tabs(["🖼️ Fotografías", "🎥 Videos"])
     
     with tab_fotos:
-        st.subheader("Álbum de Recorridas y Asambleas")
+        st.subheader("Álbum de Marchas, Eventos y Asambleas")
         
         # LISTA DE IDs: Solo tenés que agregar o quitar IDs acá adentro en el futuro.
         fotos_ids = [
