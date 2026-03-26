@@ -276,10 +276,17 @@ with st.sidebar:
     # PIE DE PÁGINA: ENLACES Y REDES
     # ==========================================
     st.markdown("---") # Línea divisoria
-    
     # --- Subsección ENLACES ÚTILES ---
     st.caption("🔗 ENLACES ÚTILES")
-    st.markdown("<p style='text-align: center; font-weight: bold; color: #1f77b4; font-size: 0.9rem;'> IERIC | UOCRA | CGT | MUTUAL | INFOLEG</p>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='text-align: center; font-weight: bold; font-size: 0.9rem;'>
+        <a href='https://www.ieric.org.ar/' target='_blank' style='color: #1f77b4; text-decoration: none;'>IERIC</a> | 
+        <a href='https://www.uocra.org/' target='_blank' style='color: #1f77b4; text-decoration: none;'>UOCRA</a> | 
+        <a href='https://www.argentina.gob.ar/trabajo' target='_blank' style='color: #1f77b4; text-decoration: none;'>CGT</a> | 
+        <a href='https://www.construirsalud.com.ar/' target='_blank' style='color: #1f77b4; text-decoration: none;'>MUTUAL</a> | 
+        <a href='http://infoleg.gob.ar/' target='_blank' style='color: #1f77b4; text-decoration: none;'>INFOLEG</a>
+    </div>
+    """, unsafe_allow_html=True)
     
     st.write("#") # Espaciador
     
