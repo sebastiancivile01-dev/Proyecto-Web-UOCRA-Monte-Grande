@@ -284,9 +284,10 @@ with st.sidebar:
         <a href='https://www.uocra.org/' target='_blank' style='color: #1f77b4; text-decoration: none;'>UOCRA</a> | 
         <a href='https://www.argentina.gob.ar/trabajo' target='_blank' style='color: #1f77b4; text-decoration: none;'>CGT</a>  | 
         <a href='https://www.construirsalud.com.ar/' target='_blank' style='color: #1f77b4; text-decoration: none;'>MUTUAL</a> |
-        <a href='https://servicios.infoleg.gob.ar/infolegInternet/anexos/20000-24999/20993/texact.htm' target='_blank' style='color: #1f77b4; text-decoration: none;'>Ley Asoc Sind</a> |
-        <a href='https://servicios.infoleg.gob.ar/infolegInternet/anexos/35000-39999/38568/texact.htm' target='_blank' style='color: #1f77b4; text-decoration: none;'>Seg.Hig</a> |
-        <a href='https://servicios.infoleg.gob.ar/infolegInternet/anexos/25000-29999/27238/norma.htm' target='_blank' style='color: #1f77b4; text-decoration: none;'>INFOLEG</a>
+        <a href='https://servicios.infoleg.gob.ar/infolegInternet/anexos/20000-24999/20993/texact.htm' target='_blank' style='color: #1f77b4; text-decoration: none;'>LEY SIND</a> |
+        <a href='https://www.uocra.org/?s=convenio-colectivo-de-trabajo&lang=1' target='_blank' style='color: #1f77b4; text-decoration: none;'>CCT</a> |
+        <a href='https://servicios.infoleg.gob.ar/infolegInternet/anexos/35000-39999/38568/texact.htm' target='_blank' style='color: #1f77b4; text-decoration: none;'>SEG.HIG.</a> |
+        <a href='https://servicios.infoleg.gob.ar/infolegInternet/anexos/25000-29999/27238/norma.htm' target='_blank' style='color: #1f77b4; text-decoration: none;'>22.250</a>
     </div>
     """, unsafe_allow_html=True)
     
