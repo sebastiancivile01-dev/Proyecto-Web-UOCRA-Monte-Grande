@@ -1336,103 +1336,108 @@ elif opcion == "9. 📸 Galería Multimedia":
         
         st.caption("▶️ Dele play al video para reproducirlo aquí mismo, o haga clic en el ícono de 'ventana emergente' arriba a la derecha del reproductor para verlo en pantalla completa.")
 
-# ==========================================
-#               Módulo 10 
-# ==========================================
-
 elif opcion == "10. 🤖 Asistente Virtual":
     st.title("🤖 Asistente Técnico Gremial")
     st.markdown("---")
 
-    # 1. Configuración de la API y el "Cerebro Gremial"
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         
         # ==========================================
-        # 🧠 INYECCIÓN DINÁMICA DE BASE DE DATOS
-        # Extraemos tus DataFrames y los hacemos legibles para la IA
+        # 📜 EL CEREBRO BASE: Reglas Fijas (Sin datos pesados)
         # ==========================================
-        info_obras = "No hay obras registradas."
-        if not df_obras.empty:
-            df_o_clean = df_obras[['Predio', 'Empresa', 'Delegado', 'Estado']].fillna("S/D")
-            info_obras = df_o_clean.to_string(index=False)
-            
-        info_delegados = "No hay delegados registrados."
-        if not df_delegados.empty:
-            df_d_clean = df_delegados[['Nombre', 'Celular', 'CUIL']].fillna("S/D")
-            info_delegados = df_d_clean.to_string(index=False)
-            
-        info_convenios = "No hay convenios registrados."
-        if not df_convenios.empty:
-            df_c_clean = df_convenios[['Empresa', 'Detalle_Convenio', 'monto $', 'Monto %', 'Vigencia']].fillna("-")
-            info_convenios = df_c_clean.to_string(index=False)
-
-        # ==========================================
-        # 📜 EL CEREBRO: Reglas Fijas + Datos Vivos (f-string)
-        # ==========================================
-        instruccion_gremial = f"""
+        instruccion_base = """
         Eres el Asistente Técnico Gremial de la UOCRA Seccional Monte Grande (Jurisdicción Esteban Echeverría - ID BAHRA 06260010).
-        Tu objetivo es asesorar sobre la gestión de Roberto Morelli y Alejandro Benítez, asegurando la correcta liquidación y el control territorial.
+        Tu objetivo es asesorar sobre la gestión de Roberto Morelli y Alejandro Benítez.
 
         [REGLAS DE LIQUIDACIÓN AESA - FIJAS]
         - Categorías: Ayudante, Medio Oficial, Oficial, Oficial Especializado.
         - Variables: Valor Hora, Viático (No Remunerativo), % Plus NR.
         - Presentismo (20%): Σ(Hs Norm, 50%, 100%, Comp, Fer) × V.Hora × 0.20.
         - Especialidad (%): Σ(Hs Norm, 50%, 100%) × V.Hora × %Esp.
-        - Altura: Hs Altura × V.Hora × 0.15. Nocturnas: Hs Nocturnas × V.Hora × (8/60).
+        - Altura: 15%. Nocturnas: (8/60).
         - Retenciones Ley (19.5%): 11% Jubilación, 3% Obra Social, 3% PAMI, 2.5% Cuota Sindical.
-        - SAC: 50% de la mayor remuneración. Vacaciones: Divisor 25.
-
-        [BASE DE DATOS EN TIEMPO REAL - DINÁMICA]
-        Utiliza ESTOS datos exactos extraídos hoy de los servidores gremiales para responder consultas:
-
-        >> OBRAS ACTIVAS Y DELEGADOS ASIGNADOS:
-        {info_obras}
-
-        >> PADRÓN DE DELEGADOS (TELÉFONOS Y CUIL):
-        {info_delegados}
-
-        >> CONVENIOS POR EMPRESA Y PARITARIAS EXTRA:
-        {info_convenios}
+        - SAC: 50% mayor rem. Vacaciones: Div 25.
 
         TONO DE RESPUESTA:
-        - Certero, directo y sin "divagues". 
-        - Si el usuario te pide un teléfono, delegado, o convenio y NO ESTÁ en las tablas de arriba, responde honestamente: "Ese dato aún no está registrado en la base". No inventes números.
-        - Peronista en lo social, pero con rigor técnico y económico (Actuario/UBA).
-        - Enfocado en la auditoría en Puntos de Control (Centro Atómico Ezeiza, Aeropuerto, Polos Industriales).
+        - Certero, directo y sin "divagues". Peronista en lo social, rigor técnico en lo económico.
+        - Si el usuario te hace una pregunta general de liquidación, responde con las reglas base.
+        - Si el usuario te pide datos puntuales (teléfonos, obras, convenios) y te adjunto información en la consulta, úsala. Si el dato no está ahí, responde: "Dato no registrado en el sistema operativo".
         """
 
-        # 👇 USAMOS EL MODELO QUE TU CUENTA AUTORIZÓ EXPLICITAMENTE 👇
         model = genai.GenerativeModel(
             model_name='models/gemini-flash-latest',
-            system_instruction=instruccion_gremial
+            system_instruction=instruccion_base
         )
 
-        # 2. Gestión de la sesión de Chat
         if "chat_session" not in st.session_state:
             st.session_state.chat_session = model.start_chat(history=[])
         if "mensajes_ui" not in st.session_state:
             st.session_state.mensajes_ui = []
 
-        # Mostrar historial de mensajes
+        # Mostrar historial
         for mensaje in st.session_state.mensajes_ui:
             with st.chat_message(mensaje["rol"]):
                 st.markdown(mensaje["contenido"])
 
-        # 3. Interacción con el Usuario
-        if prompt := st.chat_input("Escriba su consulta sobre liquidación, obras o delegados..."):
-            # Guardar y mostrar mensaje del usuario
+        # 3. Interacción con el Usuario y ENRUTADOR DINÁMICO
+        if prompt := st.chat_input("Ej: Dame el teléfono del delegado de Techint, o liquidame 8hs de Oficial..."):
             st.session_state.mensajes_ui.append({"rol": "user", "contenido": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
 
-            # Generar respuesta de la IA
             with st.chat_message("assistant"):
                 try:
-                    with st.spinner("Consultando bases de datos y hoja de ruta..."):
-                        respuesta = st.session_state.chat_session.send_message(prompt)
+                    with st.spinner("Creando plan de acción y filtrando bases de datos..."):
+                        
+                        # ==========================================
+                        # 🧠 PLAN DE ACCIÓN (ENRUTADOR SEMÁNTICO)
+                        # Identificamos qué pestañas necesita leer según la pregunta
+                        # ==========================================
+                        prompt_min = prompt.lower()
+                        contexto_inyectado = ""
+
+                        # 1. ¿Pregunta por obras, predios o estado territorial?
+                        if any(palabra in prompt_min for palabra in ["obra", "predio", "empresa", "estado", "activa", "finalizada", "obreros"]):
+                            if not df_obras.empty:
+                                contexto_inyectado += "\n[TABLA OBRAS ACTIVAS Y DELEGADOS]\n" + df_obras[['Predio', 'Empresa', 'Delegado', 'Estado', 'Obreros']].fillna("S/D").to_string(index=False) + "\n"
+                        
+                        # 2. ¿Pregunta por compañeros, teléfonos o contactos?
+                        if any(palabra in prompt_min for palabra in ["delegado", "tel", "celular", "cuil", "numero", "contacto", "rrhh", "recursos humanos"]):
+                            if not df_delegados.empty:
+                                contexto_inyectado += "\n[PADRÓN DELEGADOS (TELÉFONOS/CUIL)]\n" + df_delegados[['Nombre', 'Celular', 'CUIL']].fillna("S/D").to_string(index=False) + "\n"
+                            if not df_contactos.empty:
+                                contexto_inyectado += "\n[CONTACTOS EMPRESARIALES (RRHH)]\n" + df_contactos[['Nombre', 'Cargo', 'Empresa']].fillna("S/D").to_string(index=False) + "\n"
+
+                        # 3. ¿Pregunta por paritarias extra o convenios específicos?
+                        if any(palabra in prompt_min for palabra in ["convenio", "paritaria", "plus", "acuerdo", "escala"]):
+                            if not df_convenios.empty:
+                                contexto_inyectado += "\n[CONVENIOS Y PARITARIAS POR EMPRESA]\n" + df_convenios[['Empresa', 'Detalle_Convenio', 'monto $', 'Monto %', 'Vigencia']].fillna("-").to_string(index=False) + "\n"
+
+                        # 4. ¿Pregunta por problemas o reclamos activos?
+                        if any(palabra in prompt_min for palabra in ["reclamo", "queja", "motivo", "problema", "conflicto"]):
+                            if not df_reclamos.empty:
+                                contexto_inyectado += "\n[RECLAMOS GREMIALES ACTIVOS]\n" + df_reclamos[['Nombre', 'Empresa', 'Motivo', 'Estado']].fillna("S/D").to_string(index=False) + "\n"
+
+                        # 5. ¿Pregunta por UOCRA Mujeres o Eventos?
+                        if any(palabra in prompt_min for palabra in ["mujer", "mujeres", "evento", "cupo", "actividad", "agenda"]):
+                            if not df_eventos.empty:
+                                contexto_inyectado += "\n[AGENDA UOCRA MUJERES (EVENTOS)]\n" + df_eventos[['Titulo', 'Fecha', 'Observaciones']].fillna("S/D").to_string(index=False) + "\n"
+
+                        # ==========================================
+                        # 🎯 INYECCIÓN FINAL
+                        # ==========================================
+                        if contexto_inyectado != "":
+                            # Si detectó necesidad de datos, se los pasamos ocultos en su instrucción.
+                            prompt_final_ia = f"INSTRUCCIÓN INTERNA DE SISTEMAS: El usuario requiere información específica. Búscala en estas tablas extraídas en tiempo real:\n{contexto_inyectado}\n\nCONSULTA DEL USUARIO:\n{prompt}"
+                        else:
+                            # Si es una pregunta técnica genérica (Ej: "¿Cómo calculo el presentismo?"), no mandamos tablas pesadas.
+                            prompt_final_ia = prompt
+
+                        respuesta = st.session_state.chat_session.send_message(prompt_final_ia)
                         st.markdown(respuesta.text)
                         st.session_state.mensajes_ui.append({"rol": "assistant", "contenido": respuesta.text})
+                        
                 except Exception as e_api:
                     st.error(f"❌ Error de conexión con el motor: {e_api}")
                     st.info("💡 Tip: Si el error persiste, probá el botón 'Actualizar Datos' en la barra lateral.")
