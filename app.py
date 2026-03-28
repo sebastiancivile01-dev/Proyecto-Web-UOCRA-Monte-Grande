@@ -1462,11 +1462,11 @@ elif opcion == "10. 🤖 Asistente Virtual":
         st.info("Verificá que la GEMINI_API_KEY en los Secrets de Streamlit sea la correcta.")
 
 # ==========================================
-# MÓDULO 11: AUDITORÍA DE DATOS
+# MÓDULO 11: AUDITORÍA DE DATOS (VERSIÓN AVANZADA)
 # ==========================================
 elif opcion == "11. 🧹 Auditoría de Datos":
     st.title("🧹 Auditoría y Calidad de Datos")
-    st.markdown("Radar automático de celdas vacías o datos incompletos en el sistema.")
+    st.markdown("Radar automático de celdas vacías o datos incompletos en el sistema operativo.")
     st.markdown("---")
 
     # Diccionario maestro: Nombre de la tabla -> (DataFrame, Columna_Identificadora_Principal)
@@ -1495,17 +1495,27 @@ elif opcion == "11. 🧹 Auditoría de Datos":
             
             # Revisamos cada columna de esa fila
             for col in df_actual.columns:
+                # 👇 REGLA 1: Ignorar cualquier columna que sea de Observaciones 👇
+                if "obs" in col.lower():
+                    continue
+
                 valor = row[col]
                 # Si es nulo, o si es un texto que al borrarle los espacios queda vacío ("")
                 if pd.isna(valor) or str(valor).strip() == "":
                     columnas_vacias.append(col)
             
-            # Si encontramos al menos una columna vacía, guardamos el registro
+            # Si encontramos al menos una columna vacía esencial, armamos la alerta
             if columnas_vacias:
                 identificador = row.get(col_id, f"Fila #{index+1}")
                 if pd.isna(identificador) or str(identificador).strip() == "":
                     identificador = f"Fila sin {col_id} definido (Fila #{index+1})"
                     
+                # 👇 REGLA 2: Si es una Obra y tiene Delegado, asignamos la responsabilidad 👇
+                if "Delegado" in df_actual.columns:
+                    delegado_asignado = row.get("Delegado", "")
+                    if pd.notna(delegado_asignado) and str(delegado_asignado).strip() != "":
+                        identificador = f"{identificador} (👤 Delegado a cargo: {delegado_asignado})"
+
                 filas_con_errores.append({
                     "id": identificador,
                     "faltantes": columnas_vacias
@@ -1520,16 +1530,15 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                     st.warning(f"📌 **{error['id']}** ➔ Falta completar: {faltantes_str}")
         else:
             with st.expander(f"✅ {nombre_tabla} (Datos 100% completos)", expanded=False):
-                st.success("Toda la información de esta tabla está cargada correctamente.")
+                st.success("Toda la información obligatoria de esta tabla está cargada correctamente.")
 
     # Resumen final
     st.markdown("---")
     if alertas_totales == 0:
         st.balloons()
-        st.success("🏆 ¡Felicitaciones! Todas las bases de datos están 100% completas. No hay ningún dato faltante en toda la seccional.")
+        st.success("🏆 ¡Felicitaciones! Todas las bases de datos están 100% completas. No hay ningún dato esencial faltante en la Seccional.")
     else:
         st.error(f"🚨 Se detectaron **{alertas_totales}** registros con información incompleta. Se recomienda ir al módulo '2. Carga de Datos (ABM)' para actualizar la información.")
-
 
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
