@@ -260,7 +260,7 @@ with st.sidebar:
         "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
         "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "5. ⚠️ Repositorio de Reclamos",
         "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios por Empresa", "8. 📊 Tablero de Control",
-        "9. 📸 Galería Multimedia", "10. 🤖 Asistente Virtual"
+        "9. 📸 Galería Multimedia", "10. 🤖 Asistente Virtual", "11. 🧹 Auditoría de Datos"
     ]
 
    
