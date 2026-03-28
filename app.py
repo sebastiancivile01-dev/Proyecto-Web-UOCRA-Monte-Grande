@@ -357,7 +357,7 @@ if opcion == "1. 🗺️ Mapa Territorial":
             html_p = f"<div style='text-align:center; max-width:200px;'><h4 style='color:{pt['Color']}; margin-bottom:0px;'>📍 {pt['Nombre']}</h4><span style='color:#0033A0; font-size:11px;'>[Marcador Permanente]</span><hr style='margin:5px 0;'>{pt.get('Observacion', '')}</div>"
             folium.Marker([pt["Latitud"], pt["Longitud"]], tooltip=html_p, icon=folium.Icon(color=pt["Color"], icon="star")).add_to(m)
 
-    # DIBUJAR OBRAS Y EMPRESAS
+# DIBUJAR OBRAS Y EMPRESAS
     df_mapa = df_obras.copy()
     if not df_mapa.empty:
         if "Activas" in modo_mapa: df_mapa = df_mapa[df_mapa['Estado'] == 'Activa']
@@ -366,12 +366,22 @@ if opcion == "1. 🗺️ Mapa Territorial":
         elif "Jurisdicción R" in modo_mapa: df_mapa = df_mapa[df_mapa['Jurisdiccion_R'].astype(str).str.strip().str.upper().isin(['SI', 'SÍ'])]
 
         for _, row in df_mapa.iterrows():
-            lat, lon = row.get('Latitud'), row.get('Longitud')
+            # 👇 ESCUDO ANTIBALAS: Intentamos convertir las coordenadas a números reales 👇
+            try:
+                lat = float(row.get('Latitud'))
+                lon = float(row.get('Longitud'))
+            except (ValueError, TypeError):
+                # Si la celda está vacía, tiene un espacio, o texto, ignoramos esta fila y seguimos
+                continue 
+            
             predio, empresa = str(row.get('Predio', '')).strip(), str(row.get('Empresa', '')).strip()
-            if pd.notna(lat) and pd.notna(lon) and (predio not in ["", "nan"] or empresa not in ["", "nan"]):
+            
+            # Verificamos que las coordenadas no sean cero (0.0) y que haya datos de empresa
+            if pd.notna(lat) and pd.notna(lon) and (lat != 0.0 and lon != 0.0) and (predio not in ["", "nan"] or empresa not in ["", "nan"]):
                 est = str(row.get('Estado', ''))
                 color = "green" if est == "Activa" else "orange" if est == "Intervenida" else "lightgray" if est == "Finalizada" else "red"
                 txt_p, txt_d = predio if predio else "Sin nombre", row.get('Delegado', 'Sin asignar')
+                
                 if "Delegados" in modo_mapa:
                     html = f"<div style='text-align: center;'><h3 style='color: #1a5a8a;'>👤 {txt_d}</h3><hr><b>Obra:</b> {txt_p}<br><b>Estado:</b> {est}</div>"
                     icon = folium.Icon(color="darkblue", icon="users", prefix="fa")
@@ -382,8 +392,7 @@ if opcion == "1. 🗺️ Mapa Territorial":
                     html = f"<div><h4 style='color: #3186cc;'>🏗️ {txt_p}{marca_r}</h4><hr><b>Empresa:</b> {empresa}<br><b>Estado:</b> {est}<br><b>Compañeros:</b> {row.get('Obreros', 0)}<hr><b>Delegado/s:</b><br>{txt_d}</div>"
                     icon = folium.Icon(color=color, icon="hard-hat", prefix="fa")
                 
-                folium.Marker([lat, lon], tooltip=folium.Tooltip(html), icon=icon).add_to(m)
-                
+                folium.Marker([lat, lon], tooltip=folium.Tooltip(html), icon=icon).add_to(m)                
     # CSS PARA EL BORDE NEGRO DEL MAPA
     st.markdown("""
         <style>
