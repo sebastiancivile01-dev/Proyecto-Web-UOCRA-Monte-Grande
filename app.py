@@ -1462,7 +1462,7 @@ elif opcion == "10. 🤖 Asistente Virtual":
         st.info("Verificá que la GEMINI_API_KEY en los Secrets de Streamlit sea la correcta.")
 
 # ==========================================
-# MÓDULO 11: AUDITORÍA DE DATOS (REPORTE LIMPIO)
+# MÓDULO 11: AUDITORÍA DE DATOS (REPORTE LIMPIO Y OBRAS AISLADAS)
 # ==========================================
 elif opcion == "11. 🧹 Auditoría de Datos":
     st.title("🧹 Auditoría y Calidad de Datos")
@@ -1497,7 +1497,7 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                 if pd.isna(valor) or str(valor).strip() == "":
                     columnas_vacias.append(col)
             
-            # REGLA EXCEPCIÓN: Convenios (Suma Fija vs Porcentaje)
+            # 👇 REGLA EXCEPCIÓN 1: Convenios (Suma Fija vs Porcentaje) 👇
             if "monto $" in columnas_vacias or "Monto %" in columnas_vacias:
                 if "monto $" in columnas_vacias and "Monto %" not in columnas_vacias:
                     columnas_vacias.remove("monto $")
@@ -1507,21 +1507,37 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                     columnas_vacias.remove("monto $")
                     columnas_vacias.remove("Monto %")
                     columnas_vacias.append("Monto ($ o %)")
+
+            # 👇 REGLA EXCEPCIÓN 2: Obras Aisladas (Sin Predio) 👇
+            identificador_personalizado = None
+            if nombre_tabla == "Obras y Empresas" and "Predio" in columnas_vacias:
+                columnas_vacias.remove("Predio") # Perdonamos que no tenga Predio
+                
+                # Rescatamos el nombre de la empresa para usarlo como título
+                empresa_val = str(row.get("Empresa", "")).strip()
+                if empresa_val == "" or empresa_val == "nan":
+                    empresa_val = "Empresa sin registrar"
+                
+                identificador_personalizado = f"Obra Aislada (Sin Predio) - {empresa_val}"
             
+            # Procesamos si quedaron errores reales
             if columnas_vacias:
-                identificador = str(row.get(col_id, f"Fila #{index+1}")).strip()
-                if identificador == "" or identificador == "nan":
-                    identificador = f"Registro sin nombre (Fila #{index+1})"
+                # Usamos el nombre personalizado si existe, si no, usamos la regla original
+                if identificador_personalizado:
+                    identificador = identificador_personalizado
+                else:
+                    identificador = str(row.get(col_id, f"Fila #{index+1}")).strip()
+                    if identificador == "" or identificador == "nan":
+                        identificador = f"Registro sin nombre (Fila #{index+1})"
                 
                 faltantes_str = ", ".join(columnas_vacias)
                 responsables = []
                 mensaje_alerta = ""
 
-                # 👇 NUEVA LÓGICA DE REDACCIÓN LIMPIA 👇
+                # Lógica de Redacción Limpia
                 if nombre_tabla == "Padrón de Delegados":
                     resp = str(row.get("Nombre", "")).strip()
                     responsables = [resp] if resp and resp != "nan" else ["Desconocido"]
-                    # Como ya estamos en su pestaña, no repetimos el nombre
                     mensaje_alerta = f"Tu Perfil Personal | Falta: {faltantes_str}"
                     
                 elif nombre_tabla == "Obras y Empresas":
@@ -1530,12 +1546,15 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                         responsables = ["Obras Sin Delegado Asignado"]
                     else:
                         responsables = [r.strip() for r in resp_str.split(",")]
-                    # Si es una obra, aclaramos cuál es
-                    mensaje_alerta = f"Obra: {identificador} | Falta: {faltantes_str}"
+                    
+                    # Si ya dice "Obra Aislada", no le agregamos "Obra:" adelante para no ser redundantes
+                    if "Obra Aislada" in identificador:
+                        mensaje_alerta = f"{identificador} | Falta: {faltantes_str}"
+                    else:
+                        mensaje_alerta = f"Obra: {identificador} | Falta: {faltantes_str}"
                     
                 else:
                     responsables = ["Gestión General (Comisión Directiva)"]
-                    # Para el resto, dejamos el nombre de la tabla
                     mensaje_alerta = f"{nombre_tabla} ({identificador}) | Falta: {faltantes_str}"
 
                 # Guardamos la alerta
@@ -1589,8 +1608,7 @@ elif opcion == "11. 🧹 Auditoría de Datos":
             with st.expander(f"{icono} {responsable} ({len(alertas)} pendientes)", expanded=False):
                 for alerta in alertas:
                     partes = alerta.split("| Falta: ")
-                    st.markdown(f"- 📍 **{partes[0].strip()}** | Falta: **{partes[1]}**")                    
-
+                    st.markdown(f"- 📍 **{partes[0].strip()}** | Falta: **{partes[1]}**")
 
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
