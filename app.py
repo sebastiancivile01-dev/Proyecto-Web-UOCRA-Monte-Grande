@@ -265,7 +265,7 @@ with st.sidebar:
 
    
     if st.session_state.usuario_rol == "Restringido":
-        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Tablero de Control", "9. 📸 Galería Multimedia", "10. 🤖 Asistente Virtual"
+        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Tablero de Control", "9. 📸 Galería Multimedia", "10. 🤖 Asistente Virtual" , "11. 🧹 Auditoría de Datos" 
                               ]
     else:
         opciones_permitidas = opciones_totales
@@ -1451,7 +1451,77 @@ elif opcion == "10. 🤖 Asistente Virtual":
     except Exception as e_config:
         st.error("⚠️ Error en el acceso a la Inteligencia Artificial.")
         st.info("Verificá que la GEMINI_API_KEY en los Secrets de Streamlit sea la correcta.")
+
+# ==========================================
+# MÓDULO 11: AUDITORÍA DE DATOS
+# ==========================================
+elif opcion == "11. 🧹 Auditoría de Datos":
+    st.title("🧹 Auditoría y Calidad de Datos")
+    st.markdown("Radar automático de celdas vacías o datos incompletos en el sistema.")
+    st.markdown("---")
+
+    # Diccionario maestro: Nombre de la tabla -> (DataFrame, Columna_Identificadora_Principal)
+    tablas_a_auditar = {
+        "🏗️ Obras y Empresas": (df_obras, "Predio"),
+        "👥 Padrón de Delegados": (df_delegados, "Nombre"),
+        "🤝 Convenios Vigentes": (df_convenios, "Empresa"),
+        "🏢 Agenda de Contactos": (df_contactos, "Nombre"),
+        "🚨 Repositorio de Reclamos": (df_reclamos, "Nombre"),
+        "💜 Eventos UOCRA Mujeres": (df_eventos, "Titulo"),
+        "🗺️ Predios/Polos Base": (df_predios, "Nombre")
+    }
+
+    alertas_totales = 0
+
+    # Escaneamos tabla por tabla
+    for nombre_tabla, (df_actual, col_id) in tablas_a_auditar.items():
+        if df_actual.empty:
+            continue
         
+        filas_con_errores = []
+
+        # Recorremos cada fila del DataFrame
+        for index, row in df_actual.iterrows():
+            columnas_vacias = []
+            
+            # Revisamos cada columna de esa fila
+            for col in df_actual.columns:
+                valor = row[col]
+                # Si es nulo, o si es un texto que al borrarle los espacios queda vacío ("")
+                if pd.isna(valor) or str(valor).strip() == "":
+                    columnas_vacias.append(col)
+            
+            # Si encontramos al menos una columna vacía, guardamos el registro
+            if columnas_vacias:
+                identificador = row.get(col_id, f"Fila #{index+1}")
+                if pd.isna(identificador) or str(identificador).strip() == "":
+                    identificador = f"Fila sin {col_id} definido (Fila #{index+1})"
+                    
+                filas_con_errores.append({
+                    "id": identificador,
+                    "faltantes": columnas_vacias
+                })
+                alertas_totales += 1
+
+        # Generamos la interfaz visual para esta tabla
+        if filas_con_errores:
+            with st.expander(f"⚠️ Alertas en {nombre_tabla} ({len(filas_con_errores)} registros incompletos)", expanded=True):
+                for error in filas_con_errores:
+                    faltantes_str = ", ".join([f"**{c}**" for c in error['faltantes']])
+                    st.warning(f"📌 **{error['id']}** ➔ Falta completar: {faltantes_str}")
+        else:
+            with st.expander(f"✅ {nombre_tabla} (Datos 100% completos)", expanded=False):
+                st.success("Toda la información de esta tabla está cargada correctamente.")
+
+    # Resumen final
+    st.markdown("---")
+    if alertas_totales == 0:
+        st.balloons()
+        st.success("🏆 ¡Felicitaciones! Todas las bases de datos están 100% completas. No hay ningún dato faltante en toda la seccional.")
+    else:
+        st.error(f"🚨 Se detectaron **{alertas_totales}** registros con información incompleta. Se recomienda ir al módulo '2. Carga de Datos (ABM)' para actualizar la información.")
+
+
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
 # ==========================================
