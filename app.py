@@ -1462,11 +1462,11 @@ elif opcion == "10. 🤖 Asistente Virtual":
         st.info("Verificá que la GEMINI_API_KEY en los Secrets de Streamlit sea la correcta.")
 
 # ==========================================
-# MÓDULO 11: AUDITORÍA DE DATOS (REPORTE LIMPIO Y OBRAS AISLADAS)
+# MÓDULO 11: AUDITORÍA DE DATOS (RANKING DE MAYOR A MENOR)
 # ==========================================
 elif opcion == "11. 🧹 Auditoría de Datos":
     st.title("🧹 Auditoría y Calidad de Datos")
-    st.markdown("Radar automático de celdas vacías agrupado por el responsable de la carga.")
+    st.markdown("Radar automático de celdas vacías ordenado por el responsable con mayor cantidad de faltantes.")
     st.markdown("---")
 
     tablas_a_auditar = {
@@ -1497,7 +1497,7 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                 if pd.isna(valor) or str(valor).strip() == "":
                     columnas_vacias.append(col)
             
-            # 👇 REGLA EXCEPCIÓN 1: Convenios (Suma Fija vs Porcentaje) 👇
+            # REGLA EXCEPCIÓN 1: Convenios (Suma Fija vs Porcentaje)
             if "monto $" in columnas_vacias or "Monto %" in columnas_vacias:
                 if "monto $" in columnas_vacias and "Monto %" not in columnas_vacias:
                     columnas_vacias.remove("monto $")
@@ -1508,12 +1508,11 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                     columnas_vacias.remove("Monto %")
                     columnas_vacias.append("Monto ($ o %)")
 
-            # 👇 REGLA EXCEPCIÓN 2: Obras Aisladas (Sin Predio) 👇
+            # REGLA EXCEPCIÓN 2: Obras Aisladas (Sin Predio)
             identificador_personalizado = None
             if nombre_tabla == "Obras y Empresas" and "Predio" in columnas_vacias:
-                columnas_vacias.remove("Predio") # Perdonamos que no tenga Predio
+                columnas_vacias.remove("Predio") 
                 
-                # Rescatamos el nombre de la empresa para usarlo como título
                 empresa_val = str(row.get("Empresa", "")).strip()
                 if empresa_val == "" or empresa_val == "nan":
                     empresa_val = "Empresa sin registrar"
@@ -1522,7 +1521,6 @@ elif opcion == "11. 🧹 Auditoría de Datos":
             
             # Procesamos si quedaron errores reales
             if columnas_vacias:
-                # Usamos el nombre personalizado si existe, si no, usamos la regla original
                 if identificador_personalizado:
                     identificador = identificador_personalizado
                 else:
@@ -1547,7 +1545,6 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                     else:
                         responsables = [r.strip() for r in resp_str.split(",")]
                     
-                    # Si ya dice "Obra Aislada", no le agregamos "Obra:" adelante para no ser redundantes
                     if "Obra Aislada" in identificador:
                         mensaje_alerta = f"{identificador} | Falta: {faltantes_str}"
                     else:
@@ -1566,7 +1563,16 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                 alertas_totales += 1
 
     # ==========================================
-    # 2. GENERADOR DEL DOCUMENTO DESCARGABLE
+    # 2. MOTOR DE ORDENAMIENTO (MAYOR A MENOR)
+    # ==========================================
+    # Ordena primero por cantidad de alertas (negativo para que sea descendente) y luego por nombre
+    responsables_ordenados = sorted(
+        alertas_por_responsable.keys(),
+        key=lambda r: (-len(alertas_por_responsable[r]), r)
+    )
+
+    # ==========================================
+    # 3. GENERADOR DEL DOCUMENTO DESCARGABLE
     # ==========================================
     if alertas_totales > 0:
         texto_reporte = "=================================================\n"
@@ -1575,8 +1581,9 @@ elif opcion == "11. 🧹 Auditoría de Datos":
         texto_reporte += f"🚨 Total de datos faltantes detectados: {alertas_totales}\n"
         texto_reporte += "=================================================\n\n"
 
-        for responsable in sorted(alertas_por_responsable.keys()):
-            texto_reporte += f"👤 RESPONSABLE: {responsable.upper()}\n"
+        for responsable in responsables_ordenados:
+            cantidad = len(alertas_por_responsable[responsable])
+            texto_reporte += f"👤 RESPONSABLE: {responsable.upper()} ({cantidad} pendientes)\n"
             texto_reporte += "-" * 50 + "\n"
             for alerta in alertas_por_responsable[responsable]:
                 texto_reporte += f"  • {alerta}\n"
@@ -1593,7 +1600,7 @@ elif opcion == "11. 🧹 Auditoría de Datos":
         st.markdown("<br>", unsafe_allow_html=True)
 
     # ==========================================
-    # 3. INTERFAZ VISUAL (Acordeones)
+    # 4. INTERFAZ VISUAL (Acordeones)
     # ==========================================
     if alertas_totales == 0:
         st.balloons()
@@ -1601,14 +1608,17 @@ elif opcion == "11. 🧹 Auditoría de Datos":
     else:
         st.error(f"Se detectaron **{alertas_totales}** registros incompletos. Puede descargar el reporte arriba o revisarlos aquí:")
         
-        for responsable in sorted(alertas_por_responsable.keys()):
+        for responsable in responsables_ordenados:
             alertas = alertas_por_responsable[responsable]
             icono = "🏢" if "Gestión General" in responsable or "Sin Delegado" in responsable else "👤"
 
             with st.expander(f"{icono} {responsable} ({len(alertas)} pendientes)", expanded=False):
                 for alerta in alertas:
                     partes = alerta.split("| Falta: ")
-                    st.markdown(f"- 📍 **{partes[0].strip()}** | Falta: **{partes[1]}**")
+                    if len(partes) == 2:
+                        st.markdown(f"- 📍 **{partes[0].strip()}** | Falta: **{partes[1]}**")
+                    else:
+                        st.markdown(f"- 📍 {alerta}")
 
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
