@@ -1462,7 +1462,7 @@ elif opcion == "10. 🤖 Asistente Virtual":
         st.info("Verificá que la GEMINI_API_KEY en los Secrets de Streamlit sea la correcta.")
 
 # ==========================================
-# MÓDULO 11: AUDITORÍA DE DATOS (CON REPORTE DESCARGABLE)
+# MÓDULO 11: AUDITORÍA DE DATOS (REPORTE LIMPIO)
 # ==========================================
 elif opcion == "11. 🧹 Auditoría de Datos":
     st.title("🧹 Auditoría y Calidad de Datos")
@@ -1490,7 +1490,6 @@ elif opcion == "11. 🧹 Auditoría de Datos":
         for index, row in df_actual.iterrows():
             columnas_vacias = []
             
-            # Revisamos columnas (ignorando las observaciones)
             for col in df_actual.columns:
                 if "obs" in col.lower():
                     continue
@@ -1498,14 +1497,12 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                 if pd.isna(valor) or str(valor).strip() == "":
                     columnas_vacias.append(col)
             
-            # 👇 REGLA 3: Inteligencia de Convenios (Suma Fija vs Porcentaje) 👇
+            # REGLA EXCEPCIÓN: Convenios (Suma Fija vs Porcentaje)
             if "monto $" in columnas_vacias or "Monto %" in columnas_vacias:
-                # Si falta UNO pero el otro ESTÁ, lo perdonamos (lo sacamos de los errores)
                 if "monto $" in columnas_vacias and "Monto %" not in columnas_vacias:
                     columnas_vacias.remove("monto $")
                 elif "Monto %" in columnas_vacias and "monto $" not in columnas_vacias:
                     columnas_vacias.remove("Monto %")
-                # Si faltan LOS DOS, unificamos el mensaje para que sea más prolijo
                 elif "monto $" in columnas_vacias and "Monto %" in columnas_vacias:
                     columnas_vacias.remove("monto $")
                     columnas_vacias.remove("Monto %")
@@ -1516,22 +1513,32 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                 if identificador == "" or identificador == "nan":
                     identificador = f"Registro sin nombre (Fila #{index+1})"
                 
+                faltantes_str = ", ".join(columnas_vacias)
                 responsables = []
+                mensaje_alerta = ""
+
+                # 👇 NUEVA LÓGICA DE REDACCIÓN LIMPIA 👇
                 if nombre_tabla == "Padrón de Delegados":
                     resp = str(row.get("Nombre", "")).strip()
                     responsables = [resp] if resp and resp != "nan" else ["Desconocido"]
+                    # Como ya estamos en su pestaña, no repetimos el nombre
+                    mensaje_alerta = f"Tu Perfil Personal | Falta: {faltantes_str}"
+                    
                 elif nombre_tabla == "Obras y Empresas":
                     resp_str = str(row.get("Delegado", "")).strip()
                     if resp_str in ["", "nan", "Sin asignar"]:
                         responsables = ["Obras Sin Delegado Asignado"]
                     else:
                         responsables = [r.strip() for r in resp_str.split(",")]
+                    # Si es una obra, aclaramos cuál es
+                    mensaje_alerta = f"Obra: {identificador} | Falta: {faltantes_str}"
+                    
                 else:
                     responsables = ["Gestión General (Comisión Directiva)"]
+                    # Para el resto, dejamos el nombre de la tabla
+                    mensaje_alerta = f"{nombre_tabla} ({identificador}) | Falta: {faltantes_str}"
 
-                faltantes_str = ", ".join(columnas_vacias)
-                mensaje_alerta = f"Tabla {nombre_tabla} -> {identificador} | Falta: {faltantes_str}"
-
+                # Guardamos la alerta
                 for r in responsables:
                     if r not in alertas_por_responsable:
                         alertas_por_responsable[r] = []
@@ -1582,8 +1589,8 @@ elif opcion == "11. 🧹 Auditoría de Datos":
             with st.expander(f"{icono} {responsable} ({len(alertas)} pendientes)", expanded=False):
                 for alerta in alertas:
                     partes = alerta.split("| Falta: ")
-                    st.markdown(f"- 📍 **{partes[0].strip()}** | Falta: **{partes[1]}**")
-                    
+                    st.markdown(f"- 📍 **{partes[0].strip()}** | Falta: **{partes[1]}**")                    
+
 
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
