@@ -1490,12 +1490,26 @@ elif opcion == "11. 🧹 Auditoría de Datos":
         for index, row in df_actual.iterrows():
             columnas_vacias = []
             
+            # Revisamos columnas (ignorando las observaciones)
             for col in df_actual.columns:
                 if "obs" in col.lower():
                     continue
                 valor = row[col]
                 if pd.isna(valor) or str(valor).strip() == "":
                     columnas_vacias.append(col)
+            
+            # 👇 REGLA 3: Inteligencia de Convenios (Suma Fija vs Porcentaje) 👇
+            if "monto $" in columnas_vacias or "Monto %" in columnas_vacias:
+                # Si falta UNO pero el otro ESTÁ, lo perdonamos (lo sacamos de los errores)
+                if "monto $" in columnas_vacias and "Monto %" not in columnas_vacias:
+                    columnas_vacias.remove("monto $")
+                elif "Monto %" in columnas_vacias and "monto $" not in columnas_vacias:
+                    columnas_vacias.remove("Monto %")
+                # Si faltan LOS DOS, unificamos el mensaje para que sea más prolijo
+                elif "monto $" in columnas_vacias and "Monto %" in columnas_vacias:
+                    columnas_vacias.remove("monto $")
+                    columnas_vacias.remove("Monto %")
+                    columnas_vacias.append("Monto ($ o %)")
             
             if columnas_vacias:
                 identificador = str(row.get(col_id, f"Fila #{index+1}")).strip()
@@ -1516,7 +1530,6 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                     responsables = ["Gestión General (Comisión Directiva)"]
 
                 faltantes_str = ", ".join(columnas_vacias)
-                # Formato limpio para el texto descargable
                 mensaje_alerta = f"Tabla {nombre_tabla} -> {identificador} | Falta: {faltantes_str}"
 
                 for r in responsables:
@@ -1530,7 +1543,6 @@ elif opcion == "11. 🧹 Auditoría de Datos":
     # 2. GENERADOR DEL DOCUMENTO DESCARGABLE
     # ==========================================
     if alertas_totales > 0:
-        # Armamos el texto oficial del reporte
         texto_reporte = "=================================================\n"
         texto_reporte += "📋 REPORTE DE AUDITORÍA - UOCRA MONTE GRANDE\n"
         texto_reporte += f"📅 Fecha y Hora de Emisión: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
@@ -1544,7 +1556,6 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                 texto_reporte += f"  • {alerta}\n"
             texto_reporte += "\n"
 
-        # Botón de descarga nativo de Streamlit
         st.download_button(
             label="📄 Descargar Reporte de Faltantes (.txt)",
             data=texto_reporte,
@@ -1570,9 +1581,10 @@ elif opcion == "11. 🧹 Auditoría de Datos":
 
             with st.expander(f"{icono} {responsable} ({len(alertas)} pendientes)", expanded=False):
                 for alerta in alertas:
-                    # Le agregamos negritas solo para la vista en pantalla web
                     partes = alerta.split("| Falta: ")
                     st.markdown(f"- 📍 **{partes[0].strip()}** | Falta: **{partes[1]}**")
+                    
+
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
 # ==========================================
