@@ -1462,7 +1462,7 @@ elif opcion == "10. 🤖 Asistente Virtual":
         st.info("Verificá que la GEMINI_API_KEY en los Secrets de Streamlit sea la correcta.")
 
 # ==========================================
-# MÓDULO 11: AUDITORÍA DE DATOS (POR DELEGADO)
+# MÓDULO 11: AUDITORÍA DE DATOS (CON REPORTE DESCARGABLE)
 # ==========================================
 elif opcion == "11. 🧹 Auditoría de Datos":
     st.title("🧹 Auditoría y Calidad de Datos")
@@ -1470,20 +1470,19 @@ elif opcion == "11. 🧹 Auditoría de Datos":
     st.markdown("---")
 
     tablas_a_auditar = {
-        "👥 Padrón de Delegados": (df_delegados, "Nombre"),
-        "🏗️ Obras y Empresas": (df_obras, "Predio"),
-        "🤝 Convenios Vigentes": (df_convenios, "Empresa"),
-        "🏢 Agenda de Contactos": (df_contactos, "Nombre"),
-        "🚨 Repositorio de Reclamos": (df_reclamos, "Nombre"),
-        "💜 Eventos UOCRA Mujeres": (df_eventos, "Titulo"),
-        "🗺️ Predios/Polos Base": (df_predios, "Nombre")
+        "Padrón de Delegados": (df_delegados, "Nombre"),
+        "Obras y Empresas": (df_obras, "Predio"),
+        "Convenios Vigentes": (df_convenios, "Empresa"),
+        "Agenda de Contactos": (df_contactos, "Nombre"),
+        "Repositorio de Reclamos": (df_reclamos, "Nombre"),
+        "Eventos UOCRA Mujeres": (df_eventos, "Titulo"),
+        "Predios/Polos Base": (df_predios, "Nombre")
     }
 
-    # Diccionario donde vamos a agrupar todo por Nombre de Delegado
     alertas_por_responsable = {}
     alertas_totales = 0
 
-    # Escaneamos tabla por tabla
+    # 1. MOTOR DE ESCANEO
     for nombre_tabla, (df_actual, col_id) in tablas_a_auditar.items():
         if df_actual.empty:
             continue
@@ -1491,7 +1490,6 @@ elif opcion == "11. 🧹 Auditoría de Datos":
         for index, row in df_actual.iterrows():
             columnas_vacias = []
             
-            # Revisamos columnas (ignorando las observaciones)
             for col in df_actual.columns:
                 if "obs" in col.lower():
                     continue
@@ -1499,37 +1497,28 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                 if pd.isna(valor) or str(valor).strip() == "":
                     columnas_vacias.append(col)
             
-            # Si hay datos faltantes, buscamos de quién es la culpa
             if columnas_vacias:
                 identificador = str(row.get(col_id, f"Fila #{index+1}")).strip()
                 if identificador == "" or identificador == "nan":
                     identificador = f"Registro sin nombre (Fila #{index+1})"
                 
-                # Determinamos al responsable según la tabla
                 responsables = []
-                if nombre_tabla == "👥 Padrón de Delegados":
-                    # Si falta un dato en el padrón, el responsable es el propio delegado
+                if nombre_tabla == "Padrón de Delegados":
                     resp = str(row.get("Nombre", "")).strip()
                     responsables = [resp] if resp and resp != "nan" else ["Desconocido"]
-                
-                elif nombre_tabla == "🏗️ Obras y Empresas":
-                    # Si falta un dato en la obra, el responsable es el delegado asignado
+                elif nombre_tabla == "Obras y Empresas":
                     resp_str = str(row.get("Delegado", "")).strip()
                     if resp_str in ["", "nan", "Sin asignar"]:
-                        responsables = ["⚠️ Obras Sin Delegado Asignado"]
+                        responsables = ["Obras Sin Delegado Asignado"]
                     else:
-                        # Si hay varios delegados separados por coma, le asignamos la alerta a todos
                         responsables = [r.strip() for r in resp_str.split(",")]
-                
                 else:
-                    # Convenios, Predios y Reclamos son responsabilidad de la Comisión Directiva
-                    responsables = ["🏛️ Gestión General (Comisión Directiva)"]
+                    responsables = ["Gestión General (Comisión Directiva)"]
 
-                # Armamos el mensaje del error
-                faltantes_str = ", ".join([f"**{c}**" for c in columnas_vacias])
-                mensaje_alerta = f"📍 **{nombre_tabla}** ➔ {identificador} | Falta: {faltantes_str}"
+                faltantes_str = ", ".join(columnas_vacias)
+                # Formato limpio para el texto descargable
+                mensaje_alerta = f"Tabla {nombre_tabla} -> {identificador} | Falta: {faltantes_str}"
 
-                # Guardamos la alerta en la "carpeta" de cada responsable
                 for r in responsables:
                     if r not in alertas_por_responsable:
                         alertas_por_responsable[r] = []
@@ -1538,28 +1527,53 @@ elif opcion == "11. 🧹 Auditoría de Datos":
                 alertas_totales += 1
 
     # ==========================================
-    # INTERFAZ VISUAL: ACORDEONES POR PERSONA
+    # 2. GENERADOR DEL DOCUMENTO DESCARGABLE
+    # ==========================================
+    if alertas_totales > 0:
+        # Armamos el texto oficial del reporte
+        texto_reporte = "=================================================\n"
+        texto_reporte += "📋 REPORTE DE AUDITORÍA - UOCRA MONTE GRANDE\n"
+        texto_reporte += f"📅 Fecha y Hora de Emisión: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
+        texto_reporte += f"🚨 Total de datos faltantes detectados: {alertas_totales}\n"
+        texto_reporte += "=================================================\n\n"
+
+        for responsable in sorted(alertas_por_responsable.keys()):
+            texto_reporte += f"👤 RESPONSABLE: {responsable.upper()}\n"
+            texto_reporte += "-" * 50 + "\n"
+            for alerta in alertas_por_responsable[responsable]:
+                texto_reporte += f"  • {alerta}\n"
+            texto_reporte += "\n"
+
+        # Botón de descarga nativo de Streamlit
+        st.download_button(
+            label="📄 Descargar Reporte de Faltantes (.txt)",
+            data=texto_reporte,
+            file_name=f"Auditoria_UOCRA_{datetime.now().strftime('%d_%m_%Y')}.txt",
+            mime="text/plain",
+            type="primary",
+            use_container_width=True
+        )
+        st.markdown("<br>", unsafe_allow_html=True)
+
+    # ==========================================
+    # 3. INTERFAZ VISUAL (Acordeones)
     # ==========================================
     if alertas_totales == 0:
         st.balloons()
-        st.success("🏆 ¡Felicitaciones! Todas las bases de datos están 100% completas. No hay ningún dato esencial faltante.")
+        st.success("🏆 ¡Felicitaciones! Todas las bases de datos están 100% completas.")
     else:
-        st.error(f"🚨 Se detectaron **{alertas_totales}** registros con información incompleta. Despliegue el nombre del responsable para ver sus pendientes.")
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # Ordenamos la lista de responsables alfabéticamente para que sea fácil de leer
+        st.error(f"Se detectaron **{alertas_totales}** registros incompletos. Puede descargar el reporte arriba o revisarlos aquí:")
+        
         for responsable in sorted(alertas_por_responsable.keys()):
             alertas = alertas_por_responsable[responsable]
-            
-            # Le ponemos un icono distinto si es un delegado o si es la Comisión Directiva
-            icono = "👤"
-            if "Gestión General" in responsable or "Sin Delegado" in responsable:
-                icono = "🏢"
+            icono = "🏢" if "Gestión General" in responsable or "Sin Delegado" in responsable else "👤"
 
-            # Creamos el listado desplegable (expander) por persona
             with st.expander(f"{icono} {responsable} ({len(alertas)} pendientes)", expanded=False):
                 for alerta in alertas:
-                    st.markdown(f"- {alerta}")# ==========================================
+                    # Le agregamos negritas solo para la vista en pantalla web
+                    partes = alerta.split("| Falta: ")
+                    st.markdown(f"- 📍 **{partes[0].strip()}** | Falta: **{partes[1]}**")
+# ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
 # ==========================================
 if opcion != "10. 🤖 Asistente Virtual":
