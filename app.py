@@ -1462,17 +1462,16 @@ elif opcion == "10. 🤖 Asistente Virtual":
         st.info("Verificá que la GEMINI_API_KEY en los Secrets de Streamlit sea la correcta.")
 
 # ==========================================
-# MÓDULO 11: AUDITORÍA DE DATOS (VERSIÓN AVANZADA)
+# MÓDULO 11: AUDITORÍA DE DATOS (POR DELEGADO)
 # ==========================================
 elif opcion == "11. 🧹 Auditoría de Datos":
     st.title("🧹 Auditoría y Calidad de Datos")
-    st.markdown("Radar automático de celdas vacías o datos incompletos en el sistema operativo.")
+    st.markdown("Radar automático de celdas vacías agrupado por el responsable de la carga.")
     st.markdown("---")
 
-    # Diccionario maestro: Nombre de la tabla -> (DataFrame, Columna_Identificadora_Principal)
     tablas_a_auditar = {
-        "🏗️ Obras y Empresas": (df_obras, "Predio"),
         "👥 Padrón de Delegados": (df_delegados, "Nombre"),
+        "🏗️ Obras y Empresas": (df_obras, "Predio"),
         "🤝 Convenios Vigentes": (df_convenios, "Empresa"),
         "🏢 Agenda de Contactos": (df_contactos, "Nombre"),
         "🚨 Repositorio de Reclamos": (df_reclamos, "Nombre"),
@@ -1480,6 +1479,8 @@ elif opcion == "11. 🧹 Auditoría de Datos":
         "🗺️ Predios/Polos Base": (df_predios, "Nombre")
     }
 
+    # Diccionario donde vamos a agrupar todo por Nombre de Delegado
+    alertas_por_responsable = {}
     alertas_totales = 0
 
     # Escaneamos tabla por tabla
@@ -1487,60 +1488,78 @@ elif opcion == "11. 🧹 Auditoría de Datos":
         if df_actual.empty:
             continue
         
-        filas_con_errores = []
-
-        # Recorremos cada fila del DataFrame
         for index, row in df_actual.iterrows():
             columnas_vacias = []
             
-            # Revisamos cada columna de esa fila
+            # Revisamos columnas (ignorando las observaciones)
             for col in df_actual.columns:
-                # 👇 REGLA 1: Ignorar cualquier columna que sea de Observaciones 👇
                 if "obs" in col.lower():
                     continue
-
                 valor = row[col]
-                # Si es nulo, o si es un texto que al borrarle los espacios queda vacío ("")
                 if pd.isna(valor) or str(valor).strip() == "":
                     columnas_vacias.append(col)
             
-            # Si encontramos al menos una columna vacía esencial, armamos la alerta
+            # Si hay datos faltantes, buscamos de quién es la culpa
             if columnas_vacias:
-                identificador = row.get(col_id, f"Fila #{index+1}")
-                if pd.isna(identificador) or str(identificador).strip() == "":
-                    identificador = f"Fila sin {col_id} definido (Fila #{index+1})"
-                    
-                # 👇 REGLA 2: Si es una Obra y tiene Delegado, asignamos la responsabilidad 👇
-                if "Delegado" in df_actual.columns:
-                    delegado_asignado = row.get("Delegado", "")
-                    if pd.notna(delegado_asignado) and str(delegado_asignado).strip() != "":
-                        identificador = f"{identificador} (👤 Delegado a cargo: {delegado_asignado})"
+                identificador = str(row.get(col_id, f"Fila #{index+1}")).strip()
+                if identificador == "" or identificador == "nan":
+                    identificador = f"Registro sin nombre (Fila #{index+1})"
+                
+                # Determinamos al responsable según la tabla
+                responsables = []
+                if nombre_tabla == "👥 Padrón de Delegados":
+                    # Si falta un dato en el padrón, el responsable es el propio delegado
+                    resp = str(row.get("Nombre", "")).strip()
+                    responsables = [resp] if resp and resp != "nan" else ["Desconocido"]
+                
+                elif nombre_tabla == "🏗️ Obras y Empresas":
+                    # Si falta un dato en la obra, el responsable es el delegado asignado
+                    resp_str = str(row.get("Delegado", "")).strip()
+                    if resp_str in ["", "nan", "Sin asignar"]:
+                        responsables = ["⚠️ Obras Sin Delegado Asignado"]
+                    else:
+                        # Si hay varios delegados separados por coma, le asignamos la alerta a todos
+                        responsables = [r.strip() for r in resp_str.split(",")]
+                
+                else:
+                    # Convenios, Predios y Reclamos son responsabilidad de la Comisión Directiva
+                    responsables = ["🏛️ Gestión General (Comisión Directiva)"]
 
-                filas_con_errores.append({
-                    "id": identificador,
-                    "faltantes": columnas_vacias
-                })
+                # Armamos el mensaje del error
+                faltantes_str = ", ".join([f"**{c}**" for c in columnas_vacias])
+                mensaje_alerta = f"📍 **{nombre_tabla}** ➔ {identificador} | Falta: {faltantes_str}"
+
+                # Guardamos la alerta en la "carpeta" de cada responsable
+                for r in responsables:
+                    if r not in alertas_por_responsable:
+                        alertas_por_responsable[r] = []
+                    alertas_por_responsable[r].append(mensaje_alerta)
+                
                 alertas_totales += 1
 
-        # Generamos la interfaz visual para esta tabla
-        if filas_con_errores:
-            with st.expander(f"⚠️ Alertas en {nombre_tabla} ({len(filas_con_errores)} registros incompletos)", expanded=True):
-                for error in filas_con_errores:
-                    faltantes_str = ", ".join([f"**{c}**" for c in error['faltantes']])
-                    st.warning(f"📌 **{error['id']}** ➔ Falta completar: {faltantes_str}")
-        else:
-            with st.expander(f"✅ {nombre_tabla} (Datos 100% completos)", expanded=False):
-                st.success("Toda la información obligatoria de esta tabla está cargada correctamente.")
-
-    # Resumen final
-    st.markdown("---")
+    # ==========================================
+    # INTERFAZ VISUAL: ACORDEONES POR PERSONA
+    # ==========================================
     if alertas_totales == 0:
         st.balloons()
-        st.success("🏆 ¡Felicitaciones! Todas las bases de datos están 100% completas. No hay ningún dato esencial faltante en la Seccional.")
+        st.success("🏆 ¡Felicitaciones! Todas las bases de datos están 100% completas. No hay ningún dato esencial faltante.")
     else:
-        st.error(f"🚨 Se detectaron **{alertas_totales}** registros con información incompleta. Se recomienda ir al módulo '2. Carga de Datos (ABM)' para actualizar la información.")
+        st.error(f"🚨 Se detectaron **{alertas_totales}** registros con información incompleta. Despliegue el nombre del responsable para ver sus pendientes.")
+        st.markdown("<br>", unsafe_allow_html=True)
 
-# ==========================================
+        # Ordenamos la lista de responsables alfabéticamente para que sea fácil de leer
+        for responsable in sorted(alertas_por_responsable.keys()):
+            alertas = alertas_por_responsable[responsable]
+            
+            # Le ponemos un icono distinto si es un delegado o si es la Comisión Directiva
+            icono = "👤"
+            if "Gestión General" in responsable or "Sin Delegado" in responsable:
+                icono = "🏢"
+
+            # Creamos el listado desplegable (expander) por persona
+            with st.expander(f"{icono} {responsable} ({len(alertas)} pendientes)", expanded=False):
+                for alerta in alertas:
+                    st.markdown(f"- {alerta}")# ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
 # ==========================================
 if opcion != "10. 🤖 Asistente Virtual":
