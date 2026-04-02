@@ -13,9 +13,9 @@ st.markdown("""
     <style>
     /* 1. FONDO GLOBAL DE LA APLICACIÓN */
     .stApp {
-        background-image: url("https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/refs/heads/main/UOCRA.jfif"); 
+        background-image: url("https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/main/banner_uocra.jpg"); 
         background-size: cover;
-        background-position: center;
+        background-if st.session_state.usuario_rol is None:position: center;
         background-attachment: fixed;
     }
     
@@ -77,7 +77,8 @@ if st.session_state.usuario_rol is None:
             background-position: center;
             background-attachment: fixed;
         }
-        [data-testid="stHeader"], [data-testid="stAppViewContainer"] { background: rgba(0,0,0,0) !important; }        [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"] {
+        [data-testid="stHeader"], [data-testid="stAppViewContainer"] { background: rgba(0,0,0,0) !important; }
+        [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"] {
             background-color: rgba(255, 255, 255, 0.95);
             padding: 3rem;
             border-radius: 15px;
