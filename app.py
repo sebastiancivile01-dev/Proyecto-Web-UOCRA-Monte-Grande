@@ -67,7 +67,6 @@ st.markdown("""
 if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
 
-
 if st.session_state.usuario_rol is None:
     # 1. CSS para inyectar la imagen de fondo y la caja transparente
     st.markdown("""
@@ -136,7 +135,6 @@ except Exception as e:
     st.stop()
 
 # --- FUNCIONES DE BASE DE DATOS EN LA NUBE ---
-# --- FUNCIONES DE BASE DE DATOS CON CACHÉ (PARA EVITAR ERROR 429) ---
 @st.cache_data(ttl=600) # Guarda los datos en memoria por 10 minutos
 def cargar_db(hoja_nombre, columnas):
     try:
@@ -155,23 +153,17 @@ def guardar_db(df, hoja_nombre):
         sheet.clear()
         datos_a_subir = [df_limpio.columns.values.tolist()] + df_limpio.values.tolist()
         sheet.update(values=datos_a_subir, range_name="A1")
-        
-        # 👇 ESTA LÍNEA ES LA MAGIA 👇
-        # Borra la memoria RAM para que el cambio se vea al instante
         st.cache_data.clear() 
-        
     except Exception as e:
         st.error(f"Error técnico guardando en {hoja_nombre}: {e}")
 
 # --- CARGA GLOBAL Y EXTRACCIÓN DE DATOS ---
-# Sincronizado con tus columnas exactas, incluyendo Obra_ID
 df_obras = cargar_db("Obras", ["Obra_ID", "Predio", "Empresa", "Delegado", "Obreros", "Estado", "Latitud", "Longitud", "Jurisdiccion", "Jurisdiccion_R", "Mujeres"])
 if 'Mujeres' in df_obras.columns: 
     df_obras['Mujeres'] = pd.to_numeric(df_obras['Mujeres'], errors='coerce').fillna(0)
 if 'Obreros' in df_obras.columns: 
     df_obras['Obreros'] = pd.to_numeric(df_obras['Obreros'], errors='coerce').fillna(0)
 
-# CARGA DE PREDIOS Y CONVERSIÓN NUMÉRICA
 df_predios = cargar_db("Predios", ["Nombre", "Latitud", "Longitud", "Radio_KM", "Observaciones"])
 for col in ['Latitud', 'Longitud', 'Radio_KM']:
     if col in df_predios.columns:
@@ -180,7 +172,7 @@ for col in ['Latitud', 'Longitud', 'Radio_KM']:
 df_delegados = cargar_db("Delegados", ["Nombre", "CUIL", "Celular", "Domicilio", "Nacimiento", "Correo", "Observacion"])
 df_contactos = cargar_db("Contactos", ["Nombre", "Cargo", "Empresa", "Observaciones"])
 df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "Estado", "Finalizacion", "Respuesta", "Observaciones"])
-df_eventos = cargar_db("Mujeres_Eventos", ["Titulo", "Fecha", "Observaciones"]) # Sincronizado con tu pestaña
+df_eventos = cargar_db("Mujeres_Eventos", ["Titulo", "Fecha", "Observaciones"])
 df_convenios = cargar_db("Convenios", ["Empresa", "Detalle_Convenio", "monto $", "Monto %", "Vigencia"])
 df_propuestas = cargar_db("Propuestas", ["Fecha", "Usuario", "Propuesta", "Estado"])
 df_puntos_extra = cargar_db("Puntos_Extra", ["Nombre", "Latitud", "Longitud", "Color", "Observacion"])
@@ -188,7 +180,6 @@ if not df_puntos_extra.empty:
     df_puntos_extra['Latitud'] = pd.to_numeric(df_puntos_extra['Latitud'], errors='coerce').fillna(0.0)
     df_puntos_extra['Longitud'] = pd.to_numeric(df_puntos_extra['Longitud'], errors='coerce').fillna(0.0)
 
-# La lista de predios ahora se alimenta de la base maestra oficial
 lista_predios_historicos = sorted(df_predios['Nombre'].dropna().astype(str).tolist()) if not df_predios.empty else []
 lista_empresas_historicas = sorted(list(set(pd.concat([df_obras['Empresa'], df_contactos['Empresa'], df_reclamos['Empresa'], df_convenios['Empresa']]).dropna().astype(str).tolist())))
 lista_delegados_nombres = df_delegados['Nombre'].tolist() if not df_delegados.empty else []
@@ -197,50 +188,37 @@ lista_jurisdicciones = ["Esteban Echeverría", "Ezeiza", "Cañuelas", "Roque Pé
 lista_estados = ["Activa", "Intervenida", "Finalizada", "Interrumpida"]
 
 # --- FASE 4: CONEXIÓN API BCRA (CÁLCULO CER) ---
-@st.cache_data(ttl=86400) # Cacheamos por 24hs
+@st.cache_data(ttl=86400)
 def obtener_cer(fecha_str=None):
-    """Busca el valor del CER en la API Comunitaria del BCRA"""
     try:
         token = st.secrets["BCRA_TOKEN"]
         headers = {'Authorization': f'Bearer {token}'}
-        
-        # Endpoint de la API Comunitaria para el CER
         url = "https://api.estadisticasbcra.com/cer"
-            
         respuesta = requests.get(url, headers=headers, timeout=10)
         
         if respuesta.status_code == 200:
-            datos = respuesta.json() # La API comunitaria devuelve una lista de diccionarios: [{'d': '2024-01-01', 'v': 150.5}, ...]
+            datos = respuesta.json()
             if not datos: return None
-            
             if fecha_str:
                 fecha_buscada = datetime.strptime(fecha_str, "%Y-%m-%d").date()
-                
-                # Recorremos la lista de atrás para adelante (desde lo más reciente a lo más viejo)
                 for item in reversed(datos):
                     fecha_item = datetime.strptime(item['d'], "%Y-%m-%d").date()
-                    # Buscamos la fecha exacta o la más cercana anterior (por si es feriado o fin de semana)
                     if fecha_item <= fecha_buscada:
                         return float(item['v'])
                 return None 
             else:
-                # Si no se le pasa fecha, devuelve el CER más actual disponible (el último de la lista)
                 return float(datos[-1]['v'])
-                
         return None
     except Exception as e:
         return None
 
 # --- FASE 5: CONEXIÓN API FERIADOS Y CALENDARIO MODAL ---
-@st.cache_data(ttl=86400) # Se actualiza 1 vez al día
+@st.cache_data(ttl=86400)
 def obtener_feriados_argentina():
-    """Busca los feriados nacionales mediante API y suma las fechas UOCRA"""
     anio_actual = datetime.now().year
     url = f"https://nolaborables.com.ar/api/v2/feriados/{anio_actual}"
-    
     lista_fechas = []
     
-    # 1. Traemos los feriados nacionales
     try:
         respuesta = requests.get(url, timeout=5)
         if respuesta.status_code == 200:
@@ -251,27 +229,22 @@ def obtener_feriados_argentina():
                     "dia": f["dia"], 
                     "mes": f["mes"], 
                     "tipo": "Feriado Nacional",
-                    "color": "#28a745" # Verde
+                    "color": "#28a745"
                 })
     except:
-        pass # Si la API falla, sigue adelante sin romper la página
+        pass
         
-    # 2. Inyectamos las fechas Gremiales (UOCRA)
     fechas_uocra = [
         {"motivo": "Día del Obrero de la Construcción (CCT 76/22)", "dia": 22, "mes": 4, "tipo": "Día Gremial", "color": "#0033A0"},
         {"motivo": "Día de la Lealtad Peronista", "dia": 17, "mes": 10, "tipo": "Fecha Histórica", "color": "#0033A0"},
         {"motivo": "Día Internacional de la Mujer Trabajadora", "dia": 8, "mes": 3, "tipo": "Fecha Histórica", "color": "#8A2BE2"}
     ]
     lista_fechas.extend(fechas_uocra)
-    
-    # Ordenamos todo cronológicamente por mes y día
     lista_fechas.sort(key=lambda x: (x["mes"], x["dia"]))
     return lista_fechas
 
-# ESTA ES LA MAGIA: @st.dialog crea una ventana flotante (Modal)
 @st.dialog("📅 Calendario Gremial y Feriados Nacionales", width="large")
 def abrir_calendario_flotante():
-    # 1. Tarjetas Fijas de Vencimientos
     st.markdown("<h4 style='color: #0033A0;'>📌 Vencimientos Operativos Mensuales</h4>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1: st.markdown('<div class="tarjeta-kpi"><div class="kpi-titulo" style="font-size:0.8rem;">1° Quincena</div><div style="font-size:1rem; font-weight:bold;">Días 16 al 20</div></div>', unsafe_allow_html=True)
@@ -279,8 +252,6 @@ def abrir_calendario_flotante():
     with c3: st.markdown('<div class="tarjeta-kpi naranja"><div class="kpi-titulo" style="font-size:0.8rem;">Aportes Sind.</div><div style="font-size:1rem; font-weight:bold;">Vto: Día 15</div></div>', unsafe_allow_html=True)
     
     st.markdown("---")
-    
-    # 2. Feriados dinámicos desde la API
     st.markdown("<h4 style='color: #0033A0;'>🇦🇷 Feriados y Fechas Clave del Año</h4>", unsafe_allow_html=True)
     
     feriados = obtener_feriados_argentina()
@@ -288,15 +259,10 @@ def abrir_calendario_flotante():
     if not feriados:
         st.warning("⚠️ No se pudo conectar a la base de feriados en este momento.")
     else:
-        # Meses en texto para que quede más lindo
         nombres_meses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-        
-        # Armamos una grilla de 2 columnas para las tarjetas
         col_izq, col_der = st.columns(2)
-        
         for i, f in enumerate(feriados):
             mes_texto = nombres_meses[f["mes"]]
-            # CSS para hacer una tarjeta chiquita y prolija
             tarjeta_html = f"""
             <div style="border-left: 5px solid {f['color']}; background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                 <div style="color: {f['color']}; font-weight: 900; font-size: 1.2rem; margin-bottom: 5px;">{f['dia']} de {mes_texto}</div>
@@ -304,41 +270,22 @@ def abrir_calendario_flotante():
                 <div style="font-size: 0.8rem; color: #666; text-transform: uppercase;">{f['tipo']}</div>
             </div>
             """
-            
-            # Repartimos mitad y mitad en las columnas
             if i % 2 == 0:
                 col_izq.markdown(tarjeta_html, unsafe_allow_html=True)
             else:
                 col_der.markdown(tarjeta_html, unsafe_allow_html=True)
-    
 
-
-    # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
+# --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
-    # Botón para forzar la actualización de datos
     if st.button("🔄 Actualizar Datos", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
-with st.sidebar:
-    # Botón para forzar la actualización de datos
-    if st.button("🔄 Actualizar Datos", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-
-    # 👇 NUEVO BOTÓN QUE ABRE EL MODAL (LA VENTANA FLOTANTE) 👇
     st.markdown("---")
     if st.button("📅 Calendario y Feriados", type="primary", use_container_width=True):
-        abrir_calendario_flotante() # Llama a la función que dibuja el pop-up
+        abrir_calendario_flotante() 
     st.markdown("---")
 
-    # Botón para cerrar sesión
-    if st.button("🚪 Cerrar Sesión", use_container_width=True):
-        st.session_state.usuario_rol = None
-        st.rerun()
-
-    
-    # Botón para cerrar sesión
     if st.button("🚪 Cerrar Sesión", use_container_width=True):
         st.session_state.usuario_rol = None
         st.rerun()
@@ -356,28 +303,21 @@ with st.sidebar:
         **5- Sec. Finanzas:** Roberto Oviedo
         """)
         
-    # MAGIA DEL LOGIN: Filtramos los botones según quién entró
     opciones_totales = [
         "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
         "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "5. ⚠️ Repositorio de Reclamos",
         "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios por Empresa", "8. 📊 Tablero de Control",
         "9. 📸 Galería Multimedia", "10. 🤖 Asistente Virtual", "11. 🧹 Auditoría de Datos"
     ]
-
    
     if st.session_state.usuario_rol == "Restringido":
-        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Tablero de Control", "9. 📸 Galería Multimedia", "10. 🤖 Asistente Virtual" , "11. 🧹 Auditoría de Datos" 
-                              ]
+        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Tablero de Control", "9. 📸 Galería Multimedia", "10. 🤖 Asistente Virtual" , "11. 🧹 Auditoría de Datos"]
     else:
         opciones_permitidas = opciones_totales
         
     opcion = st.radio("Navegación:", opciones_permitidas)
 
-    # ==========================================
-    # PIE DE PÁGINA: ENLACES Y REDES
-    # ==========================================
-    st.markdown("---") # Línea divisoria
-    # --- Subsección ENLACES ÚTILES ---
+    st.markdown("---") 
     st.caption("🔗 ENLACES ÚTILES")
     st.markdown("""
     <div style='text-align: center; font-weight: bold; font-size: 0.9rem;'>
@@ -392,12 +332,8 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
-    st.write("#") # Espaciador
-    
-    # --- Subsección REDES SOCIALES ---
+    st.write("#")
     st.caption("📱 REDES SOCIALES")
-    
-    # 👇 VERSIÓN ORIGINAL RESTAURADA: Centrada, sin columnas y con el logo correcto 👇
     st.markdown("""
     <div style='text-align: center; margin-bottom: 15px;'>
         <a href='https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5' target='_blank' style='text-decoration: none;'>
@@ -406,100 +342,6 @@ with st.sidebar:
         </a>
     </div>
     """, unsafe_allow_html=True)
-
-# ==========================================
-    # 📅 CALENDARIO ANUAL (AL FINAL DE LA BARRA)
-    # ==========================================
-    st.markdown("---")
-    with st.expander("📅 Calendario Anual UOCRA", expanded=False):
-        st.markdown("<p style='text-align:center; font-weight:bold; color:#0033A0; margin-bottom:5px;'>📌 Vencimientos Mensuales</p>", unsafe_allow_html=True)
-        st.markdown("""
-        * **1° Quincena:** Del 16 al 20.
-        * **2° Quincena:** Del 1 al 5.
-        * **Aportes:** Vencimiento el día 15.
-        """)
-        
-        st.markdown("---")
-        st.markdown("<p style='text-align:center; font-weight:bold; color:#0033A0; margin-bottom:5px;'>🇦🇷 Feriados y Fechas Clave</p>", unsafe_allow_html=True)
-        
-        st.markdown("**🌸 Primer Semestre**")
-        st.markdown("""
-        * **8 Mar:** Día de la Mujer.
-        * **24 Mar:** Memoria, Verdad y Justicia.
-        * **2 Abr:** Caídos en Malvinas.
-        * **🏗️ 22 ABR: DÍA DEL CONSTRUCTOR.**
-        * **1 May:** Día del Trabajador.
-        * **25 May:** Revolución de Mayo.
-        * **20 Jun:** Gral. Manuel Belgrano.
-        * **💰 30 Jun:** Vto. 1° Cuota SAC.
-        """)
-        
-        st.markdown("**🍂 Segundo Semestre**")
-        st.markdown("""
-        * **9 Jul:** Día de la Independencia.
-        * **17 Ago:** Gral. José de San Martín.
-        * **12 Oct:** Diversidad Cultural.
-        * **17 Oct:** Día de la Lealtad.
-        * **20 Nov:** Soberanía Nacional.
-        * **8 Dic:** Inmaculada Concepción.
-        * **💰 18 Dic:** Vto. 2° Cuota SAC.
-        """)
-
-# ==========================================
-# 📅 PANTALLA SUPERPUESTA: CALENDARIO ANUAL UOCRA
-# ==========================================
-if st.session_state.ver_calendario:
-    st.title("📅 Calendario Anual Gremial - UOCRA")
-    
-    # Botón de regreso
-    if st.button("⬅️ Volver al Sistema Operativo"):
-        st.session_state.ver_calendario = False
-        st.rerun()
-        
-    st.markdown("---")
-    
-    # Fechas Clave Generales (Tarjetas)
-    st.subheader("📌 Vencimientos y Liquidaciones Mensuales")
-    col_c1, col_c2, col_c3 = st.columns(3)
-    with col_c1:
-        st.markdown('<div class="tarjeta-kpi"><div class="kpi-titulo">1° Quincena</div><div style="font-size:1.1rem; font-weight:bold;">Se abona del 16 al 20</div></div>', unsafe_allow_html=True)
-    with col_c2:
-        st.markdown('<div class="tarjeta-kpi"><div class="kpi-titulo">2° Quincena</div><div style="font-size:1.1rem; font-weight:bold;">Se abona del 1 al 5</div></div>', unsafe_allow_html=True)
-    with col_c3:
-        st.markdown('<div class="tarjeta-kpi naranja"><div class="kpi-titulo">Aportes Sindicales</div><div style="font-size:1.1rem; font-weight:bold;">Vencimiento día 15</div></div>', unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Línea de Tiempo de Feriados y Eventos
-    st.subheader("🇦🇷 Fechas Históricas y Feriados Inamovibles")
-    
-    with st.expander("🌸 Primer Semestre (Enero - Junio)", expanded=True):
-        st.markdown("""
-        * **8 de Marzo:** Día Internacional de la Mujer Trabajadora (Relevante para Depto. UOCRA Mujeres).
-        * **24 de Marzo:** Día Nacional de la Memoria por la Verdad y la Justicia.
-        * **2 de Abril:** Día del Veterano y de los Caídos en la Guerra de Malvinas.
-        * **🏗️ 22 DE ABRIL: DÍA DEL OBRERO DE LA CONSTRUCCIÓN.** *(Feriado pago no laborable según Art. 19 CCT 76/22).*
-        * **1 de Mayo:** Día del Trabajador.
-        * **25 de Mayo:** Día de la Revolución de Mayo.
-        * **20 de Junio:** Paso a la Inmortalidad del Gral. Manuel Belgrano.
-        * **💰 30 de Junio:** Vencimiento para el pago de la 1° Cuota del SAC (Aguinaldo).
-        """)
-        
-    with st.expander("🍂 Segundo Semestre (Julio - Diciembre)", expanded=False):
-        st.markdown("""
-        * **9 de Julio:** Día de la Independencia.
-        * **17 de Agosto:** Paso a la Inmortalidad del Gral. José de San Martín.
-        * **12 de Octubre:** Día del Respeto a la Diversidad Cultural.
-        * **17 de Octubre:** Día de la Lealtad Peronista.
-        * **20 de Noviembre:** Día de la Soberanía Nacional.
-        * **8 de Diciembre:** Inmaculada Concepción de María.
-        * **💰 18 de Diciembre:** Vencimiento para el pago de la 2° Cuota del SAC (Aguinaldo).
-        * **25 de Diciembre:** Navidad.
-        """)
-        
-    # EL COMANDO MÁGICO: Frena la carga de la página para que no se vean los módulos de abajo
-    st.stop()
-
 # ==========================================
 # MÓDULO 1: MAPA TERRITORIAL
 # ==========================================
