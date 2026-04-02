@@ -277,6 +277,17 @@ def abrir_calendario_flotante():
 
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
+    # 👇 ESTE ES EL BLOQUE DE LA IMAGEN CON TU LINK REAL 👇
+    try:
+        URL_DE_LA_IMAGEN_NUEVA = "https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/main/banner_uocra.jpg"
+        
+        st.image(URL_DE_LA_IMAGEN_NUEVA, use_container_width=True)
+    except:
+        # Por si la imagen tarda en cargar, muestra este texto de respaldo
+        st.markdown("<h3 style='text-align: center; color: #0033A0;'>UOCRA PRESENTE</h3>", unsafe_allow_html=True)
+        
+    st.markdown("---")
+    
     # 1. BOTONES OPERATIVOS JUNTOS ARRIBA
     if st.button("🔄 Actualizar Datos", use_container_width=True):
         st.cache_data.clear()
