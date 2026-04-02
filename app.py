@@ -277,19 +277,18 @@ def abrir_calendario_flotante():
 
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
+    # 1. BOTONES OPERATIVOS JUNTOS ARRIBA
     if st.button("🔄 Actualizar Datos", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
-
-    st.markdown("---")
-    if st.button("📅 Calendario y Feriados", type="primary", use_container_width=True):
-        abrir_calendario_flotante() 
-    st.markdown("---")
 
     if st.button("🚪 Cerrar Sesión", use_container_width=True):
         st.session_state.usuario_rol = None
         st.rerun()
         
+    st.markdown("---")
+        
+    # 2. COMISIÓN DIRECTIVA Y NAVEGACIÓN
     with st.expander("🏛️ Comisión Directiva", expanded=False):
         st.markdown("""
         **1- Sec. Gral:** Roberto Morelli
@@ -317,6 +316,7 @@ with st.sidebar:
         
     opcion = st.radio("Navegación:", opciones_permitidas)
 
+    # 3. ENLACES Y REDES
     st.markdown("---") 
     st.caption("🔗 ENLACES ÚTILES")
     st.markdown("""
@@ -342,6 +342,12 @@ with st.sidebar:
         </a>
     </div>
     """, unsafe_allow_html=True)
+
+    # 👇 4. BOTÓN DEL CALENDARIO ABAJO DE TODO 👇
+    st.markdown("---")
+    if st.button("📅 Calendario y Feriados", type="primary", use_container_width=True):
+        abrir_calendario_flotante()
+
 # ==========================================
 # MÓDULO 1: MAPA TERRITORIAL
 # ==========================================
