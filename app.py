@@ -230,6 +230,89 @@ def obtener_cer(fecha_str=None):
         return None
     except Exception as e:
         return None
+
+# --- FASE 5: CONEXIÓN API FERIADOS Y CALENDARIO MODAL ---
+@st.cache_data(ttl=86400) # Se actualiza 1 vez al día
+def obtener_feriados_argentina():
+    """Busca los feriados nacionales mediante API y suma las fechas UOCRA"""
+    anio_actual = datetime.now().year
+    url = f"https://nolaborables.com.ar/api/v2/feriados/{anio_actual}"
+    
+    lista_fechas = []
+    
+    # 1. Traemos los feriados nacionales
+    try:
+        respuesta = requests.get(url, timeout=5)
+        if respuesta.status_code == 200:
+            feriados_api = respuesta.json()
+            for f in feriados_api:
+                lista_fechas.append({
+                    "motivo": f["motivo"], 
+                    "dia": f["dia"], 
+                    "mes": f["mes"], 
+                    "tipo": "Feriado Nacional",
+                    "color": "#28a745" # Verde
+                })
+    except:
+        pass # Si la API falla, sigue adelante sin romper la página
+        
+    # 2. Inyectamos las fechas Gremiales (UOCRA)
+    fechas_uocra = [
+        {"motivo": "Día del Obrero de la Construcción (CCT 76/22)", "dia": 22, "mes": 4, "tipo": "Día Gremial", "color": "#0033A0"},
+        {"motivo": "Día de la Lealtad Peronista", "dia": 17, "mes": 10, "tipo": "Fecha Histórica", "color": "#0033A0"},
+        {"motivo": "Día Internacional de la Mujer Trabajadora", "dia": 8, "mes": 3, "tipo": "Fecha Histórica", "color": "#8A2BE2"}
+    ]
+    lista_fechas.extend(fechas_uocra)
+    
+    # Ordenamos todo cronológicamente por mes y día
+    lista_fechas.sort(key=lambda x: (x["mes"], x["dia"]))
+    return lista_fechas
+
+# ESTA ES LA MAGIA: @st.dialog crea una ventana flotante (Modal)
+@st.dialog("📅 Calendario Gremial y Feriados Nacionales", width="large")
+def abrir_calendario_flotante():
+    # 1. Tarjetas Fijas de Vencimientos
+    st.markdown("<h4 style='color: #0033A0;'>📌 Vencimientos Operativos Mensuales</h4>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    with c1: st.markdown('<div class="tarjeta-kpi"><div class="kpi-titulo" style="font-size:0.8rem;">1° Quincena</div><div style="font-size:1rem; font-weight:bold;">Días 16 al 20</div></div>', unsafe_allow_html=True)
+    with c2: st.markdown('<div class="tarjeta-kpi"><div class="kpi-titulo" style="font-size:0.8rem;">2° Quincena</div><div style="font-size:1rem; font-weight:bold;">Días 1 al 5</div></div>', unsafe_allow_html=True)
+    with c3: st.markdown('<div class="tarjeta-kpi naranja"><div class="kpi-titulo" style="font-size:0.8rem;">Aportes Sind.</div><div style="font-size:1rem; font-weight:bold;">Vto: Día 15</div></div>', unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # 2. Feriados dinámicos desde la API
+    st.markdown("<h4 style='color: #0033A0;'>🇦🇷 Feriados y Fechas Clave del Año</h4>", unsafe_allow_html=True)
+    
+    feriados = obtener_feriados_argentina()
+    
+    if not feriados:
+        st.warning("⚠️ No se pudo conectar a la base de feriados en este momento.")
+    else:
+        # Meses en texto para que quede más lindo
+        nombres_meses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+        
+        # Armamos una grilla de 2 columnas para las tarjetas
+        col_izq, col_der = st.columns(2)
+        
+        for i, f in enumerate(feriados):
+            mes_texto = nombres_meses[f["mes"]]
+            # CSS para hacer una tarjeta chiquita y prolija
+            tarjeta_html = f"""
+            <div style="border-left: 5px solid {f['color']}; background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div style="color: {f['color']}; font-weight: 900; font-size: 1.2rem; margin-bottom: 5px;">{f['dia']} de {mes_texto}</div>
+                <div style="font-weight: bold; color: #333;">{f['motivo']}</div>
+                <div style="font-size: 0.8rem; color: #666; text-transform: uppercase;">{f['tipo']}</div>
+            </div>
+            """
+            
+            # Repartimos mitad y mitad en las columnas
+            if i % 2 == 0:
+                col_izq.markdown(tarjeta_html, unsafe_allow_html=True)
+            else:
+                col_der.markdown(tarjeta_html, unsafe_allow_html=True)
+    
+
+
     # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
     # Botón para forzar la actualización de datos
@@ -237,7 +320,24 @@ with st.sidebar:
         st.cache_data.clear()
         st.rerun()
 
-   
+with st.sidebar:
+    # Botón para forzar la actualización de datos
+    if st.button("🔄 Actualizar Datos", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+
+    # 👇 NUEVO BOTÓN QUE ABRE EL MODAL (LA VENTANA FLOTANTE) 👇
+    st.markdown("---")
+    if st.button("📅 Calendario y Feriados", type="primary", use_container_width=True):
+        abrir_calendario_flotante() # Llama a la función que dibuja el pop-up
+    st.markdown("---")
+
+    # Botón para cerrar sesión
+    if st.button("🚪 Cerrar Sesión", use_container_width=True):
+        st.session_state.usuario_rol = None
+        st.rerun()
+
+    
     # Botón para cerrar sesión
     if st.button("🚪 Cerrar Sesión", use_container_width=True):
         st.session_state.usuario_rol = None
