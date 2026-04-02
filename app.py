@@ -63,10 +63,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- SISTEMA DE LOGIN (CANDADO) ---
+# --- SISTEMA DE LOGIN Y MEMORIA ---
 if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
-
+# 👇 AGREGAR ESTA LÍNEA 👇
+if 'ver_calendario' not in st.session_state:
+    st.session_state.ver_calendario = False
+    
 if st.session_state.usuario_rol is None:
     # 1. CSS para inyectar la imagen de fondo y la caja transparente
     st.markdown("""
@@ -231,17 +234,23 @@ def obtener_cer(fecha_str=None):
         return None
     # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
-   
     # Botón para forzar la actualización de datos
-    if st.button("🔄 Actualizar Datos"):
+    if st.button("🔄 Actualizar Datos", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
+    # 👇 ESTE ES EL NUEVO BOTÓN DEL CALENDARIO 👇
+    st.markdown("---")
+    if st.button("📅 Ver Calendario Anual", type="primary", use_container_width=True):
+        st.session_state.ver_calendario = True
+        st.rerun()
+    st.markdown("---")
+
     # Botón para cerrar sesión
-    if st.button("🚪 Cerrar Sesión"):
+    if st.button("🚪 Cerrar Sesión", use_container_width=True):
         st.session_state.usuario_rol = None
         st.rerun()
-
+        
     with st.expander("🏛️ Comisión Directiva", expanded=False):
         st.markdown("""
         **1- Sec. Gral:** Roberto Morelli
@@ -305,6 +314,61 @@ with st.sidebar:
         </a>
     </div>
     """, unsafe_allow_html=True)
+
+# ==========================================
+# 📅 PANTALLA SUPERPUESTA: CALENDARIO ANUAL UOCRA
+# ==========================================
+if st.session_state.ver_calendario:
+    st.title("📅 Calendario Anual Gremial - UOCRA")
+    
+    # Botón de regreso
+    if st.button("⬅️ Volver al Sistema Operativo"):
+        st.session_state.ver_calendario = False
+        st.rerun()
+        
+    st.markdown("---")
+    
+    # Fechas Clave Generales (Tarjetas)
+    st.subheader("📌 Vencimientos y Liquidaciones Mensuales")
+    col_c1, col_c2, col_c3 = st.columns(3)
+    with col_c1:
+        st.markdown('<div class="tarjeta-kpi"><div class="kpi-titulo">1° Quincena</div><div style="font-size:1.1rem; font-weight:bold;">Se abona del 16 al 20</div></div>', unsafe_allow_html=True)
+    with col_c2:
+        st.markdown('<div class="tarjeta-kpi"><div class="kpi-titulo">2° Quincena</div><div style="font-size:1.1rem; font-weight:bold;">Se abona del 1 al 5</div></div>', unsafe_allow_html=True)
+    with col_c3:
+        st.markdown('<div class="tarjeta-kpi naranja"><div class="kpi-titulo">Aportes Sindicales</div><div style="font-size:1.1rem; font-weight:bold;">Vencimiento día 15</div></div>', unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Línea de Tiempo de Feriados y Eventos
+    st.subheader("🇦🇷 Fechas Históricas y Feriados Inamovibles")
+    
+    with st.expander("🌸 Primer Semestre (Enero - Junio)", expanded=True):
+        st.markdown("""
+        * **8 de Marzo:** Día Internacional de la Mujer Trabajadora (Relevante para Depto. UOCRA Mujeres).
+        * **24 de Marzo:** Día Nacional de la Memoria por la Verdad y la Justicia.
+        * **2 de Abril:** Día del Veterano y de los Caídos en la Guerra de Malvinas.
+        * **🏗️ 22 DE ABRIL: DÍA DEL OBRERO DE LA CONSTRUCCIÓN.** *(Feriado pago no laborable según Art. 19 CCT 76/22).*
+        * **1 de Mayo:** Día del Trabajador.
+        * **25 de Mayo:** Día de la Revolución de Mayo.
+        * **20 de Junio:** Paso a la Inmortalidad del Gral. Manuel Belgrano.
+        * **💰 30 de Junio:** Vencimiento para el pago de la 1° Cuota del SAC (Aguinaldo).
+        """)
+        
+    with st.expander("🍂 Segundo Semestre (Julio - Diciembre)", expanded=False):
+        st.markdown("""
+        * **9 de Julio:** Día de la Independencia.
+        * **17 de Agosto:** Paso a la Inmortalidad del Gral. José de San Martín.
+        * **12 de Octubre:** Día del Respeto a la Diversidad Cultural.
+        * **17 de Octubre:** Día de la Lealtad Peronista.
+        * **20 de Noviembre:** Día de la Soberanía Nacional.
+        * **8 de Diciembre:** Inmaculada Concepción de María.
+        * **💰 18 de Diciembre:** Vencimiento para el pago de la 2° Cuota del SAC (Aguinaldo).
+        * **25 de Diciembre:** Navidad.
+        """)
+        
+    # EL COMANDO MÁGICO: Frena la carga de la página para que no se vean los módulos de abajo
+    st.stop()
 
 # ==========================================
 # MÓDULO 1: MAPA TERRITORIAL
