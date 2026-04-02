@@ -163,6 +163,7 @@ if 'Mujeres' in df_obras.columns:
     df_obras['Mujeres'] = pd.to_numeric(df_obras['Mujeres'], errors='coerce').fillna(0)
 if 'Obreros' in df_obras.columns: 
     df_obras['Obreros'] = pd.to_numeric(df_obras['Obreros'], errors='coerce').fillna(0)
+df_cierres = cargar_db("Cierres_Quincenales", ["Empresa", "Quincena", "Fechas"])
 
 df_predios = cargar_db("Predios", ["Nombre", "Latitud", "Longitud", "Radio_KM", "Observaciones"])
 for col in ['Latitud', 'Longitud', 'Radio_KM']:
@@ -252,8 +253,37 @@ def abrir_calendario_flotante():
     with c3: st.markdown('<div class="tarjeta-kpi naranja"><div class="kpi-titulo" style="font-size:0.8rem;">Aportes Sind.</div><div style="font-size:1rem; font-weight:bold;">Vto: Día 15</div></div>', unsafe_allow_html=True)
     
     st.markdown("---")
-    st.markdown("<h4 style='color: #0033A0;'>🇦🇷 Feriados y Fechas Clave del Año</h4>", unsafe_allow_html=True)
     
+    st.markdown("<h4 style='color: #0033A0;'>🏭 Cierres Quincenales por Empresa</h4>", unsafe_allow_html=True)
+    
+    if not df_cierres.empty:
+        # Buscamos qué empresas tienen fechas cargadas
+        empresas_con_cierre = sorted(df_cierres['Empresa'].astype(str).str.strip().dropna().unique().tolist())
+        # Filtramos para sacar las filas vacías que a veces Google Sheets lee por error
+        empresas_con_cierre = [emp for emp in empresas_con_cierre if emp != ""]
+
+        if empresas_con_cierre:
+            # Desplegable para elegir la empresa
+            empresa_seleccionada = st.selectbox("Seleccione la empresa registrada para ver su cronograma:", [""] + empresas_con_cierre)
+
+            if empresa_seleccionada:
+                # Filtramos la base para mostrar solo lo de esa empresa
+                df_filtrado = df_cierres[df_cierres['Empresa'] == empresa_seleccionada]
+                
+                # Mostramos los datos en una tabla limpia y profesional
+                st.dataframe(
+                    df_filtrado[['Quincena', 'Fechas']], 
+                    hide_index=True, 
+                    use_container_width=True
+                )
+        else:
+            st.info("No hay cronogramas cargados. Ingrese los datos en la pestaña 'Cierres_Quincenales' del Excel.")
+    else:
+        st.info("La base de cierres quincenales está vacía o no se detectó la pestaña 'Cierres_Quincenales'.")
+
+    st.markdown("---")
+    
+    st.markdown("<h4 style='color: #0033A0;'>🇦🇷 Feriados y Fechas Clave del Año</h4>", unsafe_allow_html=True)
     feriados = obtener_feriados_argentina()
     
     if not feriados:
