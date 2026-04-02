@@ -66,10 +66,8 @@ st.markdown("""
 # --- SISTEMA DE LOGIN Y MEMORIA ---
 if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
-# 👇 AGREGAR ESTA LÍNEA 👇
-if 'ver_calendario' not in st.session_state:
-    st.session_state.ver_calendario = False
-    
+
+
 if st.session_state.usuario_rol is None:
     # 1. CSS para inyectar la imagen de fondo y la caja transparente
     st.markdown("""
@@ -239,13 +237,7 @@ with st.sidebar:
         st.cache_data.clear()
         st.rerun()
 
-    # 👇 ESTE ES EL NUEVO BOTÓN DEL CALENDARIO 👇
-    st.markdown("---")
-    if st.button("📅 Ver Calendario Anual", type="primary", use_container_width=True):
-        st.session_state.ver_calendario = True
-        st.rerun()
-    st.markdown("---")
-
+   
     # Botón para cerrar sesión
     if st.button("🚪 Cerrar Sesión", use_container_width=True):
         st.session_state.usuario_rol = None
@@ -314,6 +306,44 @@ with st.sidebar:
         </a>
     </div>
     """, unsafe_allow_html=True)
+
+# ==========================================
+    # 📅 CALENDARIO ANUAL (AL FINAL DE LA BARRA)
+    # ==========================================
+    st.markdown("---")
+    with st.expander("📅 Calendario Anual UOCRA", expanded=False):
+        st.markdown("<p style='text-align:center; font-weight:bold; color:#0033A0; margin-bottom:5px;'>📌 Vencimientos Mensuales</p>", unsafe_allow_html=True)
+        st.markdown("""
+        * **1° Quincena:** Del 16 al 20.
+        * **2° Quincena:** Del 1 al 5.
+        * **Aportes:** Vencimiento el día 15.
+        """)
+        
+        st.markdown("---")
+        st.markdown("<p style='text-align:center; font-weight:bold; color:#0033A0; margin-bottom:5px;'>🇦🇷 Feriados y Fechas Clave</p>", unsafe_allow_html=True)
+        
+        st.markdown("**🌸 Primer Semestre**")
+        st.markdown("""
+        * **8 Mar:** Día de la Mujer.
+        * **24 Mar:** Memoria, Verdad y Justicia.
+        * **2 Abr:** Caídos en Malvinas.
+        * **🏗️ 22 ABR: DÍA DEL CONSTRUCTOR.**
+        * **1 May:** Día del Trabajador.
+        * **25 May:** Revolución de Mayo.
+        * **20 Jun:** Gral. Manuel Belgrano.
+        * **💰 30 Jun:** Vto. 1° Cuota SAC.
+        """)
+        
+        st.markdown("**🍂 Segundo Semestre**")
+        st.markdown("""
+        * **9 Jul:** Día de la Independencia.
+        * **17 Ago:** Gral. José de San Martín.
+        * **12 Oct:** Diversidad Cultural.
+        * **17 Oct:** Día de la Lealtad.
+        * **20 Nov:** Soberanía Nacional.
+        * **8 Dic:** Inmaculada Concepción.
+        * **💰 18 Dic:** Vto. 2° Cuota SAC.
+        """)
 
 # ==========================================
 # 📅 PANTALLA SUPERPUESTA: CALENDARIO ANUAL UOCRA
