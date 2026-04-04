@@ -434,8 +434,6 @@ opciones_totales = [
     else:
         opciones_permitidas = opciones_totales
         
-    opcion = st.radio("Navegación:", opciones_permitidas)
-
     # 3. ENLACES Y REDES
     st.markdown("---") 
     st.caption("🔗 ENLACES ÚTILES")
