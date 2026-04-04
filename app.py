@@ -241,16 +241,54 @@ def obtener_feriados_argentina():
     lista_fechas.sort(key=lambda x: (x["mes"], x["dia"]))
     return lista_fechas
 
+# ESTA ES LA MAGIA: @st.dialog crea una ventana flotante (Modal)
 @st.dialog("📅 Calendario Gremial y Feriados Nacionales", width="large")
 def abrir_calendario_flotante():
-    st.markdown("<h4 style='color: #0033A0;'>📌 Vencimientos Operativos Mensuales</h4>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    with c1: st.markdown('<div class="tarjeta-kpi"><div class="kpi-titulo" style="font-size:0.8rem;">1° Quincena</div><div style="font-size:1rem; font-weight:bold;">Días 16 al 20</div></div>', unsafe_allow_html=True)
-    with c2: st.markdown('<div class="tarjeta-kpi"><div class="kpi-titulo" style="font-size:0.8rem;">2° Quincena</div><div style="font-size:1rem; font-weight:bold;">Días 1 al 5</div></div>', unsafe_allow_html=True)
-    with c3: st.markdown('<div class="tarjeta-kpi naranja"><div class="kpi-titulo" style="font-size:0.8rem;">Aportes Sind.</div><div style="font-size:1rem; font-weight:bold;">Vto: Día 15</div></div>', unsafe_allow_html=True)
+    hoy = datetime.now()
+    anio_actual = hoy.year
+    feriados = obtener_feriados_argentina()
+    nombres_meses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+
+    # ==========================================
+    # 1. RADAR: PRÓXIMOS 3 EVENTOS
+    # ==========================================
+    st.markdown("<h4 style='color: #0033A0;'>⏳ Próximos Feriados y Fechas Clave</h4>", unsafe_allow_html=True)
     
+    proximos_eventos = []
+    if feriados:
+        for f in feriados:
+            try:
+                # Armamos la fecha real del feriado para compararla con la de hoy
+                fecha_f = datetime(anio_actual, f["mes"], f["dia"])
+                if fecha_f.date() >= hoy.date():
+                    proximos_eventos.append(f)
+            except ValueError:
+                pass # Por si hay errores de fecha bisiesta
+        
+        # Cortamos la lista para mostrar solo los siguientes 3
+        proximos_eventos = proximos_eventos[:3]
+
+    if not proximos_eventos:
+        st.info("No hay feriados o eventos registrados próximamente.")
+    else:
+        # Creamos la cantidad de columnas exacta según los eventos que queden
+        cols_prox = st.columns(len(proximos_eventos))
+        for i, f in enumerate(proximos_eventos):
+            mes_texto = nombres_meses[f["mes"]]
+            with cols_prox[i]:
+                st.markdown(f'''
+                <div style="border-left: 5px solid {f['color']}; background-color: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08);">
+                    <div style="color: {f['color']}; font-weight: 900; font-size: 1.1rem; margin-bottom: 5px;">{f['dia']} de {mes_texto}</div>
+                    <div style="font-weight: bold; color: #333; font-size: 0.9rem;">{f['motivo']}</div>
+                    <div style="font-size: 0.75rem; color: #666; text-transform: uppercase; margin-top: 5px;">{f['tipo']}</div>
+                </div>
+                ''', unsafe_allow_html=True)
+
     st.markdown("---")
     
+    # ==========================================
+    # 2. CIERRES QUINCENALES POR EMPRESA
+    # ==========================================
     st.markdown("<h4 style='color: #0033A0;'>🏭 Cierres Quincenales por Empresa</h4>", unsafe_allow_html=True)
     
     if not df_cierres.empty:
@@ -265,21 +303,19 @@ def abrir_calendario_flotante():
                 
                 st.markdown(f"<p style='text-align:center; color:#666; font-size:0.95rem; margin-top: 10px;'>Cronograma oficial de <b>{empresa_seleccionada}</b></p>", unsafe_allow_html=True)
                 
-                # Generamos una grilla de 4 columnas para acomodar los meses prolijamente
+                # Grilla de 4 columnas
                 cols_q = st.columns(4)
                 
                 for i, (_, row) in enumerate(df_filtrado.iterrows()):
                     q_nom = str(row.get('Quincena', ''))
                     q_fec = str(row.get('Fechas', ''))
                     
-                    # CSS para una tarjeta chiquita, con borde azul superior
                     tarjeta_q = f"""
                     <div style="border-top: 4px solid #0033A0; background-color: #f4f6f9; padding: 12px; border-radius: 6px; margin-bottom: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <div style="color: #0033A0; font-weight: 900; font-size: 0.85rem; text-transform: uppercase;">{q_nom}</div>
                         <div style="color: #333; font-weight: 600; font-size: 0.8rem; margin-top: 5px;">{q_fec}</div>
                     </div>
                     """
-                    # Repartimos las tarjetas en las 4 columnas
                     cols_q[i % 4].markdown(tarjeta_q, unsafe_allow_html=True)
         else:
             st.info("No hay cronogramas cargados. Ingrese los datos en la pestaña 'Cierres_Quincenales' del Excel.")
@@ -288,27 +324,27 @@ def abrir_calendario_flotante():
 
     st.markdown("---")
     
-    st.markdown("<h4 style='color: #0033A0;'>🇦🇷 Feriados y Fechas Clave del Año</h4>", unsafe_allow_html=True)
-    feriados = obtener_feriados_argentina()
-    
-    if not feriados:
-        st.warning("⚠️ No se pudo conectar a la base de feriados en este momento.")
-    else:
-        nombres_meses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-        col_izq, col_der = st.columns(2)
-        for i, f in enumerate(feriados):
-            mes_texto = nombres_meses[f["mes"]]
-            tarjeta_html = f"""
-            <div style="border-left: 5px solid {f['color']}; background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <div style="color: {f['color']}; font-weight: 900; font-size: 1.2rem; margin-bottom: 5px;">{f['dia']} de {mes_texto}</div>
-                <div style="font-weight: bold; color: #333;">{f['motivo']}</div>
-                <div style="font-size: 0.8rem; color: #666; text-transform: uppercase;">{f['tipo']}</div>
-            </div>
-            """
-            if i % 2 == 0:
-                col_izq.markdown(tarjeta_html, unsafe_allow_html=True)
-            else:
-                col_der.markdown(tarjeta_html, unsafe_allow_html=True)
+    # ==========================================
+    # 3. AGENDA ANUAL COMPLETA (ACORDEÓN)
+    # ==========================================
+    with st.expander("🗓️ Ver Calendario Anual Completo (Todos los feriados)", expanded=False):
+        if not feriados:
+            st.warning("⚠️ No se pudo conectar a la base de feriados en este momento.")
+        else:
+            col_izq, col_der = st.columns(2)
+            for i, f in enumerate(feriados):
+                mes_texto = nombres_meses[f["mes"]]
+                tarjeta_html = f"""
+                <div style="border-left: 5px solid {f['color']}; background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="color: {f['color']}; font-weight: 900; font-size: 1.1rem; margin-bottom: 5px;">{f['dia']} de {mes_texto}</div>
+                    <div style="font-weight: bold; color: #333;">{f['motivo']}</div>
+                    <div style="font-size: 0.8rem; color: #666; text-transform: uppercase;">{f['tipo']}</div>
+                </div>
+                """
+                if i % 2 == 0:
+                    col_izq.markdown(tarjeta_html, unsafe_allow_html=True)
+                else:
+                    col_der.markdown(tarjeta_html, unsafe_allow_html=True)
 
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
