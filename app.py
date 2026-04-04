@@ -1507,28 +1507,44 @@ elif opcion == "9. 📸 Galería Multimedia":
         
         st.caption("▶️ Dele play al video para reproducirlo aquí mismo, o haga clic en el ícono de 'ventana emergente' arriba a la derecha del reproductor para verlo en pantalla completa.")
 
-elif opcion == "10. 🤖 Asistente Virtual":
+
+# ==========================================
+# MÓDULO 10: Asistente Virtual
+# ==========================================elif opcion == "10. 🤖 Asistente Virtual":
     st.title("🤖 Asistente Técnico Gremial")
+    
+    # ==========================================
+    # 🧠 PANEL DE APRENDIZAJE (SOLO ADMIN)
+    # ==========================================
+    if st.session_state.usuario_rol == "Admin":
+        with st.expander("🧠 Enseñar nueva regla a la Inteligencia Artificial", expanded=False):
+            st.markdown("<p style='font-size:0.9rem; color:#666;'>Inyectá nuevos conocimientos, normativas o correcciones. La IA lo recordará para siempre.</p>", unsafe_allow_html=True)
+            with st.form("form_nueva_regla", clear_on_submit=True):
+                n_regla = st.text_area("Nueva Regla o Dato (Ej: 'La vianda a partir de mayo sube a $15.000'):*")
+                n_contexto = st.text_input("Contexto / Etiqueta (Ej: Paritarias 2026):")
+                
+                if st.form_submit_button("💾 Inyectar al Cerebro de la IA"):
+                    if not n_regla.strip():
+                        st.error("❌ Escribí una regla válida.")
+                    else:
+                        fecha_hoy = datetime.now().strftime("%d/%m/%Y")
+                        nueva_memoria = pd.DataFrame([{"Fecha": fecha_hoy, "Regla": n_regla.strip(), "Contexto": n_contexto.strip()}])
+                        
+                        # Guardamos en la variable global y mandamos al Excel
+                        df_cerebro = pd.concat([df_cerebro, nueva_memoria], ignore_index=True)
+                        guardar_db(df_cerebro, "Cerebro_IA")
+                        
+                        st.success("✅ ¡Conocimiento asimilado! La IA acaba de volverse más inteligente.")
+                        import time
+                        time.sleep(1.5)
+                        st.rerun()
+                        
     st.markdown("---")
 
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        
-        # ==========================================
-        # 📜 EL CEREBRO BASE Y MEMORIA EVOLUTIVA
-        # ==========================================
-        # 1. Extraemos las reglas de Google Sheets
-        memoria_ia = ""
-        if not df_cerebro.empty:
-            for _, row in df_cerebro.iterrows():
-                regla = str(row.get('Regla', '')).strip()
-                if regla:
-                    memoria_ia += f"- REGLA: {regla}\n"
-        
-        if memoria_ia == "":
-            memoria_ia = "- Sin reglas adicionales por el momento."
 
-# ==========================================
+       # ==========================================
         # 📜 EL CEREBRO BASE Y MEMORIA EVOLUTIVA
         # ==========================================
         # 1. Extraemos las reglas de Google Sheets
