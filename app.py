@@ -421,8 +421,7 @@ with st.sidebar:
         
         **5- Sec. Finanzas:** Roberto Oviedo
         """)
-        
-opciones_totales = [
+        opciones_totales = [
         "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
         "3. 📋 Nóminas", "4. 🧮 Calculadoras", "5. ⚠️ Reclamos",
         "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios y Documentación", "8. 📊 Estadísticas",
@@ -434,6 +433,8 @@ opciones_totales = [
     else:
         opciones_permitidas = opciones_totales
         
+    opcion = st.radio("Navegación:", opciones_permitidas)
+    
     # 3. ENLACES Y REDES
     st.markdown("---") 
     st.caption("🔗 ENLACES ÚTILES")
