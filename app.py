@@ -1510,7 +1510,8 @@ elif opcion == "9. 📸 Galería Multimedia":
 
 # ==========================================
 # MÓDULO 10: Asistente Virtual
-# ==========================================elif opcion == "10. 🤖 Asistente Virtual":
+# ==========================================
+elif opcion == "10. 🤖 Asistente Virtual":
     st.title("🤖 Asistente Técnico Gremial")
     
     # ==========================================
@@ -1544,10 +1545,9 @@ elif opcion == "9. 📸 Galería Multimedia":
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-       # ==========================================
+        # ==========================================
         # 📜 EL CEREBRO BASE Y MEMORIA EVOLUTIVA
         # ==========================================
-        # 1. Extraemos las reglas de Google Sheets
         memoria_ia = ""
         if not df_cerebro.empty:
             for _, row in df_cerebro.iterrows():
@@ -1605,61 +1605,49 @@ elif opcion == "9. 📸 Galería Multimedia":
                 try:
                     with st.spinner("Creando plan de acción y filtrando bases de datos..."):
                         
-                        # ==========================================
-                        # 🧠 PLAN DE ACCIÓN (ENRUTADOR SEMÁNTICO)
-                        # Identificamos qué pestañas necesita leer según la pregunta
-                        # ==========================================
                         prompt_min = prompt.lower()
                         contexto_inyectado = ""
 
-                        # 1. ¿Pregunta por obras, predios o estado territorial?
                         if any(palabra in prompt_min for palabra in ["obra", "predio", "empresa", "estado", "activa", "finalizada", "obreros"]):
                             if not df_obras.empty:
                                 contexto_inyectado += "\n[TABLA OBRAS ACTIVAS Y DELEGADOS]\n" + df_obras[['Predio', 'Empresa', 'Delegado', 'Estado', 'Obreros']].fillna("S/D").to_string(index=False) + "\n"
                         
-                        # 2. ¿Pregunta por compañeros, teléfonos o contactos?
                         if any(palabra in prompt_min for palabra in ["delegado", "tel", "celular", "cuil", "numero", "contacto", "rrhh", "recursos humanos"]):
                             if not df_delegados.empty:
                                 contexto_inyectado += "\n[PADRÓN DELEGADOS (TELÉFONOS/CUIL)]\n" + df_delegados[['Nombre', 'Celular', 'CUIL']].fillna("S/D").to_string(index=False) + "\n"
                             if not df_contactos.empty:
                                 contexto_inyectado += "\n[CONTACTOS EMPRESARIALES (RRHH)]\n" + df_contactos[['Nombre', 'Cargo', 'Empresa']].fillna("S/D").to_string(index=False) + "\n"
 
-                        # 3. ¿Pregunta por paritarias extra o convenios específicos?
                         if any(palabra in prompt_min for palabra in ["convenio", "paritaria", "plus", "acuerdo", "escala"]):
                             if not df_convenios.empty:
                                 contexto_inyectado += "\n[CONVENIOS Y PARITARIAS POR EMPRESA]\n" + df_convenios[['Empresa', 'Detalle_Convenio', 'monto $', 'Monto %', 'Vigencia']].fillna("-").to_string(index=False) + "\n"
 
-                        # 4. ¿Pregunta por problemas o reclamos activos?
                         if any(palabra in prompt_min for palabra in ["reclamo", "queja", "motivo", "problema", "conflicto"]):
                             if not df_reclamos.empty:
                                 contexto_inyectado += "\n[RECLAMOS GREMIALES ACTIVOS]\n" + df_reclamos[['Nombre', 'Empresa', 'Motivo', 'Estado']].fillna("S/D").to_string(index=False) + "\n"
 
-                        # 5. ¿Pregunta por UOCRA Mujeres o Eventos?
                         if any(palabra in prompt_min for palabra in ["mujer", "mujeres", "evento", "cupo", "actividad", "agenda"]):
                             if not df_eventos.empty:
                                 contexto_inyectado += "\n[AGENDA UOCRA MUJERES (EVENTOS)]\n" + df_eventos[['Titulo', 'Fecha', 'Observaciones']].fillna("S/D").to_string(index=False) + "\n"
 
-                        # ==========================================
-                        # 🎯 INYECCIÓN FINAL
-                        # ==========================================
                         if contexto_inyectado != "":
-                            # Si detectó necesidad de datos, se los pasamos ocultos en su instrucción.
                             prompt_final_ia = f"INSTRUCCIÓN INTERNA DE SISTEMAS: El usuario requiere información específica. Búscala en estas tablas extraídas en tiempo real:\n{contexto_inyectado}\n\nCONSULTA DEL USUARIO:\n{prompt}"
                         else:
-                            # Si es una pregunta técnica genérica (Ej: "¿Cómo calculo el presentismo?"), no mandamos tablas pesadas.
                             prompt_final_ia = prompt
 
+                        # MANDAMOS AL CHAT USANDO LA MEMORIA DE LA SESIÓN
                         respuesta = st.session_state.chat_session.send_message(prompt_final_ia)
                         st.markdown(respuesta.text)
                         st.session_state.mensajes_ui.append({"rol": "assistant", "contenido": respuesta.text})
                         
                 except Exception as e_api:
                     st.error(f"❌ Error de conexión con el motor: {e_api}")
-                    st.info("💡 Tip: Si el error persiste, probá el botón 'Actualizar Datos' en la barra lateral.")
+                    st.info("💡 Tip: Probá refrescar la página o limpiar el historial de la IA.")
 
     except Exception as e_config:
         st.error("⚠️ Error en el acceso a la Inteligencia Artificial.")
         st.info("Verificá que la GEMINI_API_KEY en los Secrets de Streamlit sea la correcta.")
+
 
 # ==========================================
 # MÓDULO 11: AUDITORÍA DE DATOS (RANKING DE MAYOR A MENOR)
