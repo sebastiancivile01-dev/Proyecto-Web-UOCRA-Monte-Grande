@@ -908,7 +908,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
 # ==========================================
 # MÓDULO 3: NÓMINAS
 # ==========================================
-elif opcion == "3. 📋 Nóminas Consolidadas":
+elif opcion == "3. 📋 Nóminas":
     st.title("📋 Repositorio de Bases de Datos")
     
     # 1. Tarjetas de Resumen
@@ -1154,7 +1154,7 @@ elif opcion == "4. 🧮 Calculadoras":
 # ==========================================
 # MÓDULO 5: REPOSITORIO DE RECLAMOS
 # ==========================================
-elif opcion == "5. ⚠️ Repositorio de Reclamos":
+elif opcion == "5. ⚠️ Reclamos":
     st.title("⚠️ Gestión de Reclamos Gremiales")
     tab_r_nuevo, tab_r_bd = st.tabs(["➕ Ingresar Reclamo Manual", "📋 Historial de Reclamos"])
     
@@ -1287,91 +1287,152 @@ elif opcion == "6. 💜 UOCRA Mujeres":
         if not df_eventos.empty:
             st.dataframe(df_eventos, use_container_width=True)
 # ==========================================
-# MÓDULO 7: CONVENIOS POR EMPRESA (FASE 5)
+# MÓDULO 7: CONVENIOS Y DOCUMENTACIÓN
 # ==========================================
-elif opcion == "7. 🤝 Convenios por Empresa":
-    st.title("🤝 Repositorio de Convenios y Paritarias")
-    st.markdown("Módulo exclusivo para la Comisión Directiva.")
+elif opcion == "7. 🤝 Convenios y Documentación":
+    st.title("🤝 Convenios y Documentación")
+    st.markdown("Repositorio oficial de actas, paritarias y documentos de la Seccional.")
     
-    tab_n_conv, tab_ver_conv = st.tabs(["➕ Gestionar Convenio", "📋 Ver Convenios Cargados"])
+    seccion_elegida = st.radio("Seleccione el apartado a gestionar:", ["1️⃣ Convenios", "2️⃣ Documentación"], horizontal=True)
+    st.markdown("---")
     
-    with tab_n_conv:
-        acc_conv = st.radio("Acción:", ["➕ Nuevo Convenio", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
-        if acc_conv == "➕ Nuevo Convenio":
-            with st.form("f_n_conv", clear_on_submit=True):
-                col1, col2 = st.columns(2)
-                with col1:
-                    c_emp = st.selectbox("Empresa:*", [""] + lista_empresas_historicas)
-                    # 👇 ACÁ ESTABA EL ERROR: Decía c_cct, ahora dice c_vig 👇
-                    c_vig = st.text_input("Vigencia (Ej: Marzo 2026 - Mayo 2026):")
-                with col2:
-                    c_monto = st.text_input("Monto Extra $:")
-                    c_porc = st.text_input("Monto Extra %:")
-                
-                c_det = st.text_area("Detalles de Escala / CCT (Descripción):*")
-                
-                if st.form_submit_button("💾 Guardar Convenio"):
-                    if not c_emp or not c_det:
-                        st.error("❌ Empresa y Detalles son campos obligatorios.")
-                    else:
-                        nuevo_conv = pd.DataFrame([{
-                            "Empresa": c_emp, "Detalle_Convenio": c_det, 
-                            "monto $": c_monto, "Monto %": c_porc, "Vigencia": c_vig
-                        }])
-                        df_convenios = pd.concat([df_convenios, nuevo_conv], ignore_index=True)
-                        guardar_db(df_convenios, "Convenios")
-                        st.success("✅ Convenio registrado.")
-                        st.rerun()
-        elif acc_conv == "✏️ Modificar":
-            if not df_convenios.empty:
-                opciones_c = df_convenios['Empresa'] + " - " + df_convenios['Vigencia']
-                c_ed = st.selectbox("Seleccione el Convenio:", opciones_c.tolist())
-                if c_ed:
-                    idx = opciones_c.tolist().index(c_ed)
-                    dat = df_convenios.loc[idx]
-                    with st.form("f_e_conv"):
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            e_emp = st.text_input("Empresa:*", value=str(dat.get('Empresa', '')))
-                            e_vig = st.text_input("Vigencia:", value=str(dat.get('Vigencia', '')))
-                        with col2:
-                            e_monto = st.text_input("Monto Extra $:", value=str(dat.get('monto $', '')))
-                            e_porc = st.text_input("Monto Extra %:", value=str(dat.get('Monto %', '')))
-                        e_det = st.text_area("Detalles de Escala / CCT:*", value=str(dat.get('Detalle_Convenio', '')))
-                        
-                        if st.form_submit_button("🔄 Actualizar"):
-                            df_convenios.at[idx, 'Empresa'] = e_emp
-                            df_convenios.at[idx, 'Detalle_Convenio'] = e_det
-                            df_convenios.at[idx, 'monto $'] = e_monto
-                            df_convenios.at[idx, 'Monto %'] = e_porc
-                            df_convenios.at[idx, 'Vigencia'] = e_vig
+    if seccion_elegida == "1️⃣ Convenios":
+        tab_n_conv, tab_ver_conv = st.tabs(["➕ Gestionar Convenio", "📋 Ver Convenios Cargados"])
+        
+        with tab_n_conv:
+            acc_conv = st.radio("Acción:", ["➕ Nuevo Convenio", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
+            if acc_conv == "➕ Nuevo Convenio":
+                with st.form("f_n_conv", clear_on_submit=True):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        c_emp = st.selectbox("Empresa:*", [""] + lista_empresas_historicas)
+                        c_vig = st.text_input("Vigencia (Ej: Marzo 2026 - Mayo 2026):")
+                    with col2:
+                        c_monto = st.text_input("Monto Extra $:")
+                        c_porc = st.text_input("Monto Extra %:")
+                    
+                    c_det = st.text_area("Detalles de Escala / CCT (Descripción):*")
+                    c_link = st.text_input("🔗 Cargar Archivo de Respaldo (Pegue el Link del PDF/Drive):")
+                    
+                    if st.form_submit_button("💾 Guardar Convenio"):
+                        if not c_emp or not c_det:
+                            st.error("❌ Empresa y Detalles son obligatorios.")
+                        else:
+                            nuevo_conv = pd.DataFrame([{
+                                "Empresa": c_emp, "Detalle_Convenio": c_det, 
+                                "monto $": c_monto, "Monto %": c_porc, "Vigencia": c_vig, "Link_PDF": c_link
+                            }])
+                            df_convenios = pd.concat([df_convenios, nuevo_conv], ignore_index=True)
                             guardar_db(df_convenios, "Convenios")
-                            st.success("✅ Actualizado.")
+                            st.success("✅ Convenio registrado exitosamente.")
                             st.rerun()
+
+            elif acc_conv == "✏️ Modificar":
+                if not df_convenios.empty:
+                    opciones_c = df_convenios['Empresa'] + " - " + df_convenios['Vigencia']
+                    c_ed = st.selectbox("Seleccione el Convenio:", opciones_c.tolist())
+                    if c_ed:
+                        idx = opciones_c.tolist().index(c_ed)
+                        dat = df_convenios.loc[idx]
+                        with st.form("f_e_conv"):
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                e_emp = st.text_input("Empresa:*", value=str(dat.get('Empresa', '')))
+                                e_vig = st.text_input("Vigencia:", value=str(dat.get('Vigencia', '')))
+                            with col2:
+                                e_monto = st.text_input("Monto Extra $:", value=str(dat.get('monto $', '')))
+                                e_porc = st.text_input("Monto Extra %:", value=str(dat.get('Monto %', '')))
+                            e_det = st.text_area("Detalles de Escala / CCT:*", value=str(dat.get('Detalle_Convenio', '')))
+                            e_link = st.text_input("🔗 Archivo de Respaldo (Link PDF):", value=str(dat.get('Link_PDF', '')))
                             
-        elif acc_conv == "🗑️ Eliminar":
-            if not df_convenios.empty:
-                opciones_el = [""] + (df_convenios['Empresa'] + " - " + df_convenios['Vigencia']).tolist()
-                c_el = st.selectbox("Borrar:", opciones_el)
-                if st.button("🗑️ Eliminar") and c_el != "":
-                    idx_el = opciones_el.index(c_el) - 1
-                    df_convenios = df_convenios.drop(df_convenios.index[idx_el])
-                    guardar_db(df_convenios, "Convenios")
-                    st.success("Eliminado.")
-                    st.rerun()
+                            if st.form_submit_button("🔄 Actualizar"):
+                                df_convenios.at[idx, 'Empresa'] = e_emp
+                                df_convenios.at[idx, 'Detalle_Convenio'] = e_det
+                                df_convenios.at[idx, 'monto $'] = e_monto
+                                df_convenios.at[idx, 'Monto %'] = e_porc
+                                df_convenios.at[idx, 'Vigencia'] = e_vig
+                                df_convenios.at[idx, 'Link_PDF'] = e_link
+                                guardar_db(df_convenios, "Convenios")
+                                st.success("✅ Actualizado.")
+                                st.rerun()
+                                
+            elif acc_conv == "🗑️ Eliminar":
+                if not df_convenios.empty:
+                    opciones_el = [""] + (df_convenios['Empresa'] + " - " + df_convenios['Vigencia']).tolist()
+                    c_el = st.selectbox("Borrar:", opciones_el)
+                    if st.button("🗑️ Eliminar") and c_el != "":
+                        idx_el = opciones_el.index(c_el) - 1
+                        df_convenios = df_convenios.drop(df_convenios.index[idx_el])
+                        guardar_db(df_convenios, "Convenios")
+                        st.success("Eliminado.")
+                        st.rerun()
 
-    with tab_ver_conv:
-        st.write("Buscador de convenios por empresa.")
-        busq_c = st.text_input("🔍 Buscar Empresa:", key="b_conv")
-        df_mostrar_conv = df_convenios.copy()
-        if busq_c:
-            df_mostrar_conv = df_mostrar_conv[df_mostrar_conv['Empresa'].str.contains(busq_c, case=False, na=False)]
-        st.dataframe(df_mostrar_conv, use_container_width=True)
+        with tab_ver_conv:
+            busq_c = st.text_input("🔍 Buscar Empresa:", key="b_conv")
+            df_mostrar_conv = df_convenios.copy()
+            if busq_c:
+                df_mostrar_conv = df_mostrar_conv[df_mostrar_conv['Empresa'].str.contains(busq_c, case=False, na=False)]
+            
+            for _, row in df_mostrar_conv.iterrows():
+                with st.expander(f"🏢 {row.get('Empresa', '')} | Vigencia: {row.get('Vigencia', '')}"):
+                    st.write(f"**Detalle:** {row.get('Detalle_Convenio', '')}")
+                    st.write(f"**Monto $:** {row.get('monto $', '-')} | **Monto %:** {row.get('Monto %', '-')}")
+                    link_pdf = str(row.get('Link_PDF', '')).strip()
+                    if link_pdf and link_pdf.startswith("http"):
+                        st.markdown(f'<a href="{link_pdf}" target="_blank" style="display: inline-block; padding: 8px 16px; background-color: #0033A0; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">📄 Abrir Documento PDF</a>', unsafe_allow_html=True)
 
+    elif seccion_elegida == "2️⃣ Documentación":
+        tab_subir, tab_ver = st.tabs(["📤 Cargar Documento", "📚 Ver Documentación"])
+        
+        with tab_subir:
+            with st.form("form_doc", clear_on_submit=True):
+                d_tit = st.text_input("Título del Documento:*")
+                
+                col_d1, col_d2 = st.columns(2)
+                with col_d1:
+                    d_fec = st.date_input("Fecha:", format="DD/MM/YYYY")
+                with col_d2:
+                    d_vig = st.text_input("Vigencia (Opcional):")
+                    
+                d_obs = st.text_area("Observaciones (Opcional):")
+                d_link = st.text_input("🔗 Cargar Archivo (Pegue el Link del PDF/Drive):*")
+                
+                if st.form_submit_button("💾 Guardar Documento"):
+                    if not d_tit or not d_link:
+                        st.error("❌ Título y Link del archivo son obligatorios.")
+                    else:
+                        nuevo_doc = pd.DataFrame([{
+                            "Titulo": d_tit, "Fecha": d_fec.strftime("%d/%m/%Y"), 
+                            "Vigencia": d_vig, "Observaciones": d_obs, "Link_PDF": d_link
+                        }])
+                        df_documentos = pd.concat([df_documentos, nuevo_doc], ignore_index=True)
+                        guardar_db(df_documentos, "Documentos")
+                        st.success("✅ ¡Documento guardado!")
+                        st.rerun()
+
+        with tab_ver:
+            if df_documentos.empty:
+                st.info("No hay documentos subidos todavía.")
+            else:
+                b_doc = st.text_input("🔍 Buscar por Título:")
+                df_doc_view = df_documentos.copy()
+                if b_doc:
+                    df_doc_view = df_doc_view[df_doc_view['Titulo'].str.contains(b_doc, case=False, na=False)]
+                
+                for _, doc in df_doc_view.iterrows():
+                    st.markdown(f"""
+                    <div style="border-left: 5px solid #0033A0; padding: 15px; background-color: #f8f9fa; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="color: #666; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">📅 {doc.get('Fecha', '')} | Vigencia: {doc.get('Vigencia', 'N/A')}</div>
+                        <div style="color: #0033A0; font-size: 1.2rem; font-weight: 900; margin-top: 5px;">{doc.get('Titulo', '')}</div>
+                        <div style="color: #333; margin-top: 5px;"><i>"{doc.get('Observaciones', '')}"</i></div>
+                        <br>
+                        <a href="{doc.get('Link_PDF', '#')}" target="_blank" style="background-color: #28a745; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 0.9rem;">📥 Abrir Archivo</a>
+                    </div>
+                    """, unsafe_allow_html=True)
 # ==========================================
 # MÓDULO 8: TABLERO DE CONTROL
 # ==========================================
-elif opcion == "8. 📊 Tablero de Control":
+elif opcion == "8. 📊 Estadísticas":
     st.title("📊 Tablero de Control y Estadísticas")
     st.markdown("Visión analítica general de la Jurisdicción Esteban Echeverría.")
     
@@ -1511,7 +1572,7 @@ elif opcion == "9. 📸 Galería Multimedia":
 # ==========================================
 # MÓDULO 10: Asistente Virtual
 # ==========================================
-elif opcion == "10. 🤖 Asistente Virtual":
+elif opcion == "10. 🤖 Chat GPT UOCRA":
     st.title("🤖 Asistente Técnico Gremial")
     
     # ==========================================
@@ -1652,7 +1713,7 @@ elif opcion == "10. 🤖 Asistente Virtual":
 # ==========================================
 # MÓDULO 11: AUDITORÍA DE DATOS (RANKING DE MAYOR A MENOR)
 # ==========================================
-elif opcion == "11. 🧹 Auditoría de Datos":
+elif opcion == "11. 🧹 Auditoría":
     st.title("🧹 Auditoría y Calidad de Datos")
     st.markdown("Radar automático de celdas vacías ordenado por el responsable con mayor cantidad de faltantes.")
     st.markdown("---")
