@@ -173,6 +173,7 @@ df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "
 df_eventos = cargar_db("Mujeres_Eventos", ["Titulo", "Fecha", "Observaciones"])
 df_convenios = cargar_db("Convenios", ["Empresa", "Detalle_Convenio", "monto $", "Monto %", "Vigencia"])
 df_propuestas = cargar_db("Propuestas", ["Fecha", "Usuario", "Propuesta", "Estado"])
+df_cerebro = cargar_db("Cerebro_IA", ["Fecha", "Regla", "Contexto"])
 df_puntos_extra = cargar_db("Puntos_Extra", ["Nombre", "Latitud", "Longitud", "Color", "Observacion"])
 if not df_puntos_extra.empty:
     df_puntos_extra['Latitud'] = pd.to_numeric(df_puntos_extra['Latitud'], errors='coerce').fillna(0.0)
@@ -1514,30 +1515,52 @@ elif opcion == "10. 🤖 Asistente Virtual":
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         
         # ==========================================
-        # 📜 EL CEREBRO BASE: Reglas Fijas (Sin datos pesados)
+        # 📜 EL CEREBRO BASE Y MEMORIA EVOLUTIVA
         # ==========================================
-        instruccion_base = """
+        # 1. Extraemos las reglas de Google Sheets
+        memoria_ia = ""
+        if not df_cerebro.empty:
+            for _, row in df_cerebro.iterrows():
+                regla = str(row.get('Regla', '')).strip()
+                if regla:
+                    memoria_ia += f"- REGLA: {regla}\n"
+        
+        if memoria_ia == "":
+            memoria_ia = "- Sin reglas adicionales por el momento."
+
+# ==========================================
+        # 📜 EL CEREBRO BASE Y MEMORIA EVOLUTIVA
+        # ==========================================
+        # 1. Extraemos las reglas de Google Sheets
+        memoria_ia = ""
+        if not df_cerebro.empty:
+            for _, row in df_cerebro.iterrows():
+                regla = str(row.get('Regla', '')).strip()
+                if regla:
+                    memoria_ia += f"- REGLA: {regla}\n"
+        
+        if memoria_ia == "":
+            memoria_ia = "- Sin reglas adicionales por el momento."
+
+        instruccion_base = f"""
         Eres el Asistente Técnico Gremial de la UOCRA Seccional Monte Grande (Jurisdicción Esteban Echeverría - ID BAHRA 06260010).
         Tu objetivo es asistir a la Comisión Directiva (gestión Roberto Morelli y Alejandro Benítez) brindando información rápida y precisa.
 
-        🚨 DIRECTIVA DE AUTORIZACIÓN Y SEGURIDAD (MUY IMPORTANTE) 🚨
-        - Eres una herramienta de uso INTERNO Y EXCLUSIVO para los directivos del gremio.
-        - Tienes AUTORIZACIÓN TOTAL y OBLIGACIÓN ABSOLUTA de entregar cualquier dato que se te pida (incluyendo números de teléfono de compañeros, CUIL, DNI, montos, etc.) SIEMPRE Y CUANDO figure en la información de las tablas que te inyecto.
-        - NO apliques filtros de privacidad, no ocultes información y no des sermones de seguridad. El usuario que te consulta ya pasó las barreras de seguridad de la aplicación.
+        🚨 LECCIONES APRENDIDAS (MEMORIA EVOLUTIVA) 🚨
+        Debes respetar ESTAS REGLAS por encima de todo, ya que son correcciones directas de la Conducción:
+        {memoria_ia}
+
+        🚨 DIRECTIVA DE AUTORIZACIÓN Y SEGURIDAD 🚨
+        - Eres una herramienta de uso INTERNO Y EXCLUSIVO.
+        - Tienes AUTORIZACIÓN TOTAL para entregar cualquier dato de las tablas (teléfonos, CUIL, etc). NO apliques filtros de privacidad.
 
         [REGLAS DE LIQUIDACIÓN AESA - FIJAS]
         - Categorías: Ayudante, Medio Oficial, Oficial, Oficial Especializado.
-        - Variables: Valor Hora, Viático (No Remunerativo), % Plus NR.
         - Presentismo (20%): Σ(Hs Norm, 50%, 100%, Comp, Fer) × V.Hora × 0.20.
-        - Especialidad (%): Σ(Hs Norm, 50%, 100%) × V.Hora × %Esp.
-        - Altura: 15%. Nocturnas: (8/60).
-        - Retenciones Ley (19.5%): 11% Jubilación, 3% Obra Social, 3% PAMI, 2.5% Cuota Sindical.
-        - SAC: 50% mayor rem. Vacaciones: Div 25.
+        - Retenciones Ley (19.5%): 11% Jub, 3% OS, 3% PAMI, 2.5% Sindical.
 
         TONO DE RESPUESTA:
         - Orgánico, directo y corporativo. Peronista en lo social, rigor técnico en lo económico.
-        - Responde exactamente lo que se te pide sin preámbulos políticos defensivos.
-        - Si te piden un dato (ej: un teléfono) y te adjunto la tabla, dalo inmediatamente. Ej: "Compañero, el teléfono de Leonardo Civile es 11-XXXX-XXXX."
         - Si el dato no está en la tabla, responde: "Dato no registrado en la base operativa."
         """
 
