@@ -166,7 +166,7 @@ df_predios = cargar_db("Predios", ["Nombre", "Latitud", "Longitud", "Radio_KM", 
 for col in ['Latitud', 'Longitud', 'Radio_KM']:
     if col in df_predios.columns:
         df_predios[col] = pd.to_numeric(df_predios[col], errors='coerce').fillna(0.0)
-
+df_documentos = cargar_db("Documentos", ["Titulo", "Fecha", "Vigencia", "Observaciones", "Link_PDF"])
 df_delegados = cargar_db("Delegados", ["Nombre", "CUIL", "Celular", "Domicilio", "Nacimiento", "Correo", "Observacion"])
 df_contactos = cargar_db("Contactos", ["Nombre", "Cargo", "Empresa", "Observaciones"])
 df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "Estado", "Finalizacion", "Respuesta", "Observaciones"])
@@ -422,15 +422,15 @@ with st.sidebar:
         **5- Sec. Finanzas:** Roberto Oviedo
         """)
         
-    opciones_totales = [
+opciones_totales = [
         "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
-        "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "5. ⚠️ Repositorio de Reclamos",
-        "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios por Empresa", "8. 📊 Tablero de Control",
-        "9. 📸 Galería Multimedia", "10. 🤖 Asistente Virtual", "11. 🧹 Auditoría de Datos"
+        "3. 📋 Nóminas", "4. 🧮 Calculadoras", "5. ⚠️ Reclamos",
+        "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios y Documentación", "8. 📊 Estadísticas",
+        "9. 📸 Galería Multimedia", "10. 🤖 Chat GPT UOCRA", "11. 🧹 Auditoría"
     ]
    
     if st.session_state.usuario_rol == "Restringido":
-        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas Consolidadas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Tablero de Control", "9. 📸 Galería Multimedia", "10. 🤖 Asistente Virtual" , "11. 🧹 Auditoría de Datos"]
+        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Estadísticas", "9. 📸 Galería Multimedia", "10. 🤖 Chat GPT UOCRA", "11. 🧹 Auditoría"]
     else:
         opciones_permitidas = opciones_totales
         
