@@ -263,7 +263,7 @@ def abrir_calendario_flotante():
             if empresa_seleccionada:
                 df_filtrado = df_cierres[df_cierres['Empresa'] == empresa_seleccionada]
                 
-                st.dataframe(st.markdown(f"<p style='text-align:center; color:#666; font-size:0.95rem; margin-top: 10px;'>Cronograma oficial de <b>{empresa_seleccionada}</b></p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='text-align:center; color:#666; font-size:0.95rem; margin-top: 10px;'>Cronograma oficial de <b>{empresa_seleccionada}</b></p>", unsafe_allow_html=True)
                 
                 # Generamos una grilla de 4 columnas para acomodar los meses prolijamente
                 cols_q = st.columns(4)
@@ -279,8 +279,8 @@ def abrir_calendario_flotante():
                         <div style="color: #333; font-weight: 600; font-size: 0.8rem; margin-top: 5px;">{q_fec}</div>
                     </div>
                     """
-                    # Repartimos las tarjetas en las 4 columnas (enero col 1, feb col 2, etc.)
-                    cols_q[i % 4].markdown(tarjeta_q, unsafe_allow_html=True)                )
+                    # Repartimos las tarjetas en las 4 columnas
+                    cols_q[i % 4].markdown(tarjeta_q, unsafe_allow_html=True)
         else:
             st.info("No hay cronogramas cargados. Ingrese los datos en la pestaña 'Cierres_Quincenales' del Excel.")
     else:
@@ -309,7 +309,6 @@ def abrir_calendario_flotante():
                 col_izq.markdown(tarjeta_html, unsafe_allow_html=True)
             else:
                 col_der.markdown(tarjeta_html, unsafe_allow_html=True)
-
 
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
