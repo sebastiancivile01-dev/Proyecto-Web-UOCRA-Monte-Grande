@@ -263,11 +263,24 @@ def abrir_calendario_flotante():
             if empresa_seleccionada:
                 df_filtrado = df_cierres[df_cierres['Empresa'] == empresa_seleccionada]
                 
-                st.dataframe(
-                    df_filtrado[['Quincena', 'Fechas']], 
-                    hide_index=True, 
-                    use_container_width=True
-                )
+                st.dataframe(st.markdown(f"<p style='text-align:center; color:#666; font-size:0.95rem; margin-top: 10px;'>Cronograma oficial de <b>{empresa_seleccionada}</b></p>", unsafe_allow_html=True)
+                
+                # Generamos una grilla de 4 columnas para acomodar los meses prolijamente
+                cols_q = st.columns(4)
+                
+                for i, (_, row) in enumerate(df_filtrado.iterrows()):
+                    q_nom = str(row.get('Quincena', ''))
+                    q_fec = str(row.get('Fechas', ''))
+                    
+                    # CSS para una tarjeta chiquita, con borde azul superior
+                    tarjeta_q = f"""
+                    <div style="border-top: 4px solid #0033A0; background-color: #f4f6f9; padding: 12px; border-radius: 6px; margin-bottom: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="color: #0033A0; font-weight: 900; font-size: 0.85rem; text-transform: uppercase;">{q_nom}</div>
+                        <div style="color: #333; font-weight: 600; font-size: 0.8rem; margin-top: 5px;">{q_fec}</div>
+                    </div>
+                    """
+                    # Repartimos las tarjetas en las 4 columnas (enero col 1, feb col 2, etc.)
+                    cols_q[i % 4].markdown(tarjeta_q, unsafe_allow_html=True)                )
         else:
             st.info("No hay cronogramas cargados. Ingrese los datos en la pestaña 'Cierres_Quincenales' del Excel.")
     else:
