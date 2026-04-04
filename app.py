@@ -1339,7 +1339,7 @@ elif opcion == "7. 🤝 Convenios y Documentación":
         
         with tab_n_conv:
             acc_conv = st.radio("Acción:", ["➕ Nuevo Convenio", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
-            if acc_conv == "➕ Nuevo Convenio":
+if acc_conv == "➕ Nuevo Convenio":
                 with st.form("f_n_conv", clear_on_submit=True):
                     col1, col2 = st.columns(2)
                     with col1:
@@ -1350,20 +1350,28 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                         c_porc = st.text_input("Monto Extra %:")
                     
                     c_det = st.text_area("Detalles de Escala / CCT (Descripción):*")
-archivo_pdf = st.file_uploader("📄 Arrastrá el PDF del Convenio aquí", type=["pdf"])
-c_link = "" # Variable para guardar el link final
-
-if archivo_pdf is not None:
-    with st.spinner("Subiendo archivo a Google Drive..."):
-        # Le ponemos un nombre claro: Empresa_Vigencia.pdf
-        nombre_limpio = f"Convenio_{c_emp}_{c_vig}.pdf".replace(" ", "_")
-        c_link = subir_archivo_drive(archivo_pdf, nombre_limpio)
-        if c_link:
-            st.success("✅ Archivo subido con éxito.")                    
+                    
+                    # El cajón para arrastrar el PDF
+                    archivo_pdf = st.file_uploader("📄 Arrastrá el PDF del Convenio aquí", type=["pdf"])
+                    
+                    # BOTÓN DE GUARDADO (Alineado correctamente)
                     if st.form_submit_button("💾 Guardar Convenio"):
                         if not c_emp or not c_det:
                             st.error("❌ Empresa y Detalles son obligatorios.")
                         else:
+                            c_link = "" # Arranca vacío por si no suben nada
+                            
+                            # 1. Si hay archivo, lo subimos a Drive PRIMERO
+                            if archivo_pdf is not None:
+                                with st.spinner("Subiendo archivo a Google Drive... esto puede tardar unos segundos."):
+                                    nombre_limpio = f"Convenio_{c_emp}_{c_vig}.pdf".replace(" ", "_")
+                                    c_link = subir_archivo_drive(archivo_pdf, nombre_limpio)
+                                    if c_link:
+                                        st.success("✅ Archivo subido con éxito a la bóveda.")
+                                    else:
+                                        st.error("⚠️ Hubo un problema subiendo el PDF, pero el registro se guardará igual.")
+                            
+                            # 2. Guardamos los textos y el link en el Excel
                             nuevo_conv = pd.DataFrame([{
                                 "Empresa": c_emp, "Detalle_Convenio": c_det, 
                                 "monto $": c_monto, "Monto %": c_porc, "Vigencia": c_vig, "Link_PDF": c_link
@@ -1371,8 +1379,9 @@ if archivo_pdf is not None:
                             df_convenios = pd.concat([df_convenios, nuevo_conv], ignore_index=True)
                             guardar_db(df_convenios, "Convenios")
                             st.success("✅ Convenio registrado exitosamente.")
+                            import time
+                            time.sleep(2) # Pausa de 2 seg para que leas el cartelito
                             st.rerun()
-
             elif acc_conv == "✏️ Modificar":
                 if not df_convenios.empty:
                     opciones_c = df_convenios['Empresa'] + " - " + df_convenios['Vigencia']
