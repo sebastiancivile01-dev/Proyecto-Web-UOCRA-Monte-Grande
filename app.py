@@ -1420,6 +1420,7 @@ with tab_n_conv:
                         guardar_db(df_convenios, "Convenios")
                         st.success("Eliminado.")
                         st.rerun()
+
         with tab_ver_conv:
             busq_c = st.text_input("🔍 Buscar Empresa:", key="b_conv")
             df_mostrar_conv = df_convenios.copy()
