@@ -8,6 +8,10 @@ from google.oauth2.service_account import Credentials
 import json
 import requests
 import google.generativeai as genai
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
+from google.oauth2 import service_account
+import io
 
 st.markdown("""
     <style>
@@ -384,6 +388,41 @@ def abrir_calendario_flotante():
                     col_izq.markdown(tarjeta_html, unsafe_allow_html=True)
                 else:
                     col_der.markdown(tarjeta_html, unsafe_allow_html=True)
+
+# --- FUNCIÓN PARA SUBIR ARCHIVOS A GOOGLE DRIVE ---
+def subir_archivo_drive(archivo_subido, nombre_archivo):
+    try:
+        # Cargamos las credenciales que ya tenés en Streamlit
+        creds_dict = st.secrets["connections"]["gsheets"]
+        creds = service_account.Credentials.from_service_account_info(creds_dict)
+        
+        # Construimos el servicio de Drive
+        service = build('drive', 'v3', credentials=creds)
+        
+        # ID de la carpeta que me pasaste
+        id_carpeta_destino = "1ikEqgV-Ok7yFpxPLCokdboqte0vHHtGf"
+        
+        # Preparamos los metadatos del archivo
+        file_metadata = {
+            'name': nombre_archivo,
+            'parents': [id_carpeta_destino]
+        }
+        
+        # Convertimos el archivo de Streamlit a un formato que Drive entienda
+        media = MediaIoBaseUpload(io.BytesIO(archivo_subido.getvalue()), 
+                                  mimetype=archivo_subido.type, 
+                                  resumable=True)
+        
+        # Subimos el archivo
+        file = service.files().create(body=file_metadata, media_body=media, fields='id, webViewLink').execute()
+        
+        # Le damos permisos de lectura a cualquiera con el link (para que lo veas desde la app)
+        service.permissions().create(fileId=file.get('id'), body={'type': 'anyone', 'role': 'reader'}).execute()
+        
+        return file.get('webViewLink') # Devolvemos el link del PDF
+    except Exception as e:
+        st.error(f"Error al subir a Drive: {e}")
+        return None
 
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
 with st.sidebar:
@@ -1311,8 +1350,16 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                         c_porc = st.text_input("Monto Extra %:")
                     
                     c_det = st.text_area("Detalles de Escala / CCT (Descripción):*")
-                    c_link = st.text_input("🔗 Cargar Archivo de Respaldo (Pegue el Link del PDF/Drive):")
-                    
+archivo_pdf = st.file_uploader("📄 Arrastrá el PDF del Convenio aquí", type=["pdf"])
+c_link = "" # Variable para guardar el link final
+
+if archivo_pdf is not None:
+    with st.spinner("Subiendo archivo a Google Drive..."):
+        # Le ponemos un nombre claro: Empresa_Vigencia.pdf
+        nombre_limpio = f"Convenio_{c_emp}_{c_vig}.pdf".replace(" ", "_")
+        c_link = subir_archivo_drive(archivo_pdf, nombre_limpio)
+        if c_link:
+            st.success("✅ Archivo subido con éxito.")                    
                     if st.form_submit_button("💾 Guardar Convenio"):
                         if not c_emp or not c_det:
                             st.error("❌ Empresa y Detalles son obligatorios.")
