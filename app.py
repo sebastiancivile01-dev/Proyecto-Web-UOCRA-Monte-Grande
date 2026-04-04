@@ -1337,7 +1337,7 @@ elif opcion == "7. 🤝 Convenios y Documentación":
     if seccion_elegida == "1️⃣ Convenios":
         tab_n_conv, tab_ver_conv = st.tabs(["➕ Gestionar Convenio", "📋 Ver Convenios Cargados"])
         
-with tab_n_conv:
+        with tab_n_conv:
             acc_conv = st.radio("Acción:", ["➕ Nuevo Convenio", "✏️ Modificar", "🗑️ Eliminar"], horizontal=True)
             
             if acc_conv == "➕ Nuevo Convenio":
@@ -1351,24 +1351,21 @@ with tab_n_conv:
                         c_porc = st.text_input("Monto Extra %:")
                     
                     c_det = st.text_area("Detalles de Escala / CCT (Descripción):*")
-                    
-                    # El cajón para arrastrar el PDF
                     archivo_pdf = st.file_uploader("📄 Arrastrá el PDF del Convenio aquí", type=["pdf"])
                     
-                    # BOTÓN DE GUARDADO
                     if st.form_submit_button("💾 Guardar Convenio"):
                         if not c_emp or not c_det:
                             st.error("❌ Empresa y Detalles son obligatorios.")
                         else:
                             c_link = "" 
                             if archivo_pdf is not None:
-                                with st.spinner("Subiendo archivo a Google Drive... esto puede tardar unos segundos."):
+                                with st.spinner("Subiendo archivo a Google Drive..."):
                                     nombre_limpio = f"Convenio_{c_emp}_{c_vig}.pdf".replace(" ", "_")
                                     c_link = subir_archivo_drive(archivo_pdf, nombre_limpio)
                                     if c_link:
-                                        st.success("✅ Archivo subido con éxito a la bóveda.")
+                                        st.success("✅ Archivo subido con éxito.")
                                     else:
-                                        st.error("⚠️ Hubo un error subiendo el PDF.")
+                                        st.error("⚠️ Error al subir el PDF.")
                             
                             nuevo_conv = pd.DataFrame([{
                                 "Empresa": c_emp, "Detalle_Convenio": c_det, 
@@ -1449,12 +1446,22 @@ with tab_n_conv:
                     d_vig = st.text_input("Vigencia (Opcional):")
                     
                 d_obs = st.text_area("Observaciones (Opcional):")
-                d_link = st.text_input("🔗 Cargar Archivo (Pegue el Link del PDF/Drive):*")
+                archivo_doc = st.file_uploader("📄 Arrastrá el PDF del Documento aquí", type=["pdf"])
                 
                 if st.form_submit_button("💾 Guardar Documento"):
-                    if not d_tit or not d_link:
-                        st.error("❌ Título y Link del archivo son obligatorios.")
+                    if not d_tit:
+                        st.error("❌ El Título es obligatorio.")
                     else:
+                        d_link = ""
+                        if archivo_doc is not None:
+                            with st.spinner("Subiendo archivo a Google Drive..."):
+                                nombre_limpio = f"Doc_{d_tit}.pdf".replace(" ", "_")
+                                d_link = subir_archivo_drive(archivo_doc, nombre_limpio)
+                                if d_link:
+                                    st.success("✅ Archivo subido con éxito.")
+                                else:
+                                    st.error("⚠️ Error al subir el PDF.")
+                                    
                         nuevo_doc = pd.DataFrame([{
                             "Titulo": d_tit, "Fecha": d_fec.strftime("%d/%m/%Y"), 
                             "Vigencia": d_vig, "Observaciones": d_obs, "Link_PDF": d_link
@@ -1462,6 +1469,8 @@ with tab_n_conv:
                         df_documentos = pd.concat([df_documentos, nuevo_doc], ignore_index=True)
                         guardar_db(df_documentos, "Documentos")
                         st.success("✅ ¡Documento guardado!")
+                        import time
+                        time.sleep(2)
                         st.rerun()
 
         with tab_ver:
@@ -1483,6 +1492,7 @@ with tab_n_conv:
                         <a href="{doc.get('Link_PDF', '#')}" target="_blank" style="background-color: #28a745; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 0.9rem;">📥 Abrir Archivo</a>
                     </div>
                     """, unsafe_allow_html=True)
+
 # ==========================================
 # MÓDULO 8: TABLERO DE CONTROL
 # ==========================================
