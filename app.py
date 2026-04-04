@@ -211,7 +211,6 @@ def obtener_cer(fecha_str=None):
         return None
 
 # --- FASE 5: CONEXIÓN API FERIADOS Y CALENDARIO MODAL ---
-# --- FASE 5: CONEXIÓN API FERIADOS Y CALENDARIO MODAL ---
 @st.cache_data(ttl=86400)
 def obtener_feriados_argentina():
     anio_actual = datetime.now().year
@@ -235,24 +234,29 @@ def obtener_feriados_argentina():
     except:
         pass
         
-    # 2. SISTEMA DE RESPALDO: Si la API falló o no tiene datos del 2026, cargamos los fijos
-    if len(lista_fechas) == 0:
-        feriados_fijos = [
-            {"motivo": "Año Nuevo", "dia": 1, "mes": 1, "tipo": "Feriado Nacional", "color": "#28a745"},
-            {"motivo": "Carnaval (Feriado Variable)", "dia": 16, "mes": 2, "tipo": "Feriado Nacional", "color": "#28a745"},
-            {"motivo": "Día Nacional de la Memoria por la Verdad y la Justicia", "dia": 24, "mes": 3, "tipo": "Feriado Nacional", "color": "#28a745"},
-            {"motivo": "Día del Veterano y de los Caídos en Malvinas", "dia": 2, "mes": 4, "tipo": "Feriado Nacional", "color": "#28a745"},
-            {"motivo": "Día del Trabajador", "dia": 1, "mes": 5, "tipo": "Feriado Nacional", "color": "#28a745"},
-            {"motivo": "Día de la Revolución de Mayo", "dia": 25, "mes": 5, "tipo": "Feriado Nacional", "color": "#28a745"},
-            {"motivo": "Paso a la Inmortalidad del Gral. Manuel Belgrano", "dia": 20, "mes": 6, "tipo": "Feriado Nacional", "color": "#28a745"},
-            {"motivo": "Día de la Independencia", "dia": 9, "mes": 7, "tipo": "Feriado Nacional", "color": "#28a745"},
-            {"motivo": "Paso a la Inmortalidad del Gral. San Martín", "dia": 17, "mes": 8, "tipo": "Feriado Nacional", "color": "#28a745"},
-            {"motivo": "Día del Respeto a la Diversidad Cultural", "dia": 12, "mes": 10, "tipo": "Feriado Nacional", "color": "#28a745"},
-            {"motivo": "Día de la Soberanía Nacional", "dia": 20, "mes": 11, "tipo": "Feriado Nacional", "color": "#28a745"},
-            {"motivo": "Inmaculada Concepción de María", "dia": 8, "mes": 12, "tipo": "Feriado Nacional", "color": "#28a745"},
-            {"motivo": "Navidad", "dia": 25, "mes": 12, "tipo": "Feriado Nacional", "color": "#28a745"}
-        ]
-        lista_fechas.extend(feriados_fijos)
+# 1. BASE DE DATOS NACIONAL 2026 (Feriados Inamovibles, Trasladables y Turísticos)
+    feriados_fijos = [
+        {"motivo": "Año Nuevo", "dia": 1, "mes": 1, "tipo": "Feriado inamovible", "color": "#28a745"},
+        {"motivo": "Carnaval", "dia": 16, "mes": 2, "tipo": "Feriado inamovible", "color": "#28a745"},
+        {"motivo": "Carnaval", "dia": 17, "mes": 2, "tipo": "Feriado inamovible", "color": "#28a745"},
+        {"motivo": "Fines turísticos (Puente)", "dia": 23, "mes": 3, "tipo": "Día no laborable", "color": "#fd7e14"},
+        {"motivo": "Día Nacional de la Memoria por la Verdad y la Justicia", "dia": 24, "mes": 3, "tipo": "Feriado inamovible", "color": "#28a745"},
+        {"motivo": "Veterano y Caídos en Malvinas / Jueves Santo", "dia": 2, "mes": 4, "tipo": "Inamovible / No laborable", "color": "#28a745"},
+        {"motivo": "Viernes Santo", "dia": 3, "mes": 4, "tipo": "Feriado inamovible", "color": "#28a745"},
+        {"motivo": "Día del Trabajador", "dia": 1, "mes": 5, "tipo": "Feriado inamovible", "color": "#28a745"},
+        {"motivo": "Día de la Revolución de Mayo", "dia": 25, "mes": 5, "tipo": "Feriado inamovible", "color": "#28a745"},
+        {"motivo": "Paso a la Inmortalidad del Gral. Güemes", "dia": 15, "mes": 6, "tipo": "Feriado trasladable", "color": "#28a745"},
+        {"motivo": "Paso a la Inmortalidad del Gral. Manuel Belgrano", "dia": 20, "mes": 6, "tipo": "Feriado inamovible", "color": "#28a745"},
+        {"motivo": "Día de la Independencia", "dia": 9, "mes": 7, "tipo": "Feriado inamovible", "color": "#28a745"},
+        {"motivo": "Fines turísticos (Puente)", "dia": 10, "mes": 7, "tipo": "Día no laborable", "color": "#fd7e14"},
+        {"motivo": "Paso a la Inmortalidad del Gral. San Martín", "dia": 17, "mes": 8, "tipo": "Feriado trasladable", "color": "#28a745"},
+        {"motivo": "Día del Respeto a la Diversidad Cultural", "dia": 12, "mes": 10, "tipo": "Feriado trasladable", "color": "#28a745"},
+        {"motivo": "Día de la Soberanía Nacional", "dia": 23, "mes": 11, "tipo": "Feriado trasladable", "color": "#28a745"},
+        {"motivo": "Fines turísticos (Puente)", "dia": 7, "mes": 12, "tipo": "Día no laborable", "color": "#fd7e14"},
+        {"motivo": "Inmaculada Concepción de María", "dia": 8, "mes": 12, "tipo": "Feriado inamovible", "color": "#28a745"},
+        {"motivo": "Navidad", "dia": 25, "mes": 12, "tipo": "Feriado inamovible", "color": "#28a745"}
+    ]
+    lista_fechas.extend(feriados_fijos)
 
     # 3. Sumamos SIEMPRE las fechas gremiales de la UOCRA
     fechas_uocra = [
