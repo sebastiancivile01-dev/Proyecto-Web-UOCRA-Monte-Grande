@@ -211,27 +211,61 @@ def obtener_cer(fecha_str=None):
         return None
 
 # --- FASE 5: CONEXIÓN API FERIADOS Y CALENDARIO MODAL ---
+# --- FASE 5: CONEXIÓN API FERIADOS Y CALENDARIO MODAL ---
 @st.cache_data(ttl=86400)
 def obtener_feriados_argentina():
     anio_actual = datetime.now().year
     url = f"https://nolaborables.com.ar/api/v2/feriados/{anio_actual}"
     lista_fechas = []
     
+    # 1. Intentamos traer los feriados de la API
     try:
         respuesta = requests.get(url, timeout=5)
         if respuesta.status_code == 200:
-            feriados_api = respuesta.json()
-            for f in feriados_api:
-                lista_fechas.append({
-                    "motivo": f["motivo"], 
-                    "dia": f["dia"], 
-                    "mes": f["mes"], 
-                    "tipo": "Feriado Nacional",
-                    "color": "#28a745"
-                })
+            datos_api = respuesta.json()
+            if len(datos_api) > 0:
+                for f in datos_api:
+                    lista_fechas.append({
+                        "motivo": f["motivo"], 
+                        "dia": f["dia"], 
+                        "mes": f["mes"], 
+                        "tipo": "Feriado Nacional",
+                        "color": "#28a745"
+                    })
     except:
         pass
         
+    # 2. SISTEMA DE RESPALDO: Si la API falló o no tiene datos del 2026, cargamos los fijos
+    if len(lista_fechas) == 0:
+        feriados_fijos = [
+            {"motivo": "Año Nuevo", "dia": 1, "mes": 1, "tipo": "Feriado Nacional", "color": "#28a745"},
+            {"motivo": "Carnaval (Feriado Variable)", "dia": 16, "mes": 2, "tipo": "Feriado Nacional", "color": "#28a745"},
+            {"motivo": "Día Nacional de la Memoria por la Verdad y la Justicia", "dia": 24, "mes": 3, "tipo": "Feriado Nacional", "color": "#28a745"},
+            {"motivo": "Día del Veterano y de los Caídos en Malvinas", "dia": 2, "mes": 4, "tipo": "Feriado Nacional", "color": "#28a745"},
+            {"motivo": "Día del Trabajador", "dia": 1, "mes": 5, "tipo": "Feriado Nacional", "color": "#28a745"},
+            {"motivo": "Día de la Revolución de Mayo", "dia": 25, "mes": 5, "tipo": "Feriado Nacional", "color": "#28a745"},
+            {"motivo": "Paso a la Inmortalidad del Gral. Manuel Belgrano", "dia": 20, "mes": 6, "tipo": "Feriado Nacional", "color": "#28a745"},
+            {"motivo": "Día de la Independencia", "dia": 9, "mes": 7, "tipo": "Feriado Nacional", "color": "#28a745"},
+            {"motivo": "Paso a la Inmortalidad del Gral. San Martín", "dia": 17, "mes": 8, "tipo": "Feriado Nacional", "color": "#28a745"},
+            {"motivo": "Día del Respeto a la Diversidad Cultural", "dia": 12, "mes": 10, "tipo": "Feriado Nacional", "color": "#28a745"},
+            {"motivo": "Día de la Soberanía Nacional", "dia": 20, "mes": 11, "tipo": "Feriado Nacional", "color": "#28a745"},
+            {"motivo": "Inmaculada Concepción de María", "dia": 8, "mes": 12, "tipo": "Feriado Nacional", "color": "#28a745"},
+            {"motivo": "Navidad", "dia": 25, "mes": 12, "tipo": "Feriado Nacional", "color": "#28a745"}
+        ]
+        lista_fechas.extend(feriados_fijos)
+
+    # 3. Sumamos SIEMPRE las fechas gremiales de la UOCRA
+    fechas_uocra = [
+        {"motivo": "Día del Obrero de la Construcción (CCT 76/22)", "dia": 22, "mes": 4, "tipo": "Día Gremial", "color": "#0033A0"},
+        {"motivo": "Día de la Lealtad Peronista", "dia": 17, "mes": 10, "tipo": "Fecha Histórica", "color": "#0033A0"},
+        {"motivo": "Día Internacional de la Mujer Trabajadora", "dia": 8, "mes": 3, "tipo": "Fecha Histórica", "color": "#8A2BE2"}
+    ]
+    lista_fechas.extend(fechas_uocra)
+    
+    # Ordenamos cronológicamente
+    lista_fechas.sort(key=lambda x: (x["mes"], x["dia"]))
+    return lista_fechas
+    
     fechas_uocra = [
         {"motivo": "Día del Obrero de la Construcción (CCT 76/22)", "dia": 22, "mes": 4, "tipo": "Día Gremial", "color": "#0033A0"},
         {"motivo": "Día de la Lealtad Peronista", "dia": 17, "mes": 10, "tipo": "Fecha Histórica", "color": "#0033A0"},
