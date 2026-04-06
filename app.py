@@ -1578,7 +1578,7 @@ elif opcion == "7. 🤝 Convenios y Documentación":
             if df_documentos.empty:
                 st.info("No hay documentos subidos todavía.")
             else:
-                b_doc = st.text_input("🔍 Buscar por Título:")
+                b_doc = st.text_input("🔍 Buscar por Título:", key="buscador_docs_unico")
                 df_doc_view = df_documentos.copy()
                 if b_doc:
                     df_doc_view = df_doc_view[df_doc_view['Titulo'].str.contains(b_doc, case=False, na=False)]
