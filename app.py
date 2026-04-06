@@ -1498,11 +1498,10 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # 2. CAPA DE SEGURIDAD: Chequeamos si el usuario es Civile2026
-                    # (Asumo que tu variable de login se llama 'usuario', si se llama distinto, cambialo acá)
-                    usuario_actual = st.session_state.get("usuario", "")
+                    # 2. CAPA DE SEGURIDAD: Chequeamos el rol del usuario
+                    usuario_actual = st.session_state.get("usuario_rol", "")
                     
-                    if usuario_actual == "Civile2026":
+                    if usuario_actual == "Admin":
                         # Le ponemos una llave única (key) al botón usando el número de fila (idx)
                         if st.button("🗑️ Eliminar", key=f"del_doc_{idx}"):
                             # Borramos la fila exacta del dataframe original
