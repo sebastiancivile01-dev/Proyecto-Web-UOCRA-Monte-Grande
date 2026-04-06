@@ -165,14 +165,12 @@ if 'Mujeres' in df_obras.columns:
 if 'Obreros' in df_obras.columns: 
     df_obras['Obreros'] = pd.to_numeric(df_obras['Obreros'], errors='coerce').fillna(0)
 df_cierres = cargar_db("Cierres_Quincenales", ["Empresa", "Quincena", "Fechas"])
-df_galeria = cargar_db("Galeria")
-
+df_galeria = cargar_db("Galeria", ["Fecha", "Titulo", "Tipo", "Link"])
 df_predios = cargar_db("Predios", ["Nombre", "Latitud", "Longitud", "Radio_KM", "Observaciones"])
 for col in ['Latitud', 'Longitud', 'Radio_KM']:
     if col in df_predios.columns:
         df_predios[col] = pd.to_numeric(df_predios[col], errors='coerce').fillna(0.0)
-df_documentos = cargar_db("Documentos", ["Titulo", "Fecha", "Vigencia", "Observaciones", "Link_PDF"])
-df_galeria = cargar_db("Galeria")    
+df_documentos = cargar_db("Documentos", ["Titulo", "Fecha", "Vigencia", "Observaciones", "Link_PDF"])  
 df_delegados = cargar_db("Delegados", ["Nombre", "CUIL", "Celular", "Domicilio", "Nacimiento", "Correo", "Observacion"])
 df_contactos = cargar_db("Contactos", ["Nombre", "Cargo", "Empresa", "Observaciones"])
 df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "Estado", "Finalizacion", "Respuesta", "Observaciones"])
