@@ -100,6 +100,27 @@ st.markdown("""
         background-color: transparent !important;
     }
 
+    /* 7. ANTI MODO OSCURO PARA TÍTULOS DE CASILLEROS Y FORMULARIOS */
+    label, 
+    label p, 
+    label div {
+        color: #222222 !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Forzamos también el color del texto adentro de los botones de opciones (radios/checkbox) */
+    div[role="radiogroup"] label,
+    div[data-testid="stCheckbox"] label {
+        color: #222222 !important;
+    }
+
+    /* Forzamos el color del texto que el usuario escribe adentro de los casilleros */
+    input, 
+    textarea, 
+    div[data-baseweb="select"] div {
+        color: #111111 !important;
+    }
+
     /* ======================================================= */
     /* 📱 MODO CELULAR (SOLO SE ACTIVA EN PANTALLAS CHICAS)    */
     /* ======================================================= */
