@@ -165,12 +165,14 @@ if 'Mujeres' in df_obras.columns:
 if 'Obreros' in df_obras.columns: 
     df_obras['Obreros'] = pd.to_numeric(df_obras['Obreros'], errors='coerce').fillna(0)
 df_cierres = cargar_db("Cierres_Quincenales", ["Empresa", "Quincena", "Fechas"])
+df_galeria = cargar_db("Galeria")
 
 df_predios = cargar_db("Predios", ["Nombre", "Latitud", "Longitud", "Radio_KM", "Observaciones"])
 for col in ['Latitud', 'Longitud', 'Radio_KM']:
     if col in df_predios.columns:
         df_predios[col] = pd.to_numeric(df_predios[col], errors='coerce').fillna(0.0)
 df_documentos = cargar_db("Documentos", ["Titulo", "Fecha", "Vigencia", "Observaciones", "Link_PDF"])
+df_galeria = cargar_db("Galeria")    
 df_delegados = cargar_db("Delegados", ["Nombre", "CUIL", "Celular", "Domicilio", "Nacimiento", "Correo", "Observacion"])
 df_contactos = cargar_db("Contactos", ["Nombre", "Cargo", "Empresa", "Observaciones"])
 df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "Estado", "Finalizacion", "Respuesta", "Observaciones"])
@@ -1601,60 +1603,124 @@ elif opcion == "8. 📊 Estadísticas":
 # ==========================================
 elif opcion == "9. 📸 Galería Multimedia":
     st.title("📸 Galería de Obras y Eventos")
-    st.markdown("Repositorio Audiovisual.")
-    st.info("💡 Haga clic en cualquier imagen para verla en alta resolución en una pestaña nueva.")
+    st.markdown("Repositorio Audiovisual institucional y operativo.")
     
-    st.markdown("---")
+    # 3 Pestañas para organizar la visualización y la carga
+    tab_fotos, tab_videos, tab_subir = st.tabs(["🖼️ Fotografías", "🎥 Videos", "📤 Subir Material"])
     
-    tab_fotos, tab_videos = st.tabs(["🖼️ Fotografías", "🎥 Videos"])
-    
+    # --- PESTAÑA 1: FOTOS ---
     with tab_fotos:
         st.subheader("Álbum de Marchas, Eventos y Asambleas")
+        df_fotos = df_galeria[df_galeria['Tipo'] == 'Foto'].copy()
         
-        # LISTA DE IDs: Solo tenés que agregar o quitar IDs acá adentro en el futuro.
-        fotos_ids = [
-            "12FISPzadXqVBHOAoFaq8hh-VshWV7AUY",
-            "1OJosCkzy6nf-IN2J1t0hFlz72lC5M9Er",
-            "1LBWJrOI-f5PC-lLmplOvgFy8t2-HQUeW",
-            "1qpcz7hPiW65yBRcdy6nN_DC5kWdN8LQN",
-            "1pLQAd5Jvv-BFtjyT1UV0yP-SfYRKpD9r",
-            "1sCFFciZmY1jgrKMxahFtqd5_dkbqmap6",
-            "1oQdTetQlS2zB56jzip1ZAAP22gg2QeRT",
-            "1yWUA1UgUfubgphPAAGow2orpSRN0pDxE",
-            "1-CdsMO60gIWtm0TRRguFhO7b4TwWmN0v",
-            "1922DnTBV6ySICImt7Z4FA2rqeHhf7aY0",
-            "1CsiQxdHK8RiilirqZ5lKxUuy5l3jsTSs",
-            "1oBKTFsxJQTdqg1BA0B_lrj2iQC_RT67-"
-        ]
-        
-        # Motor que genera la grilla de 3 columnas automáticamente
-        for i in range(0, len(fotos_ids), 3):
-            cols = st.columns(3)
-            for j in range(3):
-                if i + j < len(fotos_ids):
-                    img_id = fotos_ids[i+j]
-                    url_min = f"https://drive.google.com/thumbnail?id={img_id}&sz=w1000"
-                    url_full = f"https://drive.google.com/file/d/{img_id}/view?usp=sharing"
-                    
-                    # Dibujamos la imagen con borde, sombra y espacio inferior (margin-bottom)
-                    cols[j].markdown(f'<a href="{url_full}" target="_blank"><img src="{url_min}" style="width:100%; border-radius:10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2); margin-bottom: 20px;"></a>', unsafe_allow_html=True)
+        if df_fotos.empty:
+            st.info("No hay fotografías subidas en la base de datos.")
+        else:
+            # Invertimos para ver las más nuevas arriba
+            df_fotos = df_fotos.iloc[::-1].reset_index()
             
+            # Motor que genera la grilla de 3 columnas automáticamente
+            for i in range(0, len(df_fotos), 3):
+                cols = st.columns(3)
+                for j in range(3):
+                    if i + j < len(df_fotos):
+                        row = df_fotos.iloc[i+j]
+                        idx_real = row['index'] # Índice para poder borrar
+                        link_img = str(row.get('Link', '')).strip()
+                        
+                        with cols[j]:
+                            # Dibujamos la foto con su título y fecha
+                            if link_img.startswith("http"):
+                                st.image(link_img, caption=f"📍 {row.get('Titulo', '')} ({row.get('Fecha', '')})", use_container_width=True)
+                            
+                            # CAPA DE SEGURIDAD VIP: Solo Civile2026 (Admin) ve el tachito
+                            usuario_actual = st.session_state.get("usuario_rol", "")
+                            if usuario_actual == "Admin":
+                                if st.button("🗑️ Eliminar", key=f"del_f_{idx_real}"):
+                                    df_galeria = df_galeria.drop(idx_real)
+                                    guardar_db(df_galeria, "Galeria")
+                                    st.success("Foto eliminada.")
+                                    import time
+                                    time.sleep(1)
+                                    st.rerun()
+
+    # --- PESTAÑA 2: VIDEOS ---
     with tab_videos:
-        st.subheader("Videos")
+        st.subheader("Videos de Gestión")
+        df_videos = df_galeria[df_galeria['Tipo'] == 'Video'].copy()
         
-        # ID del Video que me pasaste
-        video_id = "1hB31u59Blm5TlvM5RKxbls3RXdWpK-MH"
-        
-        # Usamos un iframe para que el video de Drive se pueda reproducir dentro de la app
-        st.markdown(f'''
-            <iframe src="https://drive.google.com/file/d/{video_id}/preview" 
-            width="100%" height="600" style="border-radius:15px; border:none; box-shadow: 0px 8px 20px rgba(0,0,0,0.3);">
-            </iframe>
-        ''', unsafe_allow_html=True)
-        
-        st.caption("▶️ Dele play al video para reproducirlo aquí mismo, o haga clic en el ícono de 'ventana emergente' arriba a la derecha del reproductor para verlo en pantalla completa.")
+        if df_videos.empty:
+            st.info("No hay videos subidos en la base de datos.")
+        else:
+            df_videos = df_videos.iloc[::-1].reset_index()
+            
+            for _, row in df_videos.iterrows():
+                idx_real = row['index']
+                st.markdown(f"#### 📍 {row.get('Titulo', '')}")
+                st.caption(f"📅 Fecha: {row.get('Fecha', '')}")
+                
+                link_vid = str(row.get('Link', '')).strip()
+                if link_vid.startswith("http"):
+                    # El reproductor de Streamlit lee directo desde Cloud Storage
+                    st.video(link_vid)
+                
+                # CAPA DE SEGURIDAD VIP: Solo Civile2026 (Admin) ve el tachito
+                usuario_actual = st.session_state.get("usuario_rol", "")
+                if usuario_actual == "Admin":
+                    if st.button("🗑️ Eliminar Video", key=f"del_v_{idx_real}"):
+                        df_galeria = df_galeria.drop(idx_real)
+                        guardar_db(df_galeria, "Galeria")
+                        st.success("Video eliminado.")
+                        import time
+                        time.sleep(1)
+                        st.rerun()
+                st.divider()
 
-
+    # --- PESTAÑA 3: CARGA DE MATERIAL ---
+    with tab_subir:
+        st.subheader("Subir Nuevo Material a la Nube")
+        with st.form("form_galeria", clear_on_submit=True):
+            col_m1, col_m2 = st.columns(2)
+            with col_m1:
+                m_tit = st.text_input("Título / Descripción breve:*")
+            with col_m2:
+                m_tipo = st.selectbox("Tipo de Archivo:", ["Foto", "Video"])
+                
+            # Cajón para subir archivos
+            archivo_media = st.file_uploader("📄 Arrastrá la Foto o Video aquí", type=["jpg", "jpeg", "png", "mp4", "mov"])
+            
+            # Botón público: Cualquiera que entre al sistema puede aportar material
+            if st.form_submit_button("💾 Guardar en Galería"):
+                if not m_tit:
+                    st.error("❌ El Título es obligatorio.")
+                else:
+                    m_link = ""
+                    if archivo_media is not None:
+                        with st.spinner(f"Subiendo {m_tipo.lower()} a Google Cloud..."):
+                            extension = archivo_media.name.split('.')[-1]
+                            nombre_limpio = f"Media_{m_tit}.{extension}".replace(" ", "_")
+                            
+                            # USAMOS TU BALDE
+                            m_link = subir_archivo_drive(archivo_media, nombre_limpio)
+                            if m_link:
+                                st.success("✅ Archivo subido con éxito.")
+                            else:
+                                st.error("⚠️ Error al subir el archivo.")
+                                
+                    from datetime import datetime
+                    nueva_media = pd.DataFrame([{
+                        "Fecha": datetime.now().strftime("%d/%m/%Y"), 
+                        "Titulo": m_tit, 
+                        "Tipo": m_tipo, 
+                        "Link": m_link
+                    }])
+                    df_galeria = pd.concat([df_galeria, nueva_media], ignore_index=True)
+                    guardar_db(df_galeria, "Galeria")
+                    st.success("✅ ¡Material guardado en la galería pública!")
+                    import time
+                    time.sleep(2)
+                    st.rerun()
+                    
 # ==========================================
 # MÓDULO 10: Asistente Virtual
 # ==========================================
