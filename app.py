@@ -389,46 +389,41 @@ def abrir_calendario_flotante():
                 else:
                     col_der.markdown(tarjeta_html, unsafe_allow_html=True)
 
-# --- FUNCIÓN PARA SUBIR ARCHIVOS A GOOGLE DRIVE ---
+# --- FUNCIÓN PARA SUBIR ARCHIVOS A GOOGLE CLOUD STORAGE ---
 def subir_archivo_drive(archivo_subido, nombre_archivo):
     try:
         import json
         from google.oauth2 import service_account
-        from googleapiclient.discovery import build
-        from googleapiclient.http import MediaIoBaseUpload
-        import io
+        from google.cloud import storage
+        import streamlit as st
         
-        # Leemos tus credenciales tal cual las tenés en los secrets
+        # Leemos tus credenciales de Streamlit
         creds_json = st.secrets["gcp_service_account"]
         creds_dict = json.loads(creds_json)
+        creds = service_account.Credentials.from_service_account_info(creds_dict)
         
-        # Cargamos las credenciales
-        creds = service_account.Credentials.from_service_account_info(
-            creds_dict, 
-            scopes=["https://www.googleapis.com/auth/drive"]
+        # Conectamos con el motor de Storage
+        storage_client = storage.Client(credentials=creds, project=creds_dict["project_id"])
+        
+        # Tu balde oficial
+        nombre_balde = "uocra-mg-archivos-2026" 
+        bucket = storage_client.bucket(nombre_balde)
+        
+        # Preparamos el archivo
+        blob = bucket.blob(nombre_archivo)
+        
+        # Lo subimos
+        blob.upload_from_string(
+            archivo_subido.getvalue(), 
+            content_type=archivo_subido.type
         )
         
-        # Construimos el servicio de Drive
-        service = build('drive', 'v3', credentials=creds)
+        # Devolvemos el link público directo
+        return blob.public_url
         
-        # El ID de tu carpeta
-        id_carpeta_destino = "1ikEqgV-Ok7yFpxPLCokdboqte0vHHtGf"
-        
-        file_metadata = {
-            'name': nombre_archivo,
-            'parents': [id_carpeta_destino]
-        }
-        
-        media = MediaIoBaseUpload(io.BytesIO(archivo_subido.getvalue()), 
-                                  mimetype=archivo_subido.type, 
-                                  resumable=True)
-        
-        file = service.files().create(body=file_metadata, media_body=media, fields='id, webViewLink').execute()
-        service.permissions().create(fileId=file.get('id'), body={'type': 'anyone', 'role': 'reader'}).execute()
-        
-        return file.get('webViewLink')
     except Exception as e:
-        st.error(f"Error al subir a Drive: {e}")
+        import streamlit as st
+        st.error(f"Error al subir a Cloud Storage: {e}")
         return None
         
 # --- BARRA LATERAL (MENÚ PRINCIPAL) ---
