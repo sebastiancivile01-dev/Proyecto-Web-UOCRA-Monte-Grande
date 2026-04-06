@@ -82,6 +82,23 @@ st.markdown("""
         border-radius: 6px !important;
         background-color: #ffffff !important;
     }
+    
+    /* 6. ARREGLO DE PESTAÑAS (TABS) - ANTI MODO OSCURO */
+    button[data-baseweb="tab"] p {
+        color: #555555 !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] p {
+        color: #0033A0 !important; /* Azul UOCRA para la activa */
+        font-size: 1.05rem !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        border-bottom: 3px solid #0033A0 !important;
+    }
+    button[data-baseweb="tab"] {
+        background-color: transparent !important;
+    }
 
     /* ======================================================= */
     /* 📱 MODO CELULAR (SOLO SE ACTIVA EN PANTALLAS CHICAS)    */
