@@ -1353,8 +1353,7 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                         c_porc = st.text_input("Monto Extra %:")
                     
                     c_det = st.text_area("Detalles de Escala / CCT (Descripción):*")
-                    archivo_pdf = st.file_uploader("📄 Arrastrá el PDF del Convenio aquí", type=["pdf"],
-                    accept_multiple_files=True)
+                    archivo_pdf = st.file_uploader("📄 Arrastrá el PDF del Convenio aquí", type=["pdf"])
                     
                     if st.form_submit_button("💾 Guardar Convenio"):
                         if not c_emp or not c_det:
@@ -1437,8 +1436,10 @@ elif opcion == "7. 🤝 Convenios y Documentación":
 
     elif seccion_elegida == "2️⃣ Documentación":
         tab_subir, tab_ver = st.tabs(["📤 Cargar Documento", "📚 Ver Documentación"])
-        
-        # --- PESTAÑA 3: CARGA DE MATERIAL ---
+
+
+
+    
     # --- PESTAÑA 3: CARGA DE MATERIAL ---
     with tab_subir:
         st.subheader("Subir Nuevo Material a la Nube")
