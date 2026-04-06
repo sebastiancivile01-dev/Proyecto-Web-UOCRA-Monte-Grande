@@ -1436,62 +1436,46 @@ elif opcion == "7. 🤝 Convenios y Documentación":
 
     elif seccion_elegida == "2️⃣ Documentación":
         tab_subir, tab_ver = st.tabs(["📤 Cargar Documento", "📚 Ver Documentación"])
-
-
-
-    
+   
     # --- PESTAÑA 3: CARGA DE MATERIAL ---
-    with tab_subir:
-        st.subheader("Subir Nuevo Material a la Nube")
-        with st.form("form_galeria", clear_on_submit=True):
-            col_m1, col_m2 = st.columns(2)
-            with col_m1:
-                m_tit = st.text_input("Título / Descripción común para el grupo:*")
-            with col_m2:
-                m_tipo = st.selectbox("Tipo de Archivo:", ["Foto", "Video"])
+    elif seccion_elegida == "2️⃣ Documentación":
+        tab_subir, tab_ver = st.tabs(["📤 Cargar Documento", "📚 Ver Documentación"])
+        
+        with tab_subir:
+            with st.form("form_doc", clear_on_submit=True):
+                d_tit = st.text_input("Título del Documento:*")
                 
-            # 1. ACÁ ESTÁ LA CLAVE: accept_multiple_files=True
-            archivos_multimedia = st.file_uploader(
-                "📄 Arrastrá todas las Fotos o Videos aquí", 
-                type=["jpg", "jpeg", "png", "mp4", "mov", "jfif"],
-                accept_multiple_files=True 
-            )
-            
-            if st.form_submit_button("💾 Guardar todo en Galería"):
-                if not m_tit:
-                    st.error("❌ El Título es obligatorio.")
-                elif not archivos_multimedia:
-                    st.error("❌ No seleccionaste ningún archivo.")
-                else:
-                    nuevos_registros = []
-                    progreso = st.progress(0) # Agregamos una barrita visual de carga
+                col_d1, col_d2 = st.columns(2)
+                with col_d1:
+                    d_fec = st.date_input("Fecha:", format="DD/MM/YYYY")
+                with col_d2:
+                    d_vig = st.text_input("Vigencia (Opcional):")
                     
-                    # 2. EL BUCLE: Sube archivo por archivo
-                    for i, archivo in enumerate(archivos_multimedia):
-                        with st.spinner(f"Subiendo archivo {i+1} de {len(archivos_multimedia)} a la nube..."):
-                            extension = archivo.name.split('.')[-1]
-                            # Les ponemos un número al final para que no se sobreescriban
-                            nombre_limpio = f"Media_{m_tit}_{i+1}.{extension}".replace(" ", "_")
-                            
-                            m_link = subir_archivo_drive(archivo, nombre_limpio)
-                            
-                            if m_link:
-                                from datetime import datetime
-                                nuevos_registros.append({
-                                    "Fecha": datetime.now().strftime("%d/%m/%Y"), 
-                                    "Titulo": f"{m_tit} ({i+1})", 
-                                    "Tipo": m_tipo, 
-                                    "Link": m_link
-                                })
-                        progreso.progress((i + 1) / len(archivos_multimedia))
-                    
-                    # 3. IMPACTAMOS TODO JUNTO EN EL EXCEL
-                    if nuevos_registros:
-                        df_nuevos = pd.DataFrame(nuevos_registros)
-                        df_galeria = pd.concat([df_galeria, df_nuevos], ignore_index=True)
-                        guardar_db(df_galeria, "Galeria")
-                        
-                        st.success(f"✅ ¡Se subieron {len(nuevos_registros)} archivos correctamente!")
+                d_obs = st.text_area("Observaciones (Opcional):")
+                # Acá pedimos UN SOLO ARCHIVO, y solo PDF
+                archivo_doc = st.file_uploader("📄 Arrastrá el PDF del Documento aquí", type=["pdf"])
+                
+                if st.form_submit_button("💾 Guardar Documento"):
+                    if not d_tit:
+                        st.error("❌ El Título es obligatorio.")
+                    else:
+                        d_link = ""
+                        if archivo_doc is not None:
+                            with st.spinner("Subiendo archivo a Google Cloud..."):
+                                nombre_limpio = f"Doc_{d_tit}.pdf".replace(" ", "_")
+                                d_link = subir_archivo_drive(archivo_doc, nombre_limpio)
+                                if d_link:
+                                    st.success("✅ Archivo subido con éxito.")
+                                else:
+                                    st.error("⚠️ Error al subir el PDF.")
+                                    
+                        nuevo_doc = pd.DataFrame([{
+                            "Titulo": d_tit, "Fecha": d_fec.strftime("%d/%m/%Y"), 
+                            "Vigencia": d_vig, "Observaciones": d_obs, "Link_PDF": d_link
+                        }])
+                        df_documentos = pd.concat([df_documentos, nuevo_doc], ignore_index=True)
+                        guardar_db(df_documentos, "Documentos")
+                        st.success("✅ ¡Documento guardado!")
                         import time
                         time.sleep(2)
                         st.rerun()
@@ -1698,49 +1682,58 @@ elif opcion == "9. 📸 Galería Multimedia":
                 st.divider()
 
     # --- PESTAÑA 3: CARGA DE MATERIAL ---
+    # --- CÓDIGO CORRECTO DEL MÓDULO 9 ---
     with tab_subir:
         st.subheader("Subir Nuevo Material a la Nube")
         with st.form("form_galeria", clear_on_submit=True):
             col_m1, col_m2 = st.columns(2)
             with col_m1:
-                m_tit = st.text_input("Título / Descripción breve:*")
+                m_tit = st.text_input("Título / Descripción común para el grupo:*")
             with col_m2:
                 m_tipo = st.selectbox("Tipo de Archivo:", ["Foto", "Video"])
                 
-            # Cajón para subir archivos
-            archivo_media = st.file_uploader("📄 Arrastrá la Foto o Video aquí", type=["jpg", "jpeg", "png", "mp4", "mov", "jfif"])
+            # ACÁ ESTÁ LA SUBIDA MÚLTIPLE DE FOTOS/VIDEOS
+            archivos_multimedia = st.file_uploader(
+                "📄 Arrastrá todas las Fotos o Videos aquí", 
+                type=["jpg", "jpeg", "png", "mp4", "mov", "jfif"],
+                accept_multiple_files=True 
+            )
             
-            # Botón público: Cualquiera que entre al sistema puede aportar material
-            if st.form_submit_button("💾 Guardar en Galería"):
+            if st.form_submit_button("💾 Guardar todo en Galería"):
                 if not m_tit:
                     st.error("❌ El Título es obligatorio.")
+                elif not archivos_multimedia:
+                    st.error("❌ No seleccionaste ningún archivo.")
                 else:
-                    m_link = ""
-                    if archivo_media is not None:
-                        with st.spinner(f"Subiendo {m_tipo.lower()} a Google Cloud..."):
-                            extension = archivo_media.name.split('.')[-1]
-                            nombre_limpio = f"Media_{m_tit}.{extension}".replace(" ", "_")
+                    nuevos_registros = []
+                    progreso = st.progress(0)
+                    
+                    for i, archivo in enumerate(archivos_multimedia):
+                        with st.spinner(f"Subiendo archivo {i+1} de {len(archivos_multimedia)} a la nube..."):
+                            extension = archivo.name.split('.')[-1]
+                            nombre_limpio = f"Media_{m_tit}_{i+1}.{extension}".replace(" ", "_")
                             
-                            # USAMOS TU BALDE
-                            m_link = subir_archivo_drive(archivo_media, nombre_limpio)
+                            m_link = subir_archivo_drive(archivo, nombre_limpio)
+                            
                             if m_link:
-                                st.success("✅ Archivo subido con éxito.")
-                            else:
-                                st.error("⚠️ Error al subir el archivo.")
-                                
-                    from datetime import datetime
-                    nueva_media = pd.DataFrame([{
-                        "Fecha": datetime.now().strftime("%d/%m/%Y"), 
-                        "Titulo": m_tit, 
-                        "Tipo": m_tipo, 
-                        "Link": m_link
-                    }])
-                    df_galeria = pd.concat([df_galeria, nueva_media], ignore_index=True)
-                    guardar_db(df_galeria, "Galeria")
-                    st.success("✅ ¡Material guardado en la galería pública!")
-                    import time
-                    time.sleep(2)
-                    st.rerun()
+                                from datetime import datetime
+                                nuevos_registros.append({
+                                    "Fecha": datetime.now().strftime("%d/%m/%Y"), 
+                                    "Titulo": f"{m_tit} ({i+1})", 
+                                    "Tipo": m_tipo, 
+                                    "Link": m_link
+                                })
+                        progreso.progress((i + 1) / len(archivos_multimedia))
+                    
+                    if nuevos_registros:
+                        df_nuevos = pd.DataFrame(nuevos_registros)
+                        df_galeria = pd.concat([df_galeria, df_nuevos], ignore_index=True)
+                        guardar_db(df_galeria, "Galeria")
+                        
+                        st.success(f"✅ ¡Se subieron {len(nuevos_registros)} archivos correctamente!")
+                        import time
+                        time.sleep(2)
+                        st.rerun()
                     
 # ==========================================
 # MÓDULO 10: Asistente Virtual
