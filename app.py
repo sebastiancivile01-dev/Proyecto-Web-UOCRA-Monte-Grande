@@ -1532,49 +1532,8 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                     if link_pdf and link_pdf.startswith("http"):
                         st.markdown(f'<a href="{link_pdf}" target="_blank" style="display: inline-block; padding: 8px 16px; background-color: #0033A0; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">📄 Abrir Documento PDF</a>', unsafe_allow_html=True)
 
+    # ESTO TIENE QUE ESTAR SANGRAMIENTO NIVEL 1 (Adentro del Módulo 7)
     elif seccion_elegida == "2️⃣ Documentación":
-        tab_subir, tab_ver = st.tabs(["📤 Cargar Documento", "📚 Ver Documentación"])
-        
-        with tab_subir:
-            with st.form("form_doc", clear_on_submit=True):
-                d_tit = st.text_input("Título del Documento:*")
-                
-                col_d1, col_d2 = st.columns(2)
-                with col_d1:
-                    d_fec = st.date_input("Fecha:", format="DD/MM/YYYY")
-                with col_d2:
-                    d_vig = st.text_input("Vigencia (Opcional):")
-                    
-                d_obs = st.text_area("Observaciones (Opcional):")
-                # Acá pedimos UN SOLO ARCHIVO, y solo PDF
-                archivo_doc = st.file_uploader("📄 Arrastrá el PDF del Documento aquí", type=["pdf"])
-                
-                if st.form_submit_button("💾 Guardar Documento"):
-                    if not d_tit:
-                        st.error("❌ El Título es obligatorio.")
-                    else:
-                        d_link = ""
-                        if archivo_doc is not None:
-                            with st.spinner("Subiendo archivo a Google Cloud..."):
-                                nombre_limpio = f"Doc_{d_tit}.pdf".replace(" ", "_")
-                                d_link = subir_archivo_drive(archivo_doc, nombre_limpio)
-                                if d_link:
-                                    st.success("✅ Archivo subido con éxito.")
-                                else:
-                                    st.error("⚠️ Error al subir el PDF.")
-                                    
-                        nuevo_doc = pd.DataFrame([{
-                            "Titulo": d_tit, "Fecha": d_fec.strftime("%d/%m/%Y"), 
-                            "Vigencia": d_vig, "Observaciones": d_obs, "Link_PDF": d_link
-                        }])
-                        df_documentos = pd.concat([df_documentos, nuevo_doc], ignore_index=True)
-                        guardar_db(df_documentos, "Documentos")
-                        st.success("✅ ¡Documento guardado!")
-                        import time
-                        time.sleep(2)
-                        st.rerun()
-
-elif seccion_elegida == "2️⃣ Documentación":
         tab_subir, tab_ver = st.tabs(["📤 Cargar Documento", "📚 Ver Documentación"])
         
         with tab_subir:
@@ -1659,11 +1618,13 @@ elif seccion_elegida == "2️⃣ Documentación":
                                 st.error("⚠️ El documento ya no existe en la base.")
                             
                     st.write("") # Un espacio en blanco para separar el siguiente documento
+
 # ==========================================
 # MÓDULO 8: TABLERO DE CONTROL
 # ==========================================
+# ESTO TIENE QUE ESTAR PEGADO AL MARGEN IZQUIERDO (Sangría 0)
 elif opcion == "8. 📊 Estadísticas":
-    st.title("📊 Tablero de Control y Estadísticas")
+st.title("📊 Tablero de Control y Estadísticas")
     st.markdown("Visión analítica general de la Jurisdicción Esteban Echeverría.")
     
     # CSS Súper Agresivo para anular el diseño por defecto y armar tarjetas reales
