@@ -33,21 +33,23 @@ st.markdown("""
         margin-bottom: 40px;
     }
 
-    /* 3. COLORES INSTITUCIONALES Y BOTONES */
+/* 3. COLORES INSTITUCIONALES Y BOTONES */
     h1, h2, h3 { color: #0033A0 !important; }
-    div.stButton > button:first-child { background-color: #0033A0; color: white; border-radius: 5px; border: 1px solid #0033A0; }
-    div.stButton > button:hover { background-color: #002277; color: white; border: 1px solid #002277; }
     
-/* ARREGLO BARRA LATERAL (MENÚ) */
-    [data-testid="stSidebar"] { 
-        background-color: #f4f6f9 !important; 
-        border-right: 2px solid #CCCCCC !important; 
+    div.stButton > button { 
+        background-color: #0033A0 !important; 
+        color: #ffffff !important; /* Blanco forzado */
+        border-radius: 5px !important; 
+        border: 1px solid #0033A0 !important; 
     }
-    /* Forzamos que TODO el texto del menú (opciones y comisión) se lea oscuro */
-    [data-testid="stSidebar"] .stRadio p,
-    [data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] p,
-    [data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] strong { 
-        color: #111111 !important; 
+    /* Forzamos que cualquier texto adentro del botón también sea blanco */
+    div.stButton > button p, div.stButton > button span, div.stButton > button * { 
+        color: #ffffff !important; 
+    }
+    div.stButton > button:hover { 
+        background-color: #002277 !important; 
+        color: #ffffff !important; 
+        border: 1px solid #002277 !important; 
     }
     
     }
@@ -74,13 +76,27 @@ st.markdown("""
     .kpi-titulo { color: #6c757d; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
     .kpi-valor { color: #212529; font-size: 2.2rem; font-weight: 900; margin: 0; }
     
-    /* 5. RECUADROS PARA CAMPOS DE FORMULARIO */
-    div[data-baseweb="input"], 
-    div[data-baseweb="select"], 
-    div[data-baseweb="textarea"] {
-        border: 1px solid #000000 !important;
+    /* 5. CASILLEROS, FORMULARIOS Y ANTI MODO OSCURO (iOS) */
+    /* Títulos arriba de las cajas */
+    label, label p, label div {
+        color: #222222 !important;
+        font-weight: 600 !important;
+    }
+    
+    /* El fondo de la caja: Un celeste/azul pastel muy clarito */
+    div[data-baseweb="input"] > div, 
+    div[data-baseweb="select"] > div, 
+    div[data-baseweb="textarea"] > div {
+        background-color: #e6f2ff !important; /* Celeste claro institucional */
+        border: 1px solid #0033A0 !important;
         border-radius: 6px !important;
-        background-color: #ffffff !important;
+    }
+
+    /* El texto que el usuario escribe adentro (El parche para iPhone) */
+    input, textarea, div[data-baseweb="select"] {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important; /* Esto evita que iOS lo haga invisible */
+        background-color: transparent !important;
     }
     
     /* 6. ARREGLO DE PESTAÑAS (TABS) - ANTI MODO OSCURO */
@@ -98,27 +114,6 @@ st.markdown("""
     }
     button[data-baseweb="tab"] {
         background-color: transparent !important;
-    }
-
-    /* 7. ANTI MODO OSCURO PARA TÍTULOS DE CASILLEROS Y FORMULARIOS */
-    label, 
-    label p, 
-    label div {
-        color: #222222 !important;
-        font-weight: 600 !important;
-    }
-    
-    /* Forzamos también el color del texto adentro de los botones de opciones (radios/checkbox) */
-    div[role="radiogroup"] label,
-    div[data-testid="stCheckbox"] label {
-        color: #222222 !important;
-    }
-
-    /* Forzamos el color del texto que el usuario escribe adentro de los casilleros */
-    input, 
-    textarea, 
-    div[data-baseweb="select"] div {
-        color: #111111 !important;
     }
 
     /* ======================================================= */
