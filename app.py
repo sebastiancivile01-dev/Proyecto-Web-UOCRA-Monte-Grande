@@ -470,7 +470,7 @@ with st.sidebar:
     ]
    
     if st.session_state.usuario_rol == "Restringido":
-        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "8. 📊 Estadísticas", "9. 📸 Galería Multimedia", "10. 🤖 Chat GPT UOCRA", "11. 🧹 Auditoría"]
+        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios y Documentación", "8. 📊 Estadísticas", "9. 📸 Galería Multimedia", "10. 🤖 Chat GPT UOCRA", "11. 🧹 Auditoría"]
     else:
         opciones_permitidas = opciones_totales
         
