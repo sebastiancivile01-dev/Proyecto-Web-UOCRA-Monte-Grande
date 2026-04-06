@@ -1534,10 +1534,6 @@ elif opcion == "7. 🤝 Convenios y Documentación":
 
     elif seccion_elegida == "2️⃣ Documentación":
         tab_subir, tab_ver = st.tabs(["📤 Cargar Documento", "📚 Ver Documentación"])
-   
-    # --- PESTAÑA 3: CARGA DE MATERIAL ---
-    elif seccion_elegida == "2️⃣ Documentación":
-        tab_subir, tab_ver = st.tabs(["📤 Cargar Documento", "📚 Ver Documentación"])
         
         with tab_subir:
             with st.form("form_doc", clear_on_submit=True):
@@ -1577,6 +1573,46 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                         import time
                         time.sleep(2)
                         st.rerun()
+
+        with tab_ver:
+            if df_documentos.empty:
+                st.info("No hay documentos subidos todavía.")
+            else:
+                b_doc = st.text_input("🔍 Buscar por Título:")
+                df_doc_view = df_documentos.copy()
+                if b_doc:
+                    df_doc_view = df_doc_view[df_doc_view['Titulo'].str.contains(b_doc, case=False, na=False)]
+                
+                # Usamos iterrows y sacamos el 'idx' (Índice real del Excel) para saber exactamente qué fila borrar
+                for idx, doc in df_doc_view.iterrows():
+                    
+                    # 1. Dibujamos la tarjeta visual del documento
+                    st.markdown(f"""
+                    <div style="border-left: 5px solid #0033A0; padding: 15px; background-color: #f8f9fa; border-radius: 8px; margin-top: 15px; margin-bottom: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="color: #666; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">📅 {doc.get('Fecha', '')} | Vigencia: {doc.get('Vigencia', 'N/A')}</div>
+                        <div style="color: #0033A0; font-size: 1.2rem; font-weight: 900; margin-top: 5px;">{doc.get('Titulo', '')}</div>
+                        <div style="color: #333; margin-top: 5px;"><i>"{doc.get('Observaciones', '')}"</i></div>
+                        <br>
+                        <a href="{doc.get('Link_PDF', '#')}" target="_blank" style="background-color: #28a745; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 0.9rem;">📥 Abrir Archivo</a>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    # 2. CAPA DE SEGURIDAD: Chequeamos el rol del usuario
+                    usuario_actual = st.session_state.get("usuario_rol", "")
+                    
+                    if usuario_actual == "Admin":
+                        # Le ponemos una llave única (key) al botón usando el número de fila (idx)
+                        if st.button("🗑️ Eliminar", key=f"del_doc_{idx}"):
+                            # Borramos la fila exacta del dataframe original
+                            df_documentos = df_documentos.drop(idx)
+                            # Guardamos en la base de datos
+                            guardar_db(df_documentos, "Documentos")
+                            st.success("✅ Documento eliminado del sistema.")
+                            import time
+                            time.sleep(1)
+                            st.rerun()
+                            
+                    st.write("") # Un espacio en blanco para separar el siguiente documento
 
         
         with tab_ver:
