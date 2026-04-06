@@ -553,7 +553,10 @@ with st.sidebar:
     
     # 3. ENLACES Y REDES
     st.markdown("---") 
-    st.caption("🔗 ENLACES ÚTILES")
+    
+    # Reemplazamos st.caption por un texto blindado en HTML
+    st.markdown("<p style='color: #666666; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>🔗 ENLACES ÚTILES</p>", unsafe_allow_html=True)
+    
     st.markdown("""
     <div style='text-align: center; font-weight: bold; font-size: 0.9rem;'>
         <a href='https://www.ieric.org.ar/' target='_blank' style='color: #1f77b4; text-decoration: none;'>IERIC</a> | 
@@ -564,6 +567,20 @@ with st.sidebar:
         <a href='https://www.uocra.org/?s=convenio-colectivo-de-trabajo&lang=1' target='_blank' style='color: #1f77b4; text-decoration: none;'>CCT</a> |
         <a href='https://servicios.infoleg.gob.ar/infolegInternet/anexos/35000-39999/38568/texact.htm' target='_blank' style='color: #1f77b4; text-decoration: none;'>SEG.HIG.</a> |
         <a href='https://servicios.infoleg.gob.ar/infolegInternet/anexos/25000-29999/27238/norma.htm' target='_blank' style='color: #1f77b4; text-decoration: none;'>22.250</a>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.write("#")
+    
+    # Reemplazamos st.caption por un texto blindado en HTML
+    st.markdown("<p style='color: #666666; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>📱 REDES SOCIALES</p>", unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style='text-align: center; margin-bottom: 15px;'>
+        <a href='https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5' target='_blank' style='text-decoration: none;'>
+            <img src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/600px-Instagram_icon.png' width='45px' style='vertical-align: middle; margin-right: 10px;'>
+            <span style='font-size: 1.1rem; font-weight: bold; color: #e1306c; vertical-align: middle;'>Instagram</span>
+        </a>
     </div>
     """, unsafe_allow_html=True)
     
