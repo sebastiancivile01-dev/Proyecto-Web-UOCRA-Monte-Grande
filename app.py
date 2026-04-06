@@ -1622,12 +1622,11 @@ elif opcion == "7. 🤝 Convenios y Documentación":
 # ==========================================
 # MÓDULO 8: TABLERO DE CONTROL
 # ==========================================
-# ESTO TIENE QUE ESTAR PEGADO AL MARGEN IZQUIERDO (Sangría 0)
 elif opcion == "8. 📊 Estadísticas":
-st.title("📊 Tablero de Control y Estadísticas")
+    st.title("📊 Tablero de Control y Estadísticas")
     st.markdown("Visión analítica general de la Jurisdicción Esteban Echeverría.")
     
-    # CSS Súper Agresivo para anular el diseño por defecto y armar tarjetas reales
+    # CSS Súper Agresivo para anular el diseño por defecto...
     st.markdown("""
         <style>
         .tarjeta-kpi {
