@@ -38,10 +38,18 @@ st.markdown("""
     div.stButton > button:first-child { background-color: #0033A0; color: white; border-radius: 5px; border: 1px solid #0033A0; }
     div.stButton > button:hover { background-color: #002277; color: white; border: 1px solid #002277; }
     
-    /* ARREGLO BARRA LATERAL (MENÚ) */
+/* ARREGLO BARRA LATERAL (MENÚ) */
     [data-testid="stSidebar"] { 
         background-color: #f4f6f9 !important; 
         border-right: 2px solid #CCCCCC !important; 
+    }
+    /* Forzamos que TODO el texto del menú (opciones y comisión) se lea oscuro */
+    [data-testid="stSidebar"] .stRadio p,
+    [data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] p,
+    [data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] strong { 
+        color: #111111 !important; 
+    }
+    
     }
     /* Forzamos que las letras del menú se lean oscuro y en negrita */
     [data-testid="stSidebar"] .stRadio p { 
