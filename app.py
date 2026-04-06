@@ -1574,17 +1574,60 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                         time.sleep(2)
                         st.rerun()
 
+elif seccion_elegida == "2️⃣ Documentación":
+        tab_subir, tab_ver = st.tabs(["📤 Cargar Documento", "📚 Ver Documentación"])
+        
+        with tab_subir:
+            with st.form("form_doc", clear_on_submit=True):
+                d_tit = st.text_input("Título del Documento:*")
+                
+                col_d1, col_d2 = st.columns(2)
+                with col_d1:
+                    d_fec = st.date_input("Fecha:", format="DD/MM/YYYY")
+                with col_d2:
+                    d_vig = st.text_input("Vigencia (Opcional):")
+                    
+                d_obs = st.text_area("Observaciones (Opcional):")
+                # Acá pedimos UN SOLO ARCHIVO, y solo PDF
+                archivo_doc = st.file_uploader("📄 Arrastrá el PDF del Documento aquí", type=["pdf"])
+                
+                if st.form_submit_button("💾 Guardar Documento"):
+                    if not d_tit:
+                        st.error("❌ El Título es obligatorio.")
+                    else:
+                        d_link = ""
+                        if archivo_doc is not None:
+                            with st.spinner("Subiendo archivo a Google Cloud..."):
+                                nombre_limpio = f"Doc_{d_tit}.pdf".replace(" ", "_")
+                                d_link = subir_archivo_drive(archivo_doc, nombre_limpio)
+                                if d_link:
+                                    st.success("✅ Archivo subido con éxito.")
+                                else:
+                                    st.error("⚠️ Error al subir el PDF.")
+                                    
+                        nuevo_doc = pd.DataFrame([{
+                            "Titulo": d_tit, "Fecha": d_fec.strftime("%d/%m/%Y"), 
+                            "Vigencia": d_vig, "Observaciones": d_obs, "Link_PDF": d_link
+                        }])
+                        df_documentos = pd.concat([df_documentos, nuevo_doc], ignore_index=True)
+                        guardar_db(df_documentos, "Documentos")
+                        st.success("✅ ¡Documento guardado!")
+                        import time
+                        time.sleep(2)
+                        st.rerun()
+
         with tab_ver:
             if df_documentos.empty:
                 st.info("No hay documentos subidos todavía.")
             else:
+                # LLAVE DE SEGURIDAD 1: Buscador único
                 b_doc = st.text_input("🔍 Buscar por Título:", key="buscador_docs_unico")
                 df_doc_view = df_documentos.copy()
                 if b_doc:
                     df_doc_view = df_doc_view[df_doc_view['Titulo'].str.contains(b_doc, case=False, na=False)]
                 
-                # Usamos iterrows y sacamos el 'idx' (Índice real del Excel) para saber exactamente qué fila borrar
-                for idx, doc in df_doc_view.iterrows():
+                # Usamos enumerate para generar un ID 100% único por cada tarjeta
+                for num_fila, (idx, doc) in enumerate(df_doc_view.iterrows()):
                     
                     # 1. Dibujamos la tarjeta visual del documento
                     st.markdown(f"""
@@ -1601,60 +1644,21 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                     usuario_actual = st.session_state.get("usuario_rol", "")
                     
                     if usuario_actual == "Admin":
-                        # Le ponemos una llave única (key) al botón usando el número de fila (idx)
-                        if st.button("🗑️ Eliminar", key=f"del_doc_{idx}"):
-                            # Borramos la fila exacta del dataframe original
-                            df_documentos = df_documentos.drop(idx)
-                            # Guardamos en la base de datos
-                            guardar_db(df_documentos, "Documentos")
-                            st.success("✅ Documento eliminado del sistema.")
-                            import time
-                            time.sleep(1)
-                            st.rerun()
+                        # LLAVE DE SEGURIDAD 2: Botón de eliminar blindado
+                        if st.button("🗑️ Eliminar", key=f"del_doc_{idx}_unico_{num_fila}"):
+                            try:
+                                # Borramos la fila exacta del dataframe original
+                                df_documentos = df_documentos.drop(idx)
+                                # Guardamos en la base de datos
+                                guardar_db(df_documentos, "Documentos")
+                                st.success("✅ Documento eliminado del sistema.")
+                                import time
+                                time.sleep(1)
+                                st.rerun()
+                            except KeyError:
+                                st.error("⚠️ El documento ya no existe en la base.")
                             
                     st.write("") # Un espacio en blanco para separar el siguiente documento
-
-        
-        with tab_ver:
-            if df_documentos.empty:
-                st.info("No hay documentos subidos todavía.")
-            else:
-                b_doc = st.text_input("🔍 Buscar por Título:")
-                df_doc_view = df_documentos.copy()
-                if b_doc:
-                    df_doc_view = df_doc_view[df_doc_view['Titulo'].str.contains(b_doc, case=False, na=False)]
-                
-                # Usamos iterrows y sacamos el 'idx' (Índice real del Excel) para saber exactamente qué fila borrar
-                for idx, doc in df_doc_view.iterrows():
-                    
-                    # 1. Dibujamos la tarjeta visual del documento
-                    st.markdown(f"""
-                    <div style="border-left: 5px solid #0033A0; padding: 15px; background-color: #f8f9fa; border-radius: 8px; margin-top: 15px; margin-bottom: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <div style="color: #666; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">📅 {doc.get('Fecha', '')} | Vigencia: {doc.get('Vigencia', 'N/A')}</div>
-                        <div style="color: #0033A0; font-size: 1.2rem; font-weight: 900; margin-top: 5px;">{doc.get('Titulo', '')}</div>
-                        <div style="color: #333; margin-top: 5px;"><i>"{doc.get('Observaciones', '')}"</i></div>
-                        <br>
-                        <a href="{doc.get('Link_PDF', '#')}" target="_blank" style="background-color: #28a745; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 0.9rem;">📥 Abrir Archivo</a>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    # 2. CAPA DE SEGURIDAD: Chequeamos el rol del usuario
-                    usuario_actual = st.session_state.get("usuario_rol", "")
-                    
-                    if usuario_actual == "Admin":
-                        # Le ponemos una llave única (key) al botón usando el número de fila (idx)
-                        if st.button("🗑️ Eliminar", key=f"del_doc_{idx}"):
-                            # Borramos la fila exacta del dataframe original
-                            df_documentos = df_documentos.drop(idx)
-                            # Guardamos en la base de datos
-                            guardar_db(df_documentos, "Documentos")
-                            st.success("✅ Documento eliminado del sistema.")
-                            import time
-                            time.sleep(1)
-                            st.rerun()
-                            
-                    st.write("") # Un espacio en blanco para separar el siguiente documento
-
 # ==========================================
 # MÓDULO 8: TABLERO DE CONTROL
 # ==========================================
