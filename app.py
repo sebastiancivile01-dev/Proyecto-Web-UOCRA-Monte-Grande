@@ -1686,7 +1686,7 @@ elif opcion == "9. 📸 Galería Multimedia":
                 m_tipo = st.selectbox("Tipo de Archivo:", ["Foto", "Video"])
                 
             # Cajón para subir archivos
-            archivo_media = st.file_uploader("📄 Arrastrá la Foto o Video aquí", type=["jpg", "jpeg", "png", "mp4", "mov"])
+            archivo_media = st.file_uploader("📄 Arrastrá la Foto o Video aquí", type=["jpg", "jpeg", "png", "mp4", "mov", "jfif"])
             
             # Botón público: Cualquiera que entre al sistema puede aportar material
             if st.form_submit_button("💾 Guardar en Galería"):
