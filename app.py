@@ -584,16 +584,6 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
-    st.write("#")
-    st.caption("📱 REDES SOCIALES")
-    st.markdown("""
-    <div style='text-align: center; margin-bottom: 15px;'>
-        <a href='https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5' target='_blank' style='text-decoration: none;'>
-            <img src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/600px-Instagram_icon.png' width='45px' style='vertical-align: middle; margin-right: 10px;'>
-            <span style='font-size: 1.1rem; font-weight: bold; color: #e1306c; vertical-align: middle;'>Instagram</span>
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
 
     # 4. BOTÓN DEL CALENDARIO ABAJO DE TODO
     st.markdown("---")
