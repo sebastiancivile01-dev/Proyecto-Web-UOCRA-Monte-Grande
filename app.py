@@ -1598,6 +1598,7 @@ elif opcion == "8. 📊 Estadísticas":
                 st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">Compañeras</div><div class="kpi-valor">{total_mujeres}</div></div>', unsafe_allow_html=True)
             with c_m2:
                 st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">Cupo Global</div><div class="kpi-valor">{porc_general:.1f}%</div></div>', unsafe_allow_html=True)
+
 # ==========================================
 # MÓDULO 9: GALERÍA MULTIMEDIA
 # ==========================================
