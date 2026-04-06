@@ -1438,8 +1438,7 @@ elif opcion == "7. 🤝 Convenios y Documentación":
     elif seccion_elegida == "2️⃣ Documentación":
         tab_subir, tab_ver = st.tabs(["📤 Cargar Documento", "📚 Ver Documentación"])
         
-        # --- PESTAÑA 3: CARGA DE MATERIAL ---
-    with tab_subir:
+        with tab_subir:
             with st.form("form_doc", clear_on_submit=True):
                 d_tit = st.text_input("Título del Documento:*")
                 
@@ -1476,6 +1475,7 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                         import time
                         time.sleep(2)
                         st.rerun()
+
         with tab_ver:
             if df_documentos.empty:
                 st.info("No hay documentos subidos todavía.")
