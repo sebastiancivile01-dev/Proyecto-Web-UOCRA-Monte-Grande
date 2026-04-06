@@ -1353,7 +1353,8 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                         c_porc = st.text_input("Monto Extra %:")
                     
                     c_det = st.text_area("Detalles de Escala / CCT (Descripción):*")
-                    archivo_pdf = st.file_uploader("📄 Arrastrá el PDF del Convenio aquí", type=["pdf"])
+                    archivo_pdf = st.file_uploader("📄 Arrastrá el PDF del Convenio aquí", type=["pdf"],
+                    accept_multiple_files=True)
                     
                     if st.form_submit_button("💾 Guardar Convenio"):
                         if not c_emp or not c_det:
