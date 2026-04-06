@@ -1439,6 +1439,7 @@ elif opcion == "7. 🤝 Convenios y Documentación":
         tab_subir, tab_ver = st.tabs(["📤 Cargar Documento", "📚 Ver Documentación"])
         
         # --- PESTAÑA 3: CARGA DE MATERIAL ---
+    # --- PESTAÑA 3: CARGA DE MATERIAL ---
     with tab_subir:
         st.subheader("Subir Nuevo Material a la Nube")
         with st.form("form_galeria", clear_on_submit=True):
@@ -1448,14 +1449,13 @@ elif opcion == "7. 🤝 Convenios y Documentación":
             with col_m2:
                 m_tipo = st.selectbox("Tipo de Archivo:", ["Foto", "Video"])
                 
-            # 1. ACÁ ESTÁ LA MAGIA: Habilitamos múltiples archivos
+            # 1. ACÁ ESTÁ LA CLAVE: accept_multiple_files=True
             archivos_multimedia = st.file_uploader(
                 "📄 Arrastrá todas las Fotos o Videos aquí", 
-                type=["jpg", "jpeg", "png", "jfif", "mp4", "mov"],
+                type=["jpg", "jpeg", "png", "mp4", "mov", "jfif"],
                 accept_multiple_files=True 
             )
             
-            # Botón público
             if st.form_submit_button("💾 Guardar todo en Galería"):
                 if not m_tit:
                     st.error("❌ El Título es obligatorio.")
@@ -1463,13 +1463,13 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                     st.error("❌ No seleccionaste ningún archivo.")
                 else:
                     nuevos_registros = []
-                    progreso = st.progress(0) # Agregamos una barra de progreso visual
+                    progreso = st.progress(0) # Agregamos una barrita visual de carga
                     
-                    # 2. BUCLE: Procesamos cada archivo de la lista uno por uno
+                    # 2. EL BUCLE: Sube archivo por archivo
                     for i, archivo in enumerate(archivos_multimedia):
-                        with st.spinner(f"Subiendo archivo {i+1} de {len(archivos_multimedia)} a Google Cloud..."):
+                        with st.spinner(f"Subiendo archivo {i+1} de {len(archivos_multimedia)} a la nube..."):
                             extension = archivo.name.split('.')[-1]
-                            # Le agregamos un número (_1, _2) al final del nombre para que no se pisen en la nube
+                            # Les ponemos un número al final para que no se sobreescriban
                             nombre_limpio = f"Media_{m_tit}_{i+1}.{extension}".replace(" ", "_")
                             
                             m_link = subir_archivo_drive(archivo, nombre_limpio)
@@ -1478,14 +1478,13 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                                 from datetime import datetime
                                 nuevos_registros.append({
                                     "Fecha": datetime.now().strftime("%d/%m/%Y"), 
-                                    "Titulo": f"{m_tit} ({i+1})", # El título también lleva número
+                                    "Titulo": f"{m_tit} ({i+1})", 
                                     "Tipo": m_tipo, 
                                     "Link": m_link
                                 })
-                        # Actualizamos la barra de progreso
                         progreso.progress((i + 1) / len(archivos_multimedia))
                     
-                    # 3. Guardamos todos los links juntos en el Excel
+                    # 3. IMPACTAMOS TODO JUNTO EN EL EXCEL
                     if nuevos_registros:
                         df_nuevos = pd.DataFrame(nuevos_registros)
                         df_galeria = pd.concat([df_galeria, df_nuevos], ignore_index=True)
@@ -1495,6 +1494,8 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                         import time
                         time.sleep(2)
                         st.rerun()
+
+        
         with tab_ver:
             if df_documentos.empty:
                 st.info("No hay documentos subidos todavía.")
