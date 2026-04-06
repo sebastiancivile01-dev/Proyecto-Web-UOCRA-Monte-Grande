@@ -64,6 +64,45 @@ st.markdown("""
         border-radius: 6px !important;
         background-color: #ffffff !important;
     }
+
+    /* ======================================================= */
+    /* 📱 MODO CELULAR (SOLO SE ACTIVA EN PANTALLAS CHICAS)    */
+    /* ======================================================= */
+    @media (max-width: 768px) {
+        /* 1. Achicamos los márgenes laterales para ganar espacio útil */
+        .block-container {
+            padding: 1rem 0.5rem !important; 
+            margin-top: 10px !important;
+        }
+        
+        /* 2. Achicamos los títulos para que no se corten en dos renglones */
+        h1 { font-size: 1.6rem !important; }
+        h2 { font-size: 1.4rem !important; }
+        h3 { font-size: 1.2rem !important; }
+        
+        /* 3. Botones "Gordos": Hacemos que ocupen el 100% del ancho para tocarlos fácil con el pulgar */
+        .stButton > button {
+            width: 100% !important; 
+            padding: 12px !important;
+            font-size: 1.1rem !important;
+            margin-bottom: 5px !important;
+        }
+        
+        /* 4. Achicamos los números gigantes de los KPI (Estadísticas) */
+        .kpi-valor { 
+            font-size: 2.2rem !important; 
+        }
+        .tarjeta-kpi {
+            padding: 15px !important;
+        }
+        
+        /* 5. El menú lateral (Sidebar) ocupa toda la pantalla al abrirse */
+        [data-testid="stSidebar"] {
+            min-width: 100vw !important;
+        }
+    }
+
+    
     </style>
 """, unsafe_allow_html=True)
 
