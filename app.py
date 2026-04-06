@@ -25,7 +25,7 @@ st.markdown("""
     
     /* 2. CAJA BLANCA SEMITRANSPARENTE (Protege la lectura de los módulos) */
     .block-container {
-        background-color: rgba(255, 255, 255, 0.92) !important;
+        background-color: rgba(255, 255, 255, 0.95) !important;
         padding: 2rem 3rem !important;
         border-radius: 15px;
         box-shadow: 0px 8px 25px rgba(0,0,0,0.2);
@@ -37,7 +37,17 @@ st.markdown("""
     h1, h2, h3 { color: #0033A0 !important; }
     div.stButton > button:first-child { background-color: #0033A0; color: white; border-radius: 5px; border: 1px solid #0033A0; }
     div.stButton > button:hover { background-color: #002277; color: white; border: 1px solid #002277; }
-    [data-testid="stSidebar"] { background-color: #EAEAEA !important; border-right: 2px solid #CCCCCC !important; }
+    
+    /* ARREGLO BARRA LATERAL (MENÚ) */
+    [data-testid="stSidebar"] { 
+        background-color: #f4f6f9 !important; 
+        border-right: 2px solid #CCCCCC !important; 
+    }
+    /* Forzamos que las letras del menú se lean oscuro y en negrita */
+    [data-testid="stSidebar"] .stRadio p { 
+        color: #111111 !important; 
+        font-weight: 600 !important; 
+    }
     
     /* 4. SISTEMA DE TARJETAS KPI PROFESIONALES */
     .tarjeta-kpi {
@@ -69,40 +79,41 @@ st.markdown("""
     /* 📱 MODO CELULAR (SOLO SE ACTIVA EN PANTALLAS CHICAS)    */
     /* ======================================================= */
     @media (max-width: 768px) {
-        /* 1. Achicamos los márgenes laterales para ganar espacio útil */
+        /* 1. Ajuste de la caja principal para que no rebalse */
         .block-container {
-            padding: 1rem 0.5rem !important; 
-            margin-top: 10px !important;
+            padding: 1.5rem 1rem !important; 
+            margin-top: 5px !important;
+            max-width: 100vw !important;
+            border-radius: 0px !important; /* En celular queda mejor sin bordes curvos a los lados */
         }
         
-        /* 2. Achicamos los títulos para que no se corten en dos renglones */
+        /* 2. EL MAPA: Forzamos a que respete los límites de la pantalla del celular */
+        iframe {
+            max-width: 100% !important;
+            height: 450px !important;
+        }
+
+        /* 3. Achicamos los títulos */
         h1 { font-size: 1.6rem !important; }
         h2 { font-size: 1.4rem !important; }
         h3 { font-size: 1.2rem !important; }
         
-        /* 3. Botones "Gordos": Hacemos que ocupen el 100% del ancho para tocarlos fácil con el pulgar */
+        /* 4. Botones y KPIs anchos */
         .stButton > button {
             width: 100% !important; 
             padding: 12px !important;
             font-size: 1.1rem !important;
             margin-bottom: 5px !important;
         }
+        .kpi-valor { font-size: 2.2rem !important; }
+        .tarjeta-kpi { padding: 15px !important; }
         
-        /* 4. Achicamos los números gigantes de los KPI (Estadísticas) */
-        .kpi-valor { 
-            font-size: 2.2rem !important; 
-        }
-        .tarjeta-kpi {
-            padding: 15px !important;
-        }
-        
-        /* 5. El menú lateral (Sidebar) ocupa toda la pantalla al abrirse */
+        /* 5. EL MENÚ: Desactivamos la orden que lo rompía, ahora se oculta solo */
         [data-testid="stSidebar"] {
-            min-width: 100vw !important;
+            min-width: 0 !important;
+            max-width: 85vw !important;
         }
     }
-
-    
     </style>
 """, unsafe_allow_html=True)
 
@@ -645,9 +656,9 @@ if opcion == "1. 🗺️ Mapa Territorial":
         </style>
     """, unsafe_allow_html=True)
     
-    # RENDERIZAMOS EL MAPA A ANCHO COMPLETO (1000px)
-    folium_static(m, width=1000, height=600)
-
+    # RENDERIZAMOS EL MAPA (El tamaño se ajusta por CSS)
+    folium_static(m, width=725, height=600)
+    
     # --- 2. PANEL DE CONTROL (SOLO ADMIN) DEBAJO DEL MAPA ---
     if st.session_state.usuario_rol == "Admin":
         st.markdown("---")
