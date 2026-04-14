@@ -263,7 +263,7 @@ for col in ['Latitud', 'Longitud', 'Radio_KM']:
         df_predios[col] = pd.to_numeric(df_predios[col], errors='coerce').fillna(0.0)
 df_documentos = cargar_db("Documentos", ["Titulo", "Fecha", "Vigencia", "Observaciones", "Link_PDF"])  
     # Carga del historial de escalas salariales (Paritarias)
-df_paritarias = cargar_db("Paritarias_Historia", ["Fecha_Carga", "Periodo_Vigencia", "Oficial_Especializado", "Oficial", "Medio_Oficial", "Ayudante", "Sereno"])
+df_paritarias = cargar_db("Paritarias_Historia", ["Fecha_Carga", "Periodo_Vigencia", "Oficial_Especializado", "Oficial", "Medio_Oficial", "Ayudante", "Sereno", "Viatico"])
 df_delegados = cargar_db("Delegados", ["Nombre", "CUIL", "Celular", "Domicilio", "Nacimiento", "Correo", "Observacion"])
 df_contactos = cargar_db("Contactos", ["Nombre", "Cargo", "Empresa", "Observaciones"])
 df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "Estado", "Finalizacion", "Respuesta", "Observaciones"])
@@ -1347,7 +1347,8 @@ elif opcion == "4. 🧮 Calculadoras":
                                 "Oficial": p_of,
                                 "Medio_Oficial": p_mo,
                                 "Ayudante": p_ay,
-                                "Sereno": p_sereno
+                                "Sereno": p_sereno,
+                                "Viatico": p_viatico
                             }])
                             df_paritarias = pd.concat([df_paritarias, nueva_paritaria], ignore_index=True)
                             guardar_db(df_paritarias, "Paritarias_Historia")
