@@ -1108,17 +1108,32 @@ elif opcion == "4. 🧮 Calculadoras":
     ])
     
     # --- CONEXIÓN A LA BASE DE PARITARIAS ---
+    # Función blindada para limpiar formatos de Excel ($ o comas)
+    def limpiar_numero(val, default):
+        try:
+            if str(val).strip() == "": return default
+            # Quitamos símbolos y espacios
+            limpio = str(val).replace("$", "").replace(" ", "")
+            # Arreglamos el tema de las comas y los puntos
+            if "," in limpio and "." in limpio: # Formato 1.500,50
+                limpio = limpio.replace(".", "").replace(",", ".")
+            elif "," in limpio: # Formato 1500,50
+                limpio = limpio.replace(",", ".")
+            return float(limpio)
+        except:
+            return default
+
     # Leemos la última fila del Excel para sacar los valores vigentes
     if not df_paritarias.empty:
         ultima_paritaria = df_paritarias.iloc[-1]
-        val_ay = float(ultima_paritaria.get("Ayudante", 5470.0))
-        val_mo = float(ultima_paritaria.get("Medio_Oficial", 6000.0))
-        val_of = float(ultima_paritaria.get("Oficial", 6800.0))
-        val_of_esp = float(ultima_paritaria.get("Oficial_Especializado", 7500.0))
+        val_ay = limpiar_numero(ultima_paritaria.get("Ayudante"), 5470.0)
+        val_mo = limpiar_numero(ultima_paritaria.get("Medio_Oficial"), 6000.0)
+        val_of = limpiar_numero(ultima_paritaria.get("Oficial"), 6800.0)
+        val_of_esp = limpiar_numero(ultima_paritaria.get("Oficial_Especializado"), 7500.0)
         val_viatico = limpiar_numero(ultima_paritaria.get("Viatico"), 15733.30)
         periodo_vigente = str(ultima_paritaria.get("Periodo_Vigencia", "Desconocido"))
     else:
-# Si el Excel está vacío, usamos estos valores de emergencia
+        # Si el Excel está vacío, usamos estos valores de emergencia
         val_ay, val_mo, val_of, val_of_esp, val_viatico = 5470.0, 6000.0, 6800.0, 7500.0, 15733.30
         periodo_vigente = "Valores de Emergencia (Falta cargar en BD)"
 
@@ -1193,7 +1208,7 @@ elif opcion == "4. 🧮 Calculadoras":
                 
                 bruto = subtot + mha + mhnoc + mpres + mesp + mvac + msac_val + er + rr
                 ret = (bruto*0.11) + (bruto*0.03) + (bruto*0.03) + (bruto*0.025) + ds + dg
-                # Acá usamos el viático constante definido arriba
+                # Acá usamos el viático constante o de BD
                 norem = (subtot*(pnr/100)) + (dvi*val_viatico) + enr + rnr 
                 neto = bruto - ret + norem
 
@@ -1212,6 +1227,7 @@ elif opcion == "4. 🧮 Calculadoras":
                 if not motivo_recibo: 
                     st.error("Escriba un motivo.")
                 else:
+                    from datetime import datetime
                     df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": st.session_state.rec_nombre, "Empresa": st.session_state.rec_empresa, "Motivo": motivo_recibo, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": "Generado Automáticamente desde Calculadora."}])], ignore_index=True)
                     guardar_db(df_reclamos, "Reclamos")
                     st.success("✅ Reclamo enviado!")
@@ -1222,7 +1238,6 @@ elif opcion == "4. 🧮 Calculadoras":
     with tab_ieric:
         st.write("Carga de quincenas históricas para cálculo de aportes y actualización por CER.")
         
-        # 1. Intentamos traer el CER de hoy
         cer_actual = obtener_cer()
         if cer_actual:
             st.success(f"🏦 Conexión BCRA Exitosa: Índice CER Actual = {cer_actual}")
@@ -1245,11 +1260,9 @@ elif opcion == "4. 🧮 Calculadoras":
                 tasa = 0.12 if nro <= 24 else 0.08
                 aporte_base = bru * tasa
                 
-                # 2. Buscamos el CER del día de pago en el BCRA
                 fecha_formato_api = fp.strftime("%Y-%m-%d")
                 cer_historico = obtener_cer(fecha_formato_api)
                 
-                # 3. Lógica de Capitalización (Fórmula de Indexación)
                 aporte_actualizado = aporte_base
                 if cer_historico and cer_actual:
                     aporte_actualizado = aporte_base * (cer_actual / cer_historico)
@@ -1290,6 +1303,7 @@ elif opcion == "4. 🧮 Calculadoras":
                 elif not motivo_ieric: 
                     st.error("❌ Escriba un motivo.")
                 else:
+                    from datetime import datetime
                     motivo_final = f"{motivo_ieric} | Deuda Actualizada: $ {suma_actualizada:,.2f}"
                     df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": ieric_nombre, "Empresa": ieric_emp, "Motivo": motivo_final, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": "Generado Auto desde IERIC (Con CER)."}])], ignore_index=True)
                     guardar_db(df_reclamos, "Reclamos")
@@ -1331,7 +1345,11 @@ elif opcion == "4. 🧮 Calculadoras":
                         p_mo = st.number_input("Medio Oficial $", min_value=0.0, format="%.2f")
                         p_ay = st.number_input("Ayudante $", min_value=0.0, format="%.2f")
                         
-                    p_sereno = st.number_input("Valor MENSUAL Sereno $ (Opcional)", min_value=0.0, format="%.2f")
+                    col_ext1, col_ext2 = st.columns(2)
+                    with col_ext1:
+                        p_sereno = st.number_input("Valor MENSUAL Sereno $ (Opcional)", min_value=0.0, format="%.2f")
+                    with col_ext2:
+                        p_viatico = st.number_input("Viático Diario $", min_value=0.0, format="%.2f")
                     
                     if st.form_submit_button("💾 Guardar Nueva Escala"):
                         if not p_periodo:
@@ -1366,8 +1384,9 @@ elif opcion == "4. 🧮 Calculadoras":
             df_mostrar = df_paritarias.iloc[::-1].copy()
             
             # Formateamos los números para que se vean como plata ($)
-            for col in ["Oficial_Especializado", "Oficial", "Medio_Oficial", "Ayudante", "Sereno"]:
-                df_mostrar[col] = df_mostrar[col].apply(lambda x: f"$ {float(x):,.2f}" if str(x).replace('.','',1).isdigit() else x)
+            for col in ["Oficial_Especializado", "Oficial", "Medio_Oficial", "Ayudante", "Sereno", "Viatico"]:
+                # Evitamos intentar formatear si viene vacío o texto
+                df_mostrar[col] = df_mostrar[col].apply(lambda x: f"$ {float(str(x).replace('$','').replace(' ','').replace('.','').replace(',','.')):,.2f}" if str(x).replace('$','').replace(' ','').replace('.','').replace(',','.').replace('-','',1).replace('.','',1).isdigit() else x)
             
             st.dataframe(df_mostrar, hide_index=True, use_container_width=True)
 # ==========================================
