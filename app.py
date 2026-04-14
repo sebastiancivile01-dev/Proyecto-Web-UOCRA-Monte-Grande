@@ -262,6 +262,8 @@ for col in ['Latitud', 'Longitud', 'Radio_KM']:
     if col in df_predios.columns:
         df_predios[col] = pd.to_numeric(df_predios[col], errors='coerce').fillna(0.0)
 df_documentos = cargar_db("Documentos", ["Titulo", "Fecha", "Vigencia", "Observaciones", "Link_PDF"])  
+    # Carga del historial de escalas salariales (Paritarias)
+df_paritarias = cargar_db("Paritarias_Historia", ["Fecha_Carga", "Periodo_Vigencia", "Oficial_Especializado", "Oficial", "Medio_Oficial", "Ayudante", "Sereno"])
 df_delegados = cargar_db("Delegados", ["Nombre", "CUIL", "Celular", "Domicilio", "Nacimiento", "Correo", "Observacion"])
 df_contactos = cargar_db("Contactos", ["Nombre", "Cargo", "Empresa", "Observaciones"])
 df_reclamos = cargar_db("Reclamos", ["Nombre", "Empresa", "Motivo", "Ingreso", "Estado", "Finalizacion", "Respuesta", "Observaciones"])
@@ -1096,33 +1098,41 @@ elif opcion == "3. 📋 Nóminas":
 elif opcion == "4. 🧮 Calculadoras":
     st.title("🧮 Módulo de Cálculos Gremiales")
 
-    tab_recibo, tab_ieric, tab_vacaciones, tab_sac = st.tabs([
+    # Sumamos la 5ta pestaña para el ABM de Paritarias
+    tab_recibo, tab_ieric, tab_vacaciones, tab_sac, tab_historial = st.tabs([
         "🧾 Calculadora de Recibos", 
         "💰 Fondo Cese (IERIC)", 
         "🏖️ Vacaciones", 
-        "🎄 SAC (Aguinaldo)"
+        "🎄 SAC (Aguinaldo)",
+        "📈 Historial Paritarias"
     ])
     
+    # --- CONEXIÓN A LA BASE DE PARITARIAS ---
+    # Leemos la última fila del Excel para sacar los valores vigentes
+    if not df_paritarias.empty:
+        ultima_paritaria = df_paritarias.iloc[-1]
+        val_ay = float(ultima_paritaria.get("Ayudante", 5470.0))
+        val_mo = float(ultima_paritaria.get("Medio_Oficial", 6000.0))
+        val_of = float(ultima_paritaria.get("Oficial", 6800.0))
+        val_of_esp = float(ultima_paritaria.get("Oficial_Especializado", 7500.0))
+        periodo_vigente = str(ultima_paritaria.get("Periodo_Vigencia", "Desconocido"))
+    else:
+        # Si el Excel está vacío, usamos estos valores de emergencia
+        val_ay, val_mo, val_of, val_of_esp = 5470.0, 6000.0, 6800.0, 7500.0
+        periodo_vigente = "Valores de Emergencia (Falta cargar en BD)"
+
+    # Viático Fijo (Se puede pasar a la base de datos más adelante si lo desean)
+    val_viatico = 15733.30
+    
+    # ---------------------------------------------------------
+    # PESTAÑA 1: CALCULADORA DE RECIBOS
+    # ---------------------------------------------------------
     with tab_recibo:
         formato_liq = st.selectbox("📝 Formato Liquidativo (Convenio de Empresa):", ["AESA"])
-        st.markdown("---")
-
-        if 'paritarias' not in st.session_state:
-            st.session_state.paritarias = {"Ayudante": 5470.0, "MO": 6000.0, "Of": 6800.0, "OfEsp": 7500.0, "Viatico": 15733.30}
         
-        with st.expander("⚙️ Actualizar Paritarias Vigentes", expanded=False):
-            with st.form("form_p"):
-                col1, col2 = st.columns(2)
-                with col1:
-                    va = st.number_input("Ayudante ($/hr):", value=st.session_state.paritarias["Ayudante"])
-                    vm = st.number_input("Medio-Oficial ($/hr):", value=st.session_state.paritarias["MO"])
-                    vo = st.number_input("Oficial ($/hr):", value=st.session_state.paritarias["Of"])
-                with col2:
-                    voe = st.number_input("Of. Esp ($/hr):", value=st.session_state.paritarias["OfEsp"])
-                    vv = st.number_input("Viático Diario ($):", value=st.session_state.paritarias["Viatico"])
-                if st.form_submit_button("💾 Guardar"):
-                    st.session_state.paritarias = {"Ayudante": va, "MO": vm, "Of": vo, "OfEsp": voe, "Viatico": vv}
-                    st.success("✅ Actualizado.")
+        # Le avisamos al usuario qué escala está usando el sistema
+        st.info(f"💡 Utilizando Escala Salarial Vigente: **{periodo_vigente}**")
+        st.markdown("---")
 
         st.markdown("### 🧮 Carga de Novedades")
         with st.form("form_calc"):
@@ -1131,8 +1141,17 @@ elif opcion == "4. 🧮 Calculadoras":
                 n_emp = st.text_input("Nombre del Compañero:")
                 e_liq = st.selectbox("Empresa:", ["AESA", "Estándar", "DF Soluciones-Tec"])
                 cat = st.selectbox("Categoría:", ["Ayudante", "Medio-Oficial", "Oficial", "Oficial-Especializado"])
-                cat_map = {"Ayudante": "Ayudante", "Medio-Oficial": "MO", "Oficial": "Of", "Oficial-Especializado": "OfEsp"}
-                vh = st.session_state.paritarias[cat_map[cat]]
+                
+                # Mapeamos la categoría seleccionada con los valores de la Base de Datos
+                cat_valores = {
+                    "Ayudante": val_ay, 
+                    "Medio-Oficial": val_mo, 
+                    "Oficial": val_of, 
+                    "Oficial-Especializado": val_of_esp
+                }
+                vh = cat_valores[cat]
+                
+                st.markdown(f"*(Valor Hora Automático: **$ {vh:,.2f}**)*")
                 
                 st.markdown("**Horas Trabajadas**")
                 hn = st.number_input("Hs Norm:", min_value=0.0)
@@ -1176,7 +1195,8 @@ elif opcion == "4. 🧮 Calculadoras":
                 
                 bruto = subtot + mha + mhnoc + mpres + mesp + mvac + msac_val + er + rr
                 ret = (bruto*0.11) + (bruto*0.03) + (bruto*0.03) + (bruto*0.025) + ds + dg
-                norem = (subtot*(pnr/100)) + (dvi*st.session_state.paritarias["Viatico"]) + enr + rnr
+                # Acá usamos el viático constante definido arriba
+                norem = (subtot*(pnr/100)) + (dvi*val_viatico) + enr + rnr 
                 neto = bruto - ret + norem
 
                 txt = f"EMPLEADO: {n_emp} | EMPRESA: {e_liq}\n{'='*50}\n TOTAL BRUTO: $ {bruto:,.2f}\n TOTAL RETENCIONES: -$ {ret:,.2f}\n TOTAL NO REMUNERATIVOS: $ {norem:,.2f}\n{'='*50}\n NETO A COBRAR: $ {neto:,.2f}"
@@ -1198,6 +1218,9 @@ elif opcion == "4. 🧮 Calculadoras":
                     guardar_db(df_reclamos, "Reclamos")
                     st.success("✅ Reclamo enviado!")
 
+    # ---------------------------------------------------------
+    # PESTAÑA 2: IERIC
+    # ---------------------------------------------------------
     with tab_ieric:
         st.write("Carga de quincenas históricas para cálculo de aportes y actualización por CER.")
         
@@ -1253,7 +1276,6 @@ elif opcion == "4. 🧮 Calculadoras":
             st.dataframe(df_m, use_container_width=True)
             
             col_tot1, col_tot2 = st.columns(2)
-            # Mostramos la diferencia entre la plata vieja y la plata indexada
             suma_nominal = sum(q['Aporte Nominal'] for q in st.session_state.quincenas)
             suma_actualizada = sum(q['Aporte Actualizado (CER)'] for q in st.session_state.quincenas)
             
@@ -1270,7 +1292,6 @@ elif opcion == "4. 🧮 Calculadoras":
                 elif not motivo_ieric: 
                     st.error("❌ Escriba un motivo.")
                 else:
-                    # Guardamos el reclamo con el monto actualizado
                     motivo_final = f"{motivo_ieric} | Deuda Actualizada: $ {suma_actualizada:,.2f}"
                     df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": ieric_nombre, "Empresa": ieric_emp, "Motivo": motivo_final, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": "Generado Auto desde IERIC (Con CER)."}])], ignore_index=True)
                     guardar_db(df_reclamos, "Reclamos")
@@ -1280,7 +1301,9 @@ elif opcion == "4. 🧮 Calculadoras":
                 st.session_state.quincenas.pop()
                 st.rerun()
 
-    # 👇 ACÁ AGREGAMOS EL CONTENIDO DE LAS PESTAÑAS NUEVAS 👇
+    # ---------------------------------------------------------
+    # PESTAÑAS EXTRAS
+    # ---------------------------------------------------------
     with tab_vacaciones:
         st.subheader("🏖️ Calculadora de Vacaciones")
         st.info("⏳ Próximamente disponible para su utilización.")
@@ -1289,6 +1312,65 @@ elif opcion == "4. 🧮 Calculadoras":
         st.subheader("🎄 Cálculo de Sueldo Anual Complementario (SAC)")
         st.info("⏳ Próximamente disponible para su utilización.")
 
+    # ---------------------------------------------------------
+    # PESTAÑA 5: ABM DE PARITARIAS (Solo Admin)
+    # ---------------------------------------------------------
+    with tab_historial:
+        st.subheader("Registro Histórico de Escalas Salariales")
+        
+        # 1. FORMULARIO DE CARGA (SOLO ADMIN)
+        if st.session_state.get("usuario_rol", "") == "Admin":
+            with st.expander("➕ Cargar Nueva Escala / Paritaria", expanded=False):
+                with st.form("form_paritaria", clear_on_submit=True):
+                    p_periodo = st.text_input("Período de Vigencia (Ej: '1° Quincena Abril 2026'):*")
+                    
+                    st.markdown("**Valores por Hora ($):**")
+                    col_p1, col_p2 = st.columns(2)
+                    with col_p1:
+                        p_of_esp = st.number_input("Oficial Especializado $", min_value=0.0, format="%.2f")
+                        p_of = st.number_input("Oficial $", min_value=0.0, format="%.2f")
+                    with col_p2:
+                        p_mo = st.number_input("Medio Oficial $", min_value=0.0, format="%.2f")
+                        p_ay = st.number_input("Ayudante $", min_value=0.0, format="%.2f")
+                        
+                    p_sereno = st.number_input("Valor MENSUAL Sereno $ (Opcional)", min_value=0.0, format="%.2f")
+                    
+                    if st.form_submit_button("💾 Guardar Nueva Escala"):
+                        if not p_periodo:
+                            st.error("❌ El Período de Vigencia es obligatorio.")
+                        else:
+                            from datetime import datetime
+                            nueva_paritaria = pd.DataFrame([{
+                                "Fecha_Carga": datetime.now().strftime("%d/%m/%Y %H:%M"),
+                                "Periodo_Vigencia": p_periodo,
+                                "Oficial_Especializado": p_of_esp,
+                                "Oficial": p_of,
+                                "Medio_Oficial": p_mo,
+                                "Ayudante": p_ay,
+                                "Sereno": p_sereno
+                            }])
+                            df_paritarias = pd.concat([df_paritarias, nueva_paritaria], ignore_index=True)
+                            guardar_db(df_paritarias, "Paritarias_Historia")
+                            st.success("✅ ¡Escala salarial guardada en la historia!")
+                            import time
+                            time.sleep(2)
+                            st.rerun()
+                            
+        st.markdown("---")
+        
+        # 2. VISUALIZACIÓN DEL HISTORIAL (Lo ven todos)
+        st.markdown("### 📚 Historial Registrado")
+        if df_paritarias.empty:
+            st.info("No hay paritarias registradas en la base de datos.")
+        else:
+            # Mostramos la tabla invertida para ver la más nueva primero
+            df_mostrar = df_paritarias.iloc[::-1].copy()
+            
+            # Formateamos los números para que se vean como plata ($)
+            for col in ["Oficial_Especializado", "Oficial", "Medio_Oficial", "Ayudante", "Sereno"]:
+                df_mostrar[col] = df_mostrar[col].apply(lambda x: f"$ {float(x):,.2f}" if str(x).replace('.','',1).isdigit() else x)
+            
+            st.dataframe(df_mostrar, hide_index=True, use_container_width=True)
 # ==========================================
 # MÓDULO 5: REPOSITORIO DE RECLAMOS
 # ==========================================
