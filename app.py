@@ -1115,15 +1115,13 @@ elif opcion == "4. 🧮 Calculadoras":
         val_mo = float(ultima_paritaria.get("Medio_Oficial", 6000.0))
         val_of = float(ultima_paritaria.get("Oficial", 6800.0))
         val_of_esp = float(ultima_paritaria.get("Oficial_Especializado", 7500.0))
+        val_viatico = limpiar_numero(ultima_paritaria.get("Viatico"), 15733.30)
         periodo_vigente = str(ultima_paritaria.get("Periodo_Vigencia", "Desconocido"))
     else:
-        # Si el Excel está vacío, usamos estos valores de emergencia
-        val_ay, val_mo, val_of, val_of_esp = 5470.0, 6000.0, 6800.0, 7500.0
+# Si el Excel está vacío, usamos estos valores de emergencia
+        val_ay, val_mo, val_of, val_of_esp, val_viatico = 5470.0, 6000.0, 6800.0, 7500.0, 15733.30
         periodo_vigente = "Valores de Emergencia (Falta cargar en BD)"
 
-    # Viático Fijo (Se puede pasar a la base de datos más adelante si lo desean)
-    val_viatico = 15733.30
-    
     # ---------------------------------------------------------
     # PESTAÑA 1: CALCULADORA DE RECIBOS
     # ---------------------------------------------------------
