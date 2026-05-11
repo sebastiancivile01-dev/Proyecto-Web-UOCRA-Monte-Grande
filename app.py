@@ -1196,7 +1196,7 @@ elif opcion == "4. 🧮 Calculadoras":
             c_vh2.info(f"💡 Por defecto el sistema cargó la paritaria actual: **{periodo_vigente}**")
             st.markdown("---")
 
-            # =================================================================
+ # =================================================================
             # 2. CONFIGURACIÓN GENERAL Y HORAS
             # =================================================================
             if modo_carga == "🤖 Carga Automática (Inteligente)":
@@ -1256,7 +1256,7 @@ elif opcion == "4. 🧮 Calculadoras":
                 h100 = c_m3.number_input("Hs al 100%:", min_value=0.0, value=0.0)
                 
                 c_m4, c_m5, c_m6 = st.columns(3)
-                hc = c_m4.number_input("Hs de Lluvia/Comp:", min_value=0.0, value=0.0)
+                hc = c_m4.number_input("Hs Compensatorias:", min_value=0.0, value=0.0) # <-- ACÁ ESTÁ CORREGIDO
                 df_f = c_m5.number_input("Días Feriados (Pagos):", min_value=0.0, value=0.0)
                 hs_descuento_parcial = c_m6.number_input("Descontar Horas (Llegada tarde):", min_value=0.0, value=0.0)
                 st.markdown("---")
@@ -1270,9 +1270,8 @@ elif opcion == "4. 🧮 Calculadoras":
                 with col1:
                     if modo_carga == "🤖 Carga Automática (Inteligente)":
                         st.markdown("**Extras Manuales**")
-                        hc = st.number_input("Hs Comp Extras (Lluvia, etc.):", min_value=0.0, value=0.0)
+                        hc = st.number_input("Hs Compensatorias:", min_value=0.0, value=0.0)
                         df_f = st.number_input("Feriados en la quincena (No trabajados pero pagos):", min_value=0.0, value=0.0)
-
                     st.markdown("**Adicionales de Convenio**")
                     ha = st.number_input("Hs Altura:", min_value=0.0)
                     hnoc = st.number_input("Hs Nocturnas:", min_value=0.0)
