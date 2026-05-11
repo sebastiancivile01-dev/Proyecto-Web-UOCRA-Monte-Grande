@@ -2242,14 +2242,13 @@ elif opcion == "12. 📝 Observaciones por Empresa":
     st.title("📝 Historial y Novedades por Empresa")
     st.markdown("Registre y consulte anotaciones, alertas o historial gremial de cada empresa contratista.")
 
-    tab_nueva, tab_historial = st.tabs(["➕ Nueva Observación", "📚 Ver Historial"])
+    tab_nueva, tab_historial = st.tabs(["➕ Nueva Observación", "📚 Ver Historial y Filtros"])
 
     # --- Pestaña 1: Carga de Datos ---
     with tab_nueva:
         with st.form("form_obs_empresa", clear_on_submit=True):
-            # Usamos la lista de empresas que ya existe en el sistema
             empresa_sel = st.selectbox("Seleccione la Empresa:*", [""] + lista_empresas_historicas)
-            obs_texto = st.text_area("Escriba la observación:*", help="Detalle la novedad comercial, gremial o administrativa.")
+            obs_texto = st.text_area("Escriba la observación:*", placeholder="Ej: La empresa presenta atrasos en el pago de quincenas...")
             
             if st.form_submit_button("💾 Guardar Observación"):
                 if not empresa_sel or not obs_texto.strip():
@@ -2272,47 +2271,72 @@ elif opcion == "12. 📝 Observaciones por Empresa":
                     time.sleep(1.5)
                     st.rerun()
 
-    # --- Pestaña 2: Visualización ---
+    # --- Pestaña 2: Visualización con FILTROS INTELIGENTES ---
     with tab_historial:
         if df_observaciones.empty:
             st.info("No hay observaciones registradas en la base de datos.")
         else:
-            filtro_empresa = st.selectbox("🔍 Filtrar historial por Empresa:", ["Todas"] + lista_empresas_historicas)
+            # FILTROS SUPERIORES
+            st.markdown("### 🔍 Panel de Búsqueda")
+            col_f1, col_f2 = st.columns(2)
             
+            with col_f1:
+                filtro_empresa = st.selectbox("🏢 Filtrar por Empresa:", ["Todas"] + lista_empresas_historicas)
+            with col_f2:
+                busqueda_texto = st.text_input("🔤 Buscar por palabra clave:", placeholder="Ej: Sueldos, Inspección...")
+
+            # Aplicamos los filtros al DataFrame
             df_vista = df_observaciones.copy()
             
+            # Filtro 1: Empresa
             if filtro_empresa != "Todas":
                 df_vista = df_vista[df_vista['Empresa'] == filtro_empresa]
+            
+            # Filtro 2: Texto (si escribió algo)
+            if busqueda_texto:
+                df_vista = df_vista[df_vista['Observacion'].str.contains(busqueda_texto, case=False, na=False)]
                 
+            st.markdown("---")
+
             if df_vista.empty:
-                st.warning(f"No hay observaciones registradas para {filtro_empresa}.")
+                st.warning("No se encontraron observaciones que coincidan con los filtros aplicados.")
             else:
-                # Damos vuelta el dataframe para ver lo más nuevo arriba
+                st.write(f"Se encontraron **{len(df_vista)}** observaciones:")
+                
+                # Invertimos para ver lo más reciente primero
                 df_vista = df_vista.iloc[::-1].reset_index(drop=True)
                 
-                # Armamos las tarjetas visuales
                 for idx, row in df_vista.iterrows():
+                    # Tarjeta visual mejorada
                     st.markdown(f"""
-                    <div style="border-left: 5px solid #fd7e14; padding: 15px; background-color: #f8f9fa; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <div style="color: #666; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">📅 {row.get('Fecha', '')} | 👤 Perfil: {row.get('Usuario', '')}</div>
-                        <div style="color: #0033A0; font-size: 1.2rem; font-weight: 900; margin-top: 5px;">🏢 {row.get('Empresa', '')}</div>
-                        <div style="color: #333; margin-top: 8px; white-space: pre-wrap; font-size: 1rem;"><i>"{row.get('Observacion', '')}"</i></div>
+                    <div style="border-left: 6px solid #ffc107; padding: 15px; background-color: #f8f9fa; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; color: #666; font-size: 0.85rem; font-weight: bold;">
+                            <span>📅 {row.get('Fecha', '')}</span>
+                            <span>👤 Cargo: {row.get('Usuario', '')}</span>
+                        </div>
+                        <div style="color: #0033A0; font-size: 1.3rem; font-weight: 900; margin-top: 10px; text-transform: uppercase;">
+                            🏢 {row.get('Empresa', '')}
+                        </div>
+                        <div style="color: #333; margin-top: 10px; padding: 10px; background: white; border-radius: 5px; border: 1px solid #eee; line-height: 1.5;">
+                            {row.get('Observacion', '')}
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Capa de Seguridad VIP: Solo Admin puede borrar una observación
+                    # Botón de eliminar (Solo para Admin)
                     if st.session_state.get("usuario_rol", "") == "Admin":
-                        # Hay que encontrar el index real del dataframe original para borrarlo
-                        idx_real = df_observaciones[(df_observaciones['Fecha'] == row['Fecha']) & (df_observaciones['Observacion'] == row['Observacion'])].index[0]
-                        if st.button("🗑️ Eliminar", key=f"del_obs_{idx_real}"):
-                            df_observaciones = df_observaciones.drop(idx_real)
-                            guardar_db(df_observaciones, "Observaciones_Empresas")
-                            st.success("✅ Observación eliminada.")
-                            import time
-                            time.sleep(1)
-                            st.rerun()
-
-
+                        # Buscamos el ID original por si hay varios con la misma fecha
+                        try:
+                            idx_original = df_observaciones[(df_observaciones['Fecha'] == row['Fecha']) & 
+                                                          (df_observaciones['Observacion'] == row['Observacion'])].index[0]
+                            if st.button(f"🗑️ Eliminar Nota #{idx_original}", key=f"del_obs_{idx_original}"):
+                                df_observaciones = df_observaciones.drop(idx_original)
+                                guardar_db(df_observaciones, "Observaciones_Empresas")
+                                st.success("✅ Eliminado.")
+                                time.sleep(1)
+                                st.rerun()
+                        except:
+                            pass
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
 # ==========================================
