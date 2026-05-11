@@ -271,6 +271,7 @@ df_eventos = cargar_db("Mujeres_Eventos", ["Titulo", "Fecha", "Observaciones"])
 df_convenios = cargar_db("Convenios", ["Empresa", "Detalle_Convenio", "monto $", "Monto %", "Vigencia"])
 df_propuestas = cargar_db("Propuestas", ["Fecha", "Usuario", "Propuesta", "Estado"])
 df_cerebro = cargar_db("Cerebro_IA", ["Fecha", "Regla", "Contexto"])
+df_observaciones = cargar_db("Observaciones_Empresas", ["Fecha", "Empresa", "Observacion", "Usuario"])
 df_puntos_extra = cargar_db("Puntos_Extra", ["Nombre", "Latitud", "Longitud", "Color", "Observacion"])
 if not df_puntos_extra.empty:
     df_puntos_extra['Latitud'] = pd.to_numeric(df_puntos_extra['Latitud'], errors='coerce').fillna(0.0)
@@ -559,11 +560,11 @@ with st.sidebar:
         "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
         "3. 📋 Nóminas", "4. 🧮 Calculadoras", "5. ⚠️ Reclamos",
         "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios y Documentación", "8. 📊 Estadísticas",
-        "9. 📸 Galería Multimedia", "10. 🤖 Chat GPT UOCRA", "11. 🧹 Auditoría"
+        "9. 📸 Galería Multimedia", "10. 🤖 Chat GPT UOCRA", "11. 🧹 Auditoría", "12. 📝 Observaciones por Empresa"
     ]
    
     if st.session_state.usuario_rol == "Restringido":
-        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios y Documentación", "8. 📊 Estadísticas", "9. 📸 Galería Multimedia", "10. 🤖 Chat GPT UOCRA", "11. 🧹 Auditoría"]
+        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios y Documentación", "8. 📊 Estadísticas", "9. 📸 Galería Multimedia", "10. 🤖 Chat GPT UOCRA", "12. 📝 Observaciones por Empresa"]
     else:
         opciones_permitidas = opciones_totales
         
@@ -2232,6 +2233,85 @@ elif opcion == "11. 🧹 Auditoría":
                         st.markdown(f"- 📍 **{partes[0].strip()}** | Falta: **{partes[1]}**")
                     else:
                         st.markdown(f"- 📍 {alerta}")
+
+
+# ==========================================
+# MÓDULO 12: OBSERVACIONES POR EMPRESA
+# ==========================================
+elif opcion == "12. 📝 Observaciones por Empresa":
+    st.title("📝 Historial y Novedades por Empresa")
+    st.markdown("Registre y consulte anotaciones, alertas o historial gremial de cada empresa contratista.")
+
+    tab_nueva, tab_historial = st.tabs(["➕ Nueva Observación", "📚 Ver Historial"])
+
+    # --- Pestaña 1: Carga de Datos ---
+    with tab_nueva:
+        with st.form("form_obs_empresa", clear_on_submit=True):
+            # Usamos la lista de empresas que ya existe en el sistema
+            empresa_sel = st.selectbox("Seleccione la Empresa:*", [""] + lista_empresas_historicas)
+            obs_texto = st.text_area("Escriba la observación:*", help="Detalle la novedad comercial, gremial o administrativa.")
+            
+            if st.form_submit_button("💾 Guardar Observación"):
+                if not empresa_sel or not obs_texto.strip():
+                    st.error("❌ Debe seleccionar una empresa y escribir una observación.")
+                else:
+                    fecha_hoy = datetime.now().strftime("%d/%m/%Y %H:%M")
+                    usuario_act = st.session_state.get("usuario_rol", "Desconocido")
+                    
+                    nueva_obs = pd.DataFrame([{
+                        "Fecha": fecha_hoy,
+                        "Empresa": empresa_sel,
+                        "Observacion": obs_texto.strip(),
+                        "Usuario": usuario_act
+                    }])
+                    
+                    df_observaciones = pd.concat([df_observaciones, nueva_obs], ignore_index=True)
+                    guardar_db(df_observaciones, "Observaciones_Empresas")
+                    st.success("✅ Observación registrada con éxito.")
+                    import time
+                    time.sleep(1.5)
+                    st.rerun()
+
+    # --- Pestaña 2: Visualización ---
+    with tab_historial:
+        if df_observaciones.empty:
+            st.info("No hay observaciones registradas en la base de datos.")
+        else:
+            filtro_empresa = st.selectbox("🔍 Filtrar historial por Empresa:", ["Todas"] + lista_empresas_historicas)
+            
+            df_vista = df_observaciones.copy()
+            
+            if filtro_empresa != "Todas":
+                df_vista = df_vista[df_vista['Empresa'] == filtro_empresa]
+                
+            if df_vista.empty:
+                st.warning(f"No hay observaciones registradas para {filtro_empresa}.")
+            else:
+                # Damos vuelta el dataframe para ver lo más nuevo arriba
+                df_vista = df_vista.iloc[::-1].reset_index(drop=True)
+                
+                # Armamos las tarjetas visuales
+                for idx, row in df_vista.iterrows():
+                    st.markdown(f"""
+                    <div style="border-left: 5px solid #fd7e14; padding: 15px; background-color: #f8f9fa; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="color: #666; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">📅 {row.get('Fecha', '')} | 👤 Perfil: {row.get('Usuario', '')}</div>
+                        <div style="color: #0033A0; font-size: 1.2rem; font-weight: 900; margin-top: 5px;">🏢 {row.get('Empresa', '')}</div>
+                        <div style="color: #333; margin-top: 8px; white-space: pre-wrap; font-size: 1rem;"><i>"{row.get('Observacion', '')}"</i></div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Capa de Seguridad VIP: Solo Admin puede borrar una observación
+                    if st.session_state.get("usuario_rol", "") == "Admin":
+                        # Hay que encontrar el index real del dataframe original para borrarlo
+                        idx_real = df_observaciones[(df_observaciones['Fecha'] == row['Fecha']) & (df_observaciones['Observacion'] == row['Observacion'])].index[0]
+                        if st.button("🗑️ Eliminar", key=f"del_obs_{idx_real}"):
+                            df_observaciones = df_observaciones.drop(idx_real)
+                            guardar_db(df_observaciones, "Observaciones_Empresas")
+                            st.success("✅ Observación eliminada.")
+                            import time
+                            time.sleep(1)
+                            st.rerun()
+
 
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
