@@ -1369,7 +1369,7 @@ elif opcion == "4. 🧮 Calculadoras":
                     
                     bruto = subtot + mha + mhnoc + mpres + mesp + mvac + msac_val + er + rr
                     ret = (bruto*0.11) + (bruto*0.03) + (bruto*0.03) + (bruto*0.025) + ds + dg
-                    norem = (subtot*(pnr/100)) + (dvi*val_viatico) + enr + rnr 
+                    norem = (subtot*(pnr/100)) + (dvi*v_viatico_final) + enr + rnr
                     neto = bruto - ret + norem
 
                     txt = f"EMPLEADO: {n_emp} | EMPRESA: {e_liq}\n"
