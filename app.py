@@ -1098,33 +1098,19 @@ elif opcion == "3. 📋 Nóminas":
 # ==========================================
 elif opcion == "4. 🧮 Calculadoras":
     st.title("🧮 Módulo de Cálculos Gremiales")
+    st.markdown("Seleccione la herramienta de auditoría que desea utilizar:")
 
-    # Sumamos la 5ta pestaña para el ABM de Paritarias
-    tab_recibo, tab_ieric, tab_vacaciones, tab_sac, tab_historial = st.tabs([
-        "🧾 Calculadora de Recibos", 
-        "💰 Fondo Cese (IERIC)", 
-        "🏖️ Vacaciones", 
-        "🎄 SAC (Aguinaldo)",
-        "📈 Historial Paritarias"
-    ])
-    
     # --- CONEXIÓN A LA BASE DE PARITARIAS ---
-    # Función blindada para limpiar formatos de Excel ($ o comas)
     def limpiar_numero(val, default):
         try:
             if str(val).strip() == "": return default
-            # Quitamos símbolos y espacios
             limpio = str(val).replace("$", "").replace(" ", "")
-            # Arreglamos el tema de las comas y los puntos
-            if "," in limpio and "." in limpio: # Formato 1.500,50
-                limpio = limpio.replace(".", "").replace(",", ".")
-            elif "," in limpio: # Formato 1500,50
-                limpio = limpio.replace(",", ".")
+            if "," in limpio and "." in limpio: limpio = limpio.replace(".", "").replace(",", ".")
+            elif "," in limpio: limpio = limpio.replace(",", ".")
             return float(limpio)
         except:
             return default
 
-    # Leemos la última fila del Excel para sacar los valores vigentes
     if not df_paritarias.empty:
         ultima_paritaria = df_paritarias.iloc[-1]
         val_ay = limpiar_numero(ultima_paritaria.get("Ayudante"), 5470.0)
@@ -1134,26 +1120,44 @@ elif opcion == "4. 🧮 Calculadoras":
         val_viatico = limpiar_numero(ultima_paritaria.get("Viatico"), 15733.30)
         periodo_vigente = str(ultima_paritaria.get("Periodo_Vigencia", "Desconocido"))
     else:
-        # Si el Excel está vacío, usamos estos valores de emergencia
         val_ay, val_mo, val_of, val_of_esp, val_viatico = 5470.0, 6000.0, 6800.0, 7500.0, 15733.30
         periodo_vigente = "Valores de Emergencia (Falta cargar en BD)"
 
-# ---------------------------------------------------------
-    # PESTAÑA 1: CALCULADORA DE RECIBOS
-    # ---------------------------------------------------------
-    with tab_recibo:
+    # ==========================================
+    # TARJETAS DE NAVEGACIÓN (MENÚ INTERACTIVO)
+    # ==========================================
+    # Iniciamos la memoria para saber qué tarjeta está activa (Por defecto: Ninguna o Quincena)
+    if 'calc_activa' not in st.session_state:
+        st.session_state.calc_activa = "Quincena"
+
+    # Dibujamos los botones grandes (Tarjetas)
+    col_t1, col_t2, col_t3, col_t4 = st.columns(4)
+    if col_t1.button("🧾 Liquidación\nQuincena", use_container_width=True): st.session_state.calc_activa = "Quincena"
+    if col_t2.button("💰 Cese Laboral\n(IERIC)", use_container_width=True): st.session_state.calc_activa = "IERIC"
+    if col_t3.button("🏖️ Cálculo\nVacaciones", use_container_width=True): st.session_state.calc_activa = "Vacaciones"
+    if col_t4.button("🎄 Aguinaldo\n(SAC)", use_container_width=True): st.session_state.calc_activa = "SAC"
+    
+    # Botón exclusivo para Admin
+    if st.session_state.get("usuario_rol", "") == "Admin":
+        if st.button("📈 Gestión Histórica de Paritarias (Exclusivo Admin)", use_container_width=True): 
+            st.session_state.calc_activa = "Paritarias"
+
+    st.markdown("---")
+
+    # ==========================================
+    # 1. PANTALLA: CALCULADORA DE QUINCENA
+    # ==========================================
+    if st.session_state.calc_activa == "Quincena":
         import datetime
-        st.markdown("### ⚙️ Configuración de Cálculo")
+        st.markdown("### 🧾 Auditoría de Recibo Quincenal")
         
-        modo_carga = st.radio("Seleccione el Modo de Carga de Horas:", ["✍️ Carga Manual (Clásica)", "🤖 Carga Automática (Inteligente)"], horizontal=True)
+        # Selector principal de modo (Por defecto en Automático)
+        modo_carga = st.radio("⚙️ Seleccione el método de carga:", ["🤖 Carga Automática (Inteligente)", "✍️ Carga Manual (Clásica)"], horizontal=True)
         formato_liq = st.selectbox("📝 Formato Liquidativo (Convenio de Empresa):", ["AESA"])
         
         st.info(f"💡 Utilizando Escala Salarial Vigente: **{periodo_vigente}**")
         st.markdown("---")
 
-        # =================================================================
-        # 1. VARIABLES DE CALENDARIO Y HORARIO HABITUAL (Arriba de todo)
-        # =================================================================
         if modo_carga == "🤖 Carga Automática (Inteligente)":
             st.markdown("### 📅 1. Parámetros de la Quincena y Horario")
             c_f1, c_f2 = st.columns(2)
@@ -1168,9 +1172,6 @@ elif opcion == "4. 🧮 Calculadoras":
             paga_almuerzo = c_h3.selectbox("Hora de Almuerzo:", ["Se descuenta (1 hora diaria)", "Jornada continua (No se descuenta)"])
             st.markdown("---")
 
-        # =================================================================
-        # 2. CARGA DE NOVEDADES DEL TRABAJADOR
-        # =================================================================
         st.markdown("### 🧮 2. Novedades del Compañero")
         with st.form("form_calc"):
             col1, col2 = st.columns(2)
@@ -1182,11 +1183,9 @@ elif opcion == "4. 🧮 Calculadoras":
                 cat_valores = {"Ayudante": val_ay, "Medio-Oficial": val_mo, "Oficial": val_of, "Oficial-Especializado": val_of_esp}
                 vh = cat_valores[cat]
                 
-                # st.markdown(f"*(Valor Hora Automático: **$ {vh:,.2f}**)*") # Leyenda oculta por si querés limpieza visual
-                
                 st.markdown("### 🕒 Horas Trabajadas")
                 
-                # MODO 1: EL CLÁSICO (A MANO)
+                # MODO 1: CLÁSICO
                 if modo_carga == "✍️ Carga Manual (Clásica)":
                     hn = st.number_input("Hs Norm:", min_value=0.0, value=0.0)
                     h50 = st.number_input("Hs 50%:", min_value=0.0, value=0.0)
@@ -1194,9 +1193,8 @@ elif opcion == "4. 🧮 Calculadoras":
                     hc = st.number_input("Hs Comp:", min_value=0.0, value=0.0)
                     df_f = st.number_input("Días Fer (Pagos):", min_value=0.0, value=0.0)
                 
-                # MODO 2: EL MOTOR INTELIGENTE
+                # MODO 2: INTELIGENTE
                 else:
-                    # Generamos el listado de los días de Lunes a Viernes de la quincena elegida
                     dias_totales = (f_fin - f_inicio).days + 1
                     dias_lv_dict = {}
                     for i in range(dias_totales):
@@ -1233,11 +1231,11 @@ elif opcion == "4. 🧮 Calculadoras":
                         st.info("No hay sábados ni domingos en este rango de fechas.")
                         
                     st.markdown("**Extras y Descuentos Manuales**")
-                    hs_descuento_parcial = st.number_input("Descontar Horas (Ej: Llegadas tarde):", min_value=0.0, value=0.0, help="Resta horas normales si el compañero llegó tarde o se retiró antes en la semana.")
+                    hs_descuento_parcial = st.number_input("Descontar Horas (Ej: Llegadas tarde):", min_value=0.0, value=0.0)
                     hc = st.number_input("Hs Comp Extras (Lluvia, etc.):", min_value=0.0, value=0.0)
                     df_f = st.number_input("Feriados en la quincena (No trabajados pero pagos):", min_value=0.0, value=0.0)
                 
-                # RESTO DE VARIABLES COMUNES
+                # COMUNES
                 st.markdown("---")
                 ha = st.number_input("Hs Altura:", min_value=0.0)
                 hnoc = st.number_input("Hs Nocturnas:", min_value=0.0)
@@ -1265,9 +1263,6 @@ elif opcion == "4. 🧮 Calculadoras":
 
             if st.form_submit_button("▶ Generar Recibo Teórico", use_container_width=True):
                 
-                # ==========================================
-                # LÓGICA DEL MOTOR INTELIGENTE
-                # ==========================================
                 if modo_carga == "🤖 Carga Automática (Inteligente)":
                     hn, h50, h100 = 0.0, 0.0, 0.0
                     dias_totales = (f_fin - f_inicio).days + 1
@@ -1278,10 +1273,8 @@ elif opcion == "4. 🧮 Calculadoras":
                         dia_actual = f_inicio + datetime.timedelta(days=i)
                         wd = dia_actual.weekday() 
                         
-                        if wd < 5: # LUNES A VIERNES
-                            if dia_actual in dias_ausente:
-                                continue # Faltó, el sistema salta este día y no suma nada
-                                
+                        if wd < 5:
+                            if dia_actual in dias_ausente: continue
                             t_inicio = datetime.datetime.combine(dia_actual, h_ent_lv)
                             t_fin = datetime.datetime.combine(dia_actual, h_sal_lv)
                             if t_fin < t_inicio: t_fin += datetime.timedelta(days=1) 
@@ -1295,22 +1288,20 @@ elif opcion == "4. 🧮 Calculadoras":
                             else:
                                 hn += horas_reales
                                     
-                        elif wd in [5, 6]: # SÁBADOS Y DOMINGOS
+                        elif wd in [5, 6]:
                             datos_dia = finde_data.get(dia_actual)
-                            if datos_dia and datos_dia["trabajo"]: # Solo entra si el delegado lo tildó
+                            if datos_dia and datos_dia["trabajo"]: 
                                 t_inicio = datetime.datetime.combine(dia_actual, datos_dia["entrada"])
                                 t_fin = datetime.datetime.combine(dia_actual, datos_dia["salida"])
                                 if t_fin < t_inicio: t_fin += datetime.timedelta(days=1)
                                 
                                 duracion_total = (t_fin - t_inicio).total_seconds() / 3600.0
-                                # Si fue a trabajar más de 4 horas el finde, también se le descuenta el almuerzo
                                 if duracion_total > 4.0:
                                     duracion_total = max(0.0, duracion_total - desc_almuerzo)
 
                                 if duracion_total > 0:
-                                    if datos_dia["es_sabado"]: # SÁBADO (Corte a las 13hs)
+                                    if datos_dia["es_sabado"]: 
                                         limite_13 = datetime.datetime.combine(dia_actual, datetime.time(13, 0))
-                                        
                                         if t_inicio < limite_13:
                                             duracion_antes_13 = (min(t_fin, limite_13) - t_inicio).total_seconds() / 3600.0
                                             if duracion_antes_13 > 4.0:
@@ -1319,21 +1310,15 @@ elif opcion == "4. 🧮 Calculadoras":
                                             hn += duracion_antes_13
                                             h100 += (duracion_total - duracion_antes_13)
                                         else:
-                                            h100 += duracion_total # Si entró después de las 13, todo al 100%
+                                            h100 += duracion_total 
                                     else: 
-                                        h100 += duracion_total # DOMINGO todo al 100%
+                                        h100 += duracion_total 
                     
-                    # CORRECCIÓN: Restamos las ausencias parciales (Llegadas tarde en la semana)
                     if hs_descuento_parcial > 0:
                         hn = max(0.0, hn - hs_descuento_parcial)
 
-                # ==========================================
-                # CÁLCULO MONETARIO 
-                # ==========================================
-                # CORRECCIÓN: Si estamos en modo clásico, restamos también para que sirva igual
                 if modo_carga == "✍️ Carga Manual (Clásica)" and 'hs_descuento_parcial' in locals():
                      hn = max(0.0, hn - hs_descuento_parcial)
-
 
                 subtot = (hn*vh) + (h50*vh*1.5) + (h100*vh*2.0) + (hc*vh) + (df_f*9.0*vh)
                 mha = ha*vh*0.15
@@ -1345,7 +1330,6 @@ elif opcion == "4. 🧮 Calculadoras":
                 
                 bruto = subtot + mha + mhnoc + mpres + mesp + mvac + msac_val + er + rr
                 ret = (bruto*0.11) + (bruto*0.03) + (bruto*0.03) + (bruto*0.025) + ds + dg
-                
                 norem = (subtot*(pnr/100)) + (dvi*val_viatico) + enr + rnr 
                 neto = bruto - ret + norem
 
@@ -1365,18 +1349,18 @@ elif opcion == "4. 🧮 Calculadoras":
             st.markdown("### ⚠️ Iniciar Reclamo por Liquidación")
             motivo_recibo = st.text_input("Motivo de la Diferencia/Reclamo:")
             if st.button("🚨 Enviar al Repositorio de Reclamos", key="btn_recibo"):
-                if not motivo_recibo: 
-                    st.error("Escriba un motivo.")
+                if not motivo_recibo: st.error("Escriba un motivo.")
                 else:
                     from datetime import datetime
                     df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": st.session_state.rec_nombre, "Empresa": st.session_state.rec_empresa, "Motivo": motivo_recibo, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": f"Generado desde Calculadora ({'Modo Inteligente' if modo_carga != '✍️ Carga Manual (Clásica)' else 'Manual'})."}])], ignore_index=True)
                     guardar_db(df_reclamos, "Reclamos")
                     st.success("✅ Reclamo enviado!")
-                    
-    # ---------------------------------------------------------
-    # PESTAÑA 2: IERIC
-    # ---------------------------------------------------------
-    with tab_ieric:
+
+    # ==========================================
+    # 2. PANTALLA: IERIC
+    # ==========================================
+    elif st.session_state.calc_activa == "IERIC":
+        st.markdown("### 💰 Fondo de Cese Laboral (IERIC)")
         st.write("Carga de quincenas históricas para cálculo de aportes y actualización por CER.")
         
         cer_actual = obtener_cer()
@@ -1389,8 +1373,7 @@ elif opcion == "4. 🧮 Calculadoras":
         ieric_nombre = col_i1.text_input("Nombre del Compañero (Para Registro/Reclamo):")
         ieric_emp = col_i2.selectbox("Empresa:", ["➕ Nueva..."] + lista_empresas_historicas, key="ieric_e")
 
-        if 'quincenas' not in st.session_state: 
-            st.session_state.quincenas = []
+        if 'quincenas' not in st.session_state: st.session_state.quincenas = []
 
         with st.form("form_q"):
             c1, c2 = st.columns(2)
@@ -1409,10 +1392,8 @@ elif opcion == "4. 🧮 Calculadoras":
                     aporte_actualizado = aporte_base * (cer_actual / cer_historico)
                 
                 st.session_state.quincenas.append({
-                    "Quincena #": f"Q-{nro:02d}", 
-                    "Fecha Pago": fp.strftime("%d/%m/%Y"), 
-                    "Bruto": bru, 
-                    "Aporte Nominal": aporte_base,
+                    "Quincena #": f"Q-{nro:02d}", "Fecha Pago": fp.strftime("%d/%m/%Y"), 
+                    "Bruto": bru, "Aporte Nominal": aporte_base,
                     "CER Hist.": round(cer_historico, 2) if cer_historico else "N/A",
                     "Aporte Actualizado (CER)": aporte_actualizado
                 })
@@ -1439,10 +1420,8 @@ elif opcion == "4. 🧮 Calculadoras":
             motivo_ieric = st.text_input("Motivo del Reclamo (Ej: Falta de pago libretas):")
             c_btn1, c_btn2 = st.columns(2)
             if c_btn1.button("🚨 Enviar al Repositorio de Reclamos", key="btn_ieric"):
-                if not ieric_nombre or ieric_emp == "➕ Nueva...": 
-                    st.error("❌ Complete Nombre y Empresa arriba.")
-                elif not motivo_ieric: 
-                    st.error("❌ Escriba un motivo.")
+                if not ieric_nombre or ieric_emp == "➕ Nueva...": st.error("❌ Complete Nombre y Empresa arriba.")
+                elif not motivo_ieric: st.error("❌ Escriba un motivo.")
                 else:
                     from datetime import datetime
                     motivo_final = f"{motivo_ieric} | Deuda Actualizada: $ {suma_actualizada:,.2f}"
@@ -1454,82 +1433,74 @@ elif opcion == "4. 🧮 Calculadoras":
                 st.session_state.quincenas.pop()
                 st.rerun()
 
-    # ---------------------------------------------------------
-    # PESTAÑAS EXTRAS
-    # ---------------------------------------------------------
-    with tab_vacaciones:
-        st.subheader("🏖️ Calculadora de Vacaciones")
-        st.info("⏳ Próximamente disponible para su utilización.")
-        
-    with tab_sac:
-        st.subheader("🎄 Cálculo de Sueldo Anual Complementario (SAC)")
+    # ==========================================
+    # 3. PANTALLA: VACACIONES
+    # ==========================================
+    elif st.session_state.calc_activa == "Vacaciones":
+        st.markdown("### 🏖️ Calculadora de Vacaciones")
         st.info("⏳ Próximamente disponible para su utilización.")
 
-    # ---------------------------------------------------------
-    # PESTAÑA 5: ABM DE PARITARIAS (Solo Admin)
-    # ---------------------------------------------------------
-    with tab_historial:
-        st.subheader("Registro Histórico de Escalas Salariales")
+    # ==========================================
+    # 4. PANTALLA: SAC
+    # ==========================================
+    elif st.session_state.calc_activa == "SAC":
+        st.markdown("### 🎄 Cálculo de Sueldo Anual Complementario (SAC)")
+        st.info("⏳ Próximamente disponible para su utilización.")
+
+    # ==========================================
+    # 5. PANTALLA: PARITARIAS (SOLO ADMIN)
+    # ==========================================
+    elif st.session_state.calc_activa == "Paritarias" and st.session_state.get("usuario_rol", "") == "Admin":
+        st.markdown("### 📈 Registro Histórico de Escalas Salariales")
         
-        # 1. FORMULARIO DE CARGA (SOLO ADMIN)
-        if st.session_state.get("usuario_rol", "") == "Admin":
-            with st.expander("➕ Cargar Nueva Escala / Paritaria", expanded=False):
-                with st.form("form_paritaria", clear_on_submit=True):
-                    p_periodo = st.text_input("Período de Vigencia (Ej: '1° Quincena Abril 2026'):*")
+        with st.expander("➕ Cargar Nueva Escala / Paritaria", expanded=False):
+            with st.form("form_paritaria", clear_on_submit=True):
+                p_periodo = st.text_input("Período de Vigencia (Ej: '1° Quincena Abril 2026'):*")
+                
+                st.markdown("**Valores por Hora ($):**")
+                col_p1, col_p2 = st.columns(2)
+                with col_p1:
+                    p_of_esp = st.number_input("Oficial Especializado $", min_value=0.0, format="%.2f")
+                    p_of = st.number_input("Oficial $", min_value=0.0, format="%.2f")
+                with col_p2:
+                    p_mo = st.number_input("Medio Oficial $", min_value=0.0, format="%.2f")
+                    p_ay = st.number_input("Ayudante $", min_value=0.0, format="%.2f")
                     
-                    st.markdown("**Valores por Hora ($):**")
-                    col_p1, col_p2 = st.columns(2)
-                    with col_p1:
-                        p_of_esp = st.number_input("Oficial Especializado $", min_value=0.0, format="%.2f")
-                        p_of = st.number_input("Oficial $", min_value=0.0, format="%.2f")
-                    with col_p2:
-                        p_mo = st.number_input("Medio Oficial $", min_value=0.0, format="%.2f")
-                        p_ay = st.number_input("Ayudante $", min_value=0.0, format="%.2f")
+                col_ext1, col_ext2 = st.columns(2)
+                with col_ext1:
+                    p_sereno = st.number_input("Valor MENSUAL Sereno $ (Opcional)", min_value=0.0, format="%.2f")
+                with col_ext2:
+                    p_viatico = st.number_input("Viático Diario $", min_value=0.0, format="%.2f")
+                
+                if st.form_submit_button("💾 Guardar Nueva Escala"):
+                    if not p_periodo:
+                        st.error("❌ El Período de Vigencia es obligatorio.")
+                    else:
+                        from datetime import datetime
+                        nueva_paritaria = pd.DataFrame([{
+                            "Fecha_Carga": datetime.now().strftime("%d/%m/%Y %H:%M"),
+                            "Periodo_Vigencia": p_periodo,
+                            "Oficial_Especializado": p_of_esp, "Oficial": p_of,
+                            "Medio_Oficial": p_mo, "Ayudante": p_ay,
+                            "Sereno": p_sereno, "Viatico": p_viatico
+                        }])
+                        df_paritarias = pd.concat([df_paritarias, nueva_paritaria], ignore_index=True)
+                        guardar_db(df_paritarias, "Paritarias_Historia")
+                        st.success("✅ ¡Escala salarial guardada en la historia!")
+                        import time
+                        time.sleep(2)
+                        st.rerun()
                         
-                    col_ext1, col_ext2 = st.columns(2)
-                    with col_ext1:
-                        p_sereno = st.number_input("Valor MENSUAL Sereno $ (Opcional)", min_value=0.0, format="%.2f")
-                    with col_ext2:
-                        p_viatico = st.number_input("Viático Diario $", min_value=0.0, format="%.2f")
-                    
-                    if st.form_submit_button("💾 Guardar Nueva Escala"):
-                        if not p_periodo:
-                            st.error("❌ El Período de Vigencia es obligatorio.")
-                        else:
-                            from datetime import datetime
-                            nueva_paritaria = pd.DataFrame([{
-                                "Fecha_Carga": datetime.now().strftime("%d/%m/%Y %H:%M"),
-                                "Periodo_Vigencia": p_periodo,
-                                "Oficial_Especializado": p_of_esp,
-                                "Oficial": p_of,
-                                "Medio_Oficial": p_mo,
-                                "Ayudante": p_ay,
-                                "Sereno": p_sereno,
-                                "Viatico": p_viatico
-                            }])
-                            df_paritarias = pd.concat([df_paritarias, nueva_paritaria], ignore_index=True)
-                            guardar_db(df_paritarias, "Paritarias_Historia")
-                            st.success("✅ ¡Escala salarial guardada en la historia!")
-                            import time
-                            time.sleep(2)
-                            st.rerun()
-                            
         st.markdown("---")
-        
-        # 2. VISUALIZACIÓN DEL HISTORIAL (Lo ven todos)
         st.markdown("### 📚 Historial Registrado")
         if df_paritarias.empty:
             st.info("No hay paritarias registradas en la base de datos.")
         else:
-            # Mostramos la tabla invertida para ver la más nueva primero
             df_mostrar = df_paritarias.iloc[::-1].copy()
-            
-            # Formateamos los números para que se vean como plata ($)
             for col in ["Oficial_Especializado", "Oficial", "Medio_Oficial", "Ayudante", "Sereno", "Viatico"]:
-                # Evitamos intentar formatear si viene vacío o texto
                 df_mostrar[col] = df_mostrar[col].apply(lambda x: f"$ {float(str(x).replace('$','').replace(' ','').replace('.','').replace(',','.')):,.2f}" if str(x).replace('$','').replace(' ','').replace('.','').replace(',','.').replace('-','',1).replace('.','',1).isdigit() else x)
-            
             st.dataframe(df_mostrar, hide_index=True, use_container_width=True)
+            
 # ==========================================
 # MÓDULO 5: REPOSITORIO DE RECLAMOS
 # ==========================================
