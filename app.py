@@ -1145,7 +1145,6 @@ elif opcion == "4. 🧮 Calculadoras":
         import datetime
         st.markdown("### ⚙️ Configuración de Cálculo")
         
-        # EL SELECTOR DE MODO
         modo_carga = st.radio("Seleccione el Modo de Carga de Horas:", ["✍️ Carga Manual (Clásica)", "🤖 Carga Automática (Inteligente)"], horizontal=True)
         formato_liq = st.selectbox("📝 Formato Liquidativo (Convenio de Empresa):", ["AESA"])
         
@@ -1153,19 +1152,26 @@ elif opcion == "4. 🧮 Calculadoras":
         st.markdown("---")
 
         # =================================================================
-        # VARIABLES DE CALENDARIO (Afuera del Form para que sea reactivo)
+        # 1. VARIABLES DE CALENDARIO Y HORARIO HABITUAL (Arriba de todo)
         # =================================================================
         if modo_carga == "🤖 Carga Automática (Inteligente)":
-            st.markdown("**📅 Rango de la Quincena**")
+            st.markdown("### 📅 1. Parámetros de la Quincena y Horario")
             c_f1, c_f2 = st.columns(2)
-            
-            # Por defecto ponemos del 1 al 15 del mes actual
             hoy = datetime.date.today()
-            f_inicio = c_f1.date_input("Día de Inicio", hoy.replace(day=1))
-            f_fin = c_f2.date_input("Día de Fin", hoy.replace(day=15))
+            f_inicio = c_f1.date_input("Día de Inicio de Quincena", hoy.replace(day=1))
+            f_fin = c_f2.date_input("Día de Fin de Quincena", hoy.replace(day=15))
+
+            st.markdown("**⏱️ Horario Habitual (Lunes a Viernes)**")
+            c_h1, c_h2, c_h3 = st.columns(3)
+            h_ent_lv = c_h1.time_input("Entrada L-V", datetime.time(7, 0))
+            h_sal_lv = c_h2.time_input("Salida L-V", datetime.time(17, 0))
+            paga_almuerzo = c_h3.selectbox("Hora de Almuerzo:", ["Se descuenta (1 hora diaria)", "Jornada continua (No se descuenta)"])
             st.markdown("---")
 
-        st.markdown("### 🧮 Carga de Novedades")
+        # =================================================================
+        # 2. CARGA DE NOVEDADES DEL TRABAJADOR
+        # =================================================================
+        st.markdown("### 🧮 2. Novedades del Compañero")
         with st.form("form_calc"):
             col1, col2 = st.columns(2)
             with col1:
@@ -1176,11 +1182,11 @@ elif opcion == "4. 🧮 Calculadoras":
                 cat_valores = {"Ayudante": val_ay, "Medio-Oficial": val_mo, "Oficial": val_of, "Oficial-Especializado": val_of_esp}
                 vh = cat_valores[cat]
                 
+                # st.markdown(f"*(Valor Hora Automático: **$ {vh:,.2f}**)*") # Leyenda oculta por si querés limpieza visual
+                
                 st.markdown("### 🕒 Horas Trabajadas")
                 
-                # ==========================================
                 # MODO 1: EL CLÁSICO (A MANO)
-                # ==========================================
                 if modo_carga == "✍️ Carga Manual (Clásica)":
                     hn = st.number_input("Hs Norm:", min_value=0.0, value=0.0)
                     h50 = st.number_input("Hs 50%:", min_value=0.0, value=0.0)
@@ -1188,34 +1194,33 @@ elif opcion == "4. 🧮 Calculadoras":
                     hc = st.number_input("Hs Comp:", min_value=0.0, value=0.0)
                     df_f = st.number_input("Días Fer (Pagos):", min_value=0.0, value=0.0)
                 
-                # ==========================================
                 # MODO 2: EL MOTOR INTELIGENTE
-                # ==========================================
                 else:
-                    st.markdown("**⏱️ Horario Habitual (Lunes a Viernes)**")
-                    c_h1, c_h2 = st.columns(2)
-                    h_ent_lv = c_h1.time_input("Entrada L-V", datetime.time(7, 0))
-                    h_sal_lv = c_h2.time_input("Salida L-V", datetime.time(17, 0))
-                    
-                    paga_almuerzo = st.selectbox("Hora de Almuerzo:", ["Se paga (No se descuenta)", "No se paga (Se descuenta 1 hora)"])
-
-                    st.markdown("**📅 Fines de Semana de esta Quincena**")
+                    # Generamos el listado de los días de Lunes a Viernes de la quincena elegida
                     dias_totales = (f_fin - f_inicio).days + 1
-                    finde_data = {}
+                    dias_lv_dict = {}
+                    for i in range(dias_totales):
+                        d = f_inicio + datetime.timedelta(days=i)
+                        if d.weekday() < 5:
+                            nombres_dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
+                            dias_lv_dict[f"{nombres_dias[d.weekday()]} {d.strftime('%d/%m')}"] = d
                     
+                    st.markdown("**❌ Ausencias en la Semana (Lunes a Viernes)**")
+                    faltas_str = st.multiselect("Seleccione si FALTÓ algún día completo:", list(dias_lv_dict.keys()), help="Los días seleccionados no sumarán horas.")
+                    
+                    st.markdown("**📅 Fines de Semana de esta Quincena**")
+                    finde_data = {}
                     hay_findes = False
                     for i in range(dias_totales):
                         dia = f_inicio + datetime.timedelta(days=i)
-                        if dia.weekday() in [5, 6]: # 5=Sábado, 6=Domingo
+                        if dia.weekday() in [5, 6]:
                             hay_findes = True
                             nombre_dia = "Sábado" if dia.weekday() == 5 else "Domingo"
                             
                             cc1, cc2, cc3 = st.columns([1.5, 1, 1])
-                            # Casillero para tildar si trabajó ese día específico
                             trabajo_check = cc1.checkbox(f"¿Trabajó {nombre_dia} {dia.strftime('%d/%m')}?", key=f"chk_{dia}")
-                            # Entradas de horario (se muestran siempre, pero el motor las ignora si no está tildado)
                             ent_f = cc2.time_input(f"Ent.", datetime.time(7, 0), key=f"ent_{dia}", label_visibility="collapsed")
-                            sal_f = cc3.time_input(f"Sal.", datetime.time(13, 0), key=f"sal_{dia}", label_visibility="collapsed")
+                            sal_f = cc3.time_input(f"Sal.", datetime.time(13, 0) if dia.weekday() == 5 else datetime.time(17,0), key=f"sal_{dia}", label_visibility="collapsed")
                             
                             finde_data[dia] = {
                                 "trabajo": trabajo_check,
@@ -1225,9 +1230,10 @@ elif opcion == "4. 🧮 Calculadoras":
                             }
                     
                     if not hay_findes:
-                        st.info("No hay sábados ni domingos en el rango de fechas seleccionado.")
+                        st.info("No hay sábados ni domingos en este rango de fechas.")
                         
-                    st.markdown("**Extras Manuales**")
+                    st.markdown("**Extras y Descuentos Manuales**")
+                    hs_descuento_parcial = st.number_input("Descontar Horas (Ej: Llegadas tarde):", min_value=0.0, value=0.0, help="Resta horas normales si el compañero llegó tarde o se retiró antes en la semana.")
                     hc = st.number_input("Hs Comp Extras (Lluvia, etc.):", min_value=0.0, value=0.0)
                     df_f = st.number_input("Feriados en la quincena (No trabajados pero pagos):", min_value=0.0, value=0.0)
                 
@@ -1265,15 +1271,17 @@ elif opcion == "4. 🧮 Calculadoras":
                 if modo_carga == "🤖 Carga Automática (Inteligente)":
                     hn, h50, h100 = 0.0, 0.0, 0.0
                     dias_totales = (f_fin - f_inicio).days + 1
-                    
-                    # Determinamos la penalización del almuerzo
-                    desc_almuerzo = 0.0 if paga_almuerzo == "Se paga (No se descuenta)" else 1.0
+                    desc_almuerzo = 1.0 if "Se descuenta" in paga_almuerzo else 0.0
+                    dias_ausente = [dias_lv_dict[k] for k in faltas_str]
                     
                     for i in range(dias_totales):
                         dia_actual = f_inicio + datetime.timedelta(days=i)
                         wd = dia_actual.weekday() 
                         
                         if wd < 5: # LUNES A VIERNES
+                            if dia_actual in dias_ausente:
+                                continue # Faltó, el sistema salta este día y no suma nada
+                                
                             t_inicio = datetime.datetime.combine(dia_actual, h_ent_lv)
                             t_fin = datetime.datetime.combine(dia_actual, h_sal_lv)
                             if t_fin < t_inicio: t_fin += datetime.timedelta(days=1) 
@@ -1289,35 +1297,38 @@ elif opcion == "4. 🧮 Calculadoras":
                                     
                         elif wd in [5, 6]: # SÁBADOS Y DOMINGOS
                             datos_dia = finde_data.get(dia_actual)
-                            # Si existe y el delegado le puso el tilde de "Sí, trabajó"
-                            if datos_dia and datos_dia["trabajo"]:
+                            if datos_dia and datos_dia["trabajo"]: # Solo entra si el delegado lo tildó
                                 t_inicio = datetime.datetime.combine(dia_actual, datos_dia["entrada"])
                                 t_fin = datetime.datetime.combine(dia_actual, datos_dia["salida"])
                                 if t_fin < t_inicio: t_fin += datetime.timedelta(days=1)
                                 
                                 duracion_total = (t_fin - t_inicio).total_seconds() / 3600.0
-                                duracion_total = max(0.0, duracion_total - desc_almuerzo)
+                                # Si fue a trabajar más de 4 horas el finde, también se le descuenta el almuerzo
+                                if duracion_total > 4.0:
+                                    duracion_total = max(0.0, duracion_total - desc_almuerzo)
 
                                 if duracion_total > 0:
-                                    if datos_dia["es_sabado"]: # SÁBADO
+                                    if datos_dia["es_sabado"]: # SÁBADO (Corte a las 13hs)
                                         limite_13 = datetime.datetime.combine(dia_actual, datetime.time(13, 0))
                                         
-                                        # Si entró antes de las 13
                                         if t_inicio < limite_13:
                                             duracion_antes_13 = (min(t_fin, limite_13) - t_inicio).total_seconds() / 3600.0
-                                            duracion_antes_13 = max(0.0, duracion_antes_13 - desc_almuerzo)
+                                            if duracion_antes_13 > 4.0:
+                                                duracion_antes_13 = max(0.0, duracion_antes_13 - desc_almuerzo)
                                             
                                             hn += duracion_antes_13
                                             h100 += (duracion_total - duracion_antes_13)
                                         else:
-                                            # Entró después de las 13, todo al 100%
-                                            h100 += duracion_total
+                                            h100 += duracion_total # Si entró después de las 13, todo al 100%
                                     else: 
-                                        # DOMINGO O FERIADO (Todo al 100%)
-                                        h100 += duracion_total
+                                        h100 += duracion_total # DOMINGO todo al 100%
+                    
+                    # Restamos las ausencias parciales (Llegadas tarde en la semana)
+                    if hs_descuento_parcial > 0:
+                        hn = max(0.0, hn - hs_descuento_parcial)
 
                 # ==========================================
-                # CÁLCULO MONETARIO (Fórmula Original Intacta)
+                # CÁLCULO MONETARIO 
                 # ==========================================
                 subtot = (hn*vh) + (h50*vh*1.5) + (h100*vh*2.0) + (hc*vh) + (df_f*9.0*vh)
                 mha = ha*vh*0.15
