@@ -1198,7 +1198,7 @@ elif opcion == "4. 🧮 Calculadoras":
             c_vh3.info(f"💡 Sugerencia actual: **{periodo_vigente}**")
             st.markdown("---")
 
- # =================================================================
+            # =================================================================
             # 2. CONFIGURACIÓN GENERAL Y HORAS
             # =================================================================
             if modo_carga == "🤖 Carga Automática (Inteligente)":
@@ -1250,57 +1250,57 @@ elif opcion == "4. 🧮 Calculadoras":
                     st.info("No hay sábados ni domingos en este rango de fechas.")
                 st.markdown("---")
 
+            # =================================================================
+            # 3. FORMULARIO FINAL: CARGA ORDENADA Y DEDUCCIONES
+            # =================================================================
+            if modo_carga == "🤖 Carga Automática (Inteligente)":
+                st.markdown("### 🧮 3. Ajustes de Recibo y Cálculo Final")
             else:
                 st.markdown("### 🕒 2. Carga de Horas y Descuentos")
-                c_m1, c_m2, c_m3 = st.columns(3)
-                hn = c_m1.number_input("Hs Normales:", min_value=0.0, value=0.0)
-                h50 = c_m2.number_input("Hs al 50%:", min_value=0.0, value=0.0)
-                h100 = c_m3.number_input("Hs al 100%:", min_value=0.0, value=0.0)
-                
-                c_m4, c_m5, c_m6 = st.columns(3)
-                hc = c_m4.number_input("Hs Compensatorias:", min_value=0.0, value=0.0) # <-- ACÁ ESTÁ CORREGIDO
-                df_f = c_m5.number_input("Días Feriados (Pagos):", min_value=0.0, value=0.0)
-                hs_descuento_parcial = c_m6.number_input("Descontar Horas (Llegada tarde):", min_value=0.0, value=0.0)
-                st.markdown("---")
 
-            # =================================================================
-            # 3. EXTRAS, DEDUCCIONES Y GENERAR
-            # =================================================================
-            st.markdown("### 🧮 3. Ajustes de Recibo y Cálculo Final")
             with st.form("form_calc"):
                 col1, col2 = st.columns(2)
+                
                 with col1:
-                    if modo_carga == "🤖 Carga Automática (Inteligente)":
-                        st.markdown("**Extras Manuales**")
-                        hc = st.number_input("Hs Compensatorias:", min_value=0.0, value=0.0)
-                        df_f = st.number_input("Feriados en la quincena (No trabajados pero pagos):", min_value=0.0, value=0.0)
-                    st.markdown("**Adicionales de Convenio**")
-                    ha = st.number_input("Hs Altura:", min_value=0.0)
-                    hnoc = st.number_input("Hs Nocturnas:", min_value=0.0)
+                    # ORDEN EXACTO (Columna Izquierda)
+                    if modo_carga == "✍️ Carga Manual (Clásica)":
+                        hn = st.number_input("Hs Normales:", min_value=0.0, value=0.0)
+                    
                     cpres = st.selectbox("Presentismo (20%):", ["Sí", "No"])
-                    pesp = st.number_input("% Especialidad:", min_value=0.0)
-                    pnr = st.number_input("Plus NR (%):", min_value=0.0)
+                    
+                    if modo_carga == "✍️ Carga Manual (Clásica)":
+                        h50 = st.number_input("Hs al 50%:", min_value=0.0, value=0.0)
+                        h100 = st.number_input("Hs al 100%:", min_value=0.0, value=0.0)
+                    
+                    hc = st.number_input("Hs Compensatorias:", min_value=0.0, value=0.0)
+                    df_f = st.number_input("Días Feriados (Pagos):", min_value=0.0, value=0.0)
+                    pesp = st.number_input("% Especialidad:", min_value=0.0, value=0.0)
+                    ha = st.number_input("Hs Altura:", min_value=0.0, value=0.0)
+                    hnoc = st.number_input("Hs Nocturnas:", min_value=0.0, value=0.0)
+                    pnr = st.number_input("Plus NR (%):", min_value=0.0, value=0.0)
+                    enr = st.number_input("Ev NR:", min_value=0.0, value=0.0)
 
                 with col2:
-                    st.markdown("**Ajustes Extras**")
-                    dv = st.number_input("Días Vac:", min_value=0.0)
-                    sb = st.number_input("Sueldo Base (Vac/SAC):", min_value=0.0)
-                    msac = st.number_input("Meses (SAC):", min_value=0.0, max_value=6.0)
-                    mr = st.number_input("Mejor Rem:", min_value=0.0)
-                    
-                    st.markdown("**Eventuales**")
-                    rr = st.number_input("Retro Rem:", min_value=0.0)
-                    rnr = st.number_input("Retro NR:", min_value=0.0)
-                    er = st.number_input("Ev Rem:", min_value=0.0)
-                    enr = st.number_input("Ev NR:", min_value=0.0)
-                    dvi = st.number_input("Días Viático:", min_value=0.0)
-                    
-                    st.markdown("**Deducciones**")
-                    ds = st.number_input("Seguro:", min_value=0.0)
+                    # EL RESTO (Columna Derecha)
+                    if modo_carga == "✍️ Carga Manual (Clásica)":
+                        hs_descuento_parcial = st.number_input("Descontar Horas (Llegada tarde):", min_value=0.0, value=0.0)
+                        
+                    dv = st.number_input("Días Vac:", min_value=0.0, value=0.0)
+                    sb = st.number_input("Sueldo Base (Vac/SAC):", min_value=0.0, value=0.0)
+                    msac = st.number_input("Meses (SAC):", min_value=0.0, max_value=6.0, value=0.0)
+                    mr = st.number_input("Mejor Rem:", min_value=0.0, value=0.0)
+                    rr = st.number_input("Retro Rem:", min_value=0.0, value=0.0)
+                    rnr = st.number_input("Retro NR:", min_value=0.0, value=0.0)
+                    er = st.number_input("Ev Rem:", min_value=0.0, value=0.0)
+                    dvi = st.number_input("Días Viático:", min_value=0.0, value=0.0)
+                    ds = st.number_input("Seguro:", min_value=0.0, value=0.0)
                     dg = st.number_input("Ganancias (+/-):", value=0.0)
 
                 if st.form_submit_button("▶ Generar Recibo Teórico", use_container_width=True):
                     
+                    # ==========================================
+                    # LÓGICA DEL MOTOR INTELIGENTE
+                    # ==========================================
                     if modo_carga == "🤖 Carga Automática (Inteligente)":
                         hn, h50, h100 = 0.0, 0.0, 0.0
                         dias_totales = (f_fin - f_inicio).days + 1
@@ -1358,7 +1358,9 @@ elif opcion == "4. 🧮 Calculadoras":
                     if modo_carga == "✍️ Carga Manual (Clásica)" and 'hs_descuento_parcial' in locals():
                          hn = max(0.0, hn - hs_descuento_parcial)
 
-                    # CÁLCULO FINAL (USANDO LA VARIABLE `vh` REACTIVA)
+                    # ==========================================
+                    # CÁLCULO MONETARIO
+                    # ==========================================
                     subtot = (hn*vh) + (h50*vh*1.5) + (h100*vh*2.0) + (hc*vh) + (df_f*9.0*vh)
                     mha = ha*vh*0.15
                     mhnoc = hnoc*vh*(8/60)
@@ -1369,7 +1371,7 @@ elif opcion == "4. 🧮 Calculadoras":
                     
                     bruto = subtot + mha + mhnoc + mpres + mesp + mvac + msac_val + er + rr
                     ret = (bruto*0.11) + (bruto*0.03) + (bruto*0.03) + (bruto*0.025) + ds + dg
-                    norem = (subtot*(pnr/100)) + (dvi*v_viatico_final) + enr + rnr
+                    norem = (subtot*(pnr/100)) + (dvi*v_viatico_final) + enr + rnr 
                     neto = bruto - ret + norem
 
                     txt = f"EMPLEADO: {n_emp} | EMPRESA: {e_liq}\n"
