@@ -1323,13 +1323,18 @@ elif opcion == "4. 🧮 Calculadoras":
                                     else: 
                                         h100 += duracion_total # DOMINGO todo al 100%
                     
-                    # Restamos las ausencias parciales (Llegadas tarde en la semana)
+                    # CORRECCIÓN: Restamos las ausencias parciales (Llegadas tarde en la semana)
                     if hs_descuento_parcial > 0:
                         hn = max(0.0, hn - hs_descuento_parcial)
 
                 # ==========================================
                 # CÁLCULO MONETARIO 
                 # ==========================================
+                # CORRECCIÓN: Si estamos en modo clásico, restamos también para que sirva igual
+                if modo_carga == "✍️ Carga Manual (Clásica)" and 'hs_descuento_parcial' in locals():
+                     hn = max(0.0, hn - hs_descuento_parcial)
+
+
                 subtot = (hn*vh) + (h50*vh*1.5) + (h100*vh*2.0) + (hc*vh) + (df_f*9.0*vh)
                 mha = ha*vh*0.15
                 mhnoc = hnoc*vh*(8/60)
