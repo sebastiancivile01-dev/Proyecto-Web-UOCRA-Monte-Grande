@@ -1178,7 +1178,7 @@ elif opcion == "4. 🧮 Calculadoras":
             st.markdown("---")
 
             # =================================================================
-            # 1. DATOS DEL COMPAÑERO Y VALOR HORA (MODIFICABLE)
+            # 1. DATOS DEL COMPAÑERO Y ESCALA (MODIFICABLE)
             # =================================================================
             st.markdown("### 👤 1. Datos y Escala Salarial")
             c_dat1, c_dat2, c_dat3 = st.columns(3)
@@ -1186,14 +1186,16 @@ elif opcion == "4. 🧮 Calculadoras":
             e_liq = c_dat2.selectbox("Empresa:", ["AESA", "Estándar", "DF Soluciones-Tec"])
             cat = c_dat3.selectbox("Categoría:", ["Ayudante", "Medio-Oficial", "Oficial", "Oficial-Especializado"])
             
-            # Traemos el valor automático de la base de datos
+            # Traemos los valores sugeridos de la base de datos
             cat_valores = {"Ayudante": val_ay, "Medio-Oficial": val_mo, "Oficial": val_of, "Oficial-Especializado": val_of_esp}
             vh_sugerido = float(cat_valores[cat])
+            viatico_sugerido = float(val_viatico)
             
-            # CASILLERO MODIFICABLE REACTIVO
-            c_vh1, c_vh2 = st.columns([1.5, 2.5])
-            vh = c_vh1.number_input("Valor Hora ($) a liquidar:", value=vh_sugerido, min_value=0.0, step=100.0, help="Puede modificar este número manualmente para liquidar recibos antiguos.")
-            c_vh2.info(f"💡 Por defecto el sistema cargó la paritaria actual: **{periodo_vigente}**")
+            # FILA DE VALORES MODIFICABLES
+            c_vh1, c_vh2, c_vh3 = st.columns([1.5, 1.5, 2.5])
+            vh = c_vh1.number_input("Valor Hora ($):", value=vh_sugerido, min_value=0.0, step=100.0, help="Modifique para recibos antiguos.")
+            v_viatico_final = c_vh2.number_input("Viático Diario ($):", value=viatico_sugerido, min_value=0.0, step=500.0, help="Modifique para recibos antiguos.")
+            c_vh3.info(f"💡 Sugerencia actual: **{periodo_vigente}**")
             st.markdown("---")
 
  # =================================================================
