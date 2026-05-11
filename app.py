@@ -1166,7 +1166,7 @@ elif opcion == "4. 🧮 Calculadoras":
         
         st.markdown("---")
 
-        # ---------------------------------------------------------
+# ---------------------------------------------------------
         # 1. PANTALLA: CALCULADORA DE QUINCENA
         # ---------------------------------------------------------
         if st.session_state.calc_activa == "Quincena":
@@ -1175,15 +1175,32 @@ elif opcion == "4. 🧮 Calculadoras":
             
             modo_carga = st.radio("⚙️ Seleccione el método de carga:", ["🤖 Carga Automática (Inteligente)", "✍️ Carga Manual (Clásica)"], horizontal=True)
             formato_liq = st.selectbox("📝 Formato Liquidativo (Convenio de Empresa):", ["AESA"])
-            
-            st.info(f"💡 Utilizando Escala Salarial Vigente: **{periodo_vigente}**")
             st.markdown("---")
 
             # =================================================================
-            # CONFIGURACIÓN GENERAL Y HORAS (AHORA HORIZONTAL)
+            # 1. DATOS DEL COMPAÑERO Y VALOR HORA (MODIFICABLE)
+            # =================================================================
+            st.markdown("### 👤 1. Datos y Escala Salarial")
+            c_dat1, c_dat2, c_dat3 = st.columns(3)
+            n_emp = c_dat1.text_input("Nombre del Compañero:")
+            e_liq = c_dat2.selectbox("Empresa:", ["AESA", "Estándar", "DF Soluciones-Tec"])
+            cat = c_dat3.selectbox("Categoría:", ["Ayudante", "Medio-Oficial", "Oficial", "Oficial-Especializado"])
+            
+            # Traemos el valor automático de la base de datos
+            cat_valores = {"Ayudante": val_ay, "Medio-Oficial": val_mo, "Oficial": val_of, "Oficial-Especializado": val_of_esp}
+            vh_sugerido = float(cat_valores[cat])
+            
+            # CASILLERO MODIFICABLE REACTIVO
+            c_vh1, c_vh2 = st.columns([1.5, 2.5])
+            vh = c_vh1.number_input("Valor Hora ($) a liquidar:", value=vh_sugerido, min_value=0.0, step=100.0, help="Puede modificar este número manualmente para liquidar recibos antiguos.")
+            c_vh2.info(f"💡 Por defecto el sistema cargó la paritaria actual: **{periodo_vigente}**")
+            st.markdown("---")
+
+            # =================================================================
+            # 2. CONFIGURACIÓN GENERAL Y HORAS
             # =================================================================
             if modo_carga == "🤖 Carga Automática (Inteligente)":
-                st.markdown("### 📅 1. Parámetros de la Quincena y Horario")
+                st.markdown("### 📅 2. Parámetros de la Quincena y Horario")
                 c_f1, c_f2 = st.columns(2)
                 hoy = datetime.date.today()
                 f_inicio = c_f1.date_input("Día de Inicio de Quincena", hoy.replace(day=1))
@@ -1195,7 +1212,6 @@ elif opcion == "4. 🧮 Calculadoras":
                 h_sal_lv = c_h2.time_input("Salida L-V", datetime.time(17, 0))
                 paga_almuerzo = c_h3.selectbox("Hora de Almuerzo:", ["Se descuenta (1 hora diaria)", "Jornada continua (No se descuenta)"])
                 
-                # ACÁ ESTÁ EL CAMBIO: AUSENCIAS Y DESCUENTOS EN HORIZONTAL Y PEGADOS AL HORARIO
                 st.markdown("**❌ Ausencias y Descuentos (Lunes a Viernes)**")
                 c_aus1, c_aus2 = st.columns([2, 1])
                 
@@ -1233,8 +1249,7 @@ elif opcion == "4. 🧮 Calculadoras":
                 st.markdown("---")
 
             else:
-                # MODO CLÁSICO TAMBIÉN EN HORIZONTAL
-                st.markdown("### 🕒 1. Carga de Horas y Descuentos")
+                st.markdown("### 🕒 2. Carga de Horas y Descuentos")
                 c_m1, c_m2, c_m3 = st.columns(3)
                 hn = c_m1.number_input("Hs Normales:", min_value=0.0, value=0.0)
                 h50 = c_m2.number_input("Hs al 50%:", min_value=0.0, value=0.0)
@@ -1247,19 +1262,12 @@ elif opcion == "4. 🧮 Calculadoras":
                 st.markdown("---")
 
             # =================================================================
-            # CARGA DE NOVEDADES DEL TRABAJADOR
+            # 3. EXTRAS, DEDUCCIONES Y GENERAR
             # =================================================================
-            st.markdown("### 🧮 2. Datos del Compañero y Ajustes")
+            st.markdown("### 🧮 3. Ajustes de Recibo y Cálculo Final")
             with st.form("form_calc"):
                 col1, col2 = st.columns(2)
                 with col1:
-                    n_emp = st.text_input("Nombre del Compañero:")
-                    e_liq = st.selectbox("Empresa:", ["AESA", "Estándar", "DF Soluciones-Tec"])
-                    cat = st.selectbox("Categoría:", ["Ayudante", "Medio-Oficial", "Oficial", "Oficial-Especializado"])
-                    
-                    cat_valores = {"Ayudante": val_ay, "Medio-Oficial": val_mo, "Oficial": val_of, "Oficial-Especializado": val_of_esp}
-                    vh = cat_valores[cat]
-                    
                     if modo_carga == "🤖 Carga Automática (Inteligente)":
                         st.markdown("**Extras Manuales**")
                         hc = st.number_input("Hs Comp Extras (Lluvia, etc.):", min_value=0.0, value=0.0)
@@ -1346,11 +1354,10 @@ elif opcion == "4. 🧮 Calculadoras":
                         if hs_descuento_parcial > 0:
                             hn = max(0.0, hn - hs_descuento_parcial)
 
-                    # Si es manual también aplicamos el descuento
                     if modo_carga == "✍️ Carga Manual (Clásica)" and 'hs_descuento_parcial' in locals():
                          hn = max(0.0, hn - hs_descuento_parcial)
 
-                    # CÁLCULO FINAL
+                    # CÁLCULO FINAL (USANDO LA VARIABLE `vh` REACTIVA)
                     subtot = (hn*vh) + (h50*vh*1.5) + (h100*vh*2.0) + (hc*vh) + (df_f*9.0*vh)
                     mha = ha*vh*0.15
                     mhnoc = hnoc*vh*(8/60)
