@@ -552,15 +552,15 @@ with st.sidebar:
     # --- TU EXPANDER ORIGINAL DE LA COMISIÓN DIRECTIVA ---
     with st.sidebar.expander("👥 Comisión Directiva", expanded=False):
         st.markdown(""" 
-        1- Sec. Gral:**👤 Roberto Morelli
+        1- Sec. Gral:👤 Roberto Morelli
         
-        2- Sec. Adj:**👤 Alejandro Benitez
+        2- Sec. Adj:👤 Alejandro Benitez
         
-        3- Sec. Org:**👤 Rolando Civile
+        3- Sec. Org:👤 Rolando Civile
         
-        4- Sec. Act:**👤 Ruben Fernandez
+        4- Sec. Act:👤 Ruben Fernandez
         
-        5- Sec. Fin:**👤 Roberto Oviedo
+        5- Sec. Fin:👤 Roberto Oviedo
         """)
         
     st.markdown("---")
