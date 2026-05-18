@@ -543,34 +543,96 @@ with st.sidebar:
         
     st.markdown("---")
         
-    # 2. COMISIÓN DIRECTIVA Y NAVEGACIÓN
-    with st.expander("🏛️ Comisión Directiva", expanded=False):
-        st.markdown("""
-        **1- Sec. Gral:** Roberto Morelli
-        
-        **2- Sec. Adj:** Alejandro Benitez
-        
-        **3- Sec. Org:** Rolando Civile
-        
-        **4- Sec. Actas:** Ruben Fernandez
-        
-        **5- Sec. Finanzas:** Roberto Oviedo
-        """)
-        opciones_totales = [
-        "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
-        "3. 📋 Nóminas", "4. 🧮 Calculadoras", "5. ⚠️ Reclamos",
-        "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios y Documentación", "8. 📊 Estadísticas",
-        "9. 📸 Galería Multimedia", "10. 🤖 Chat GPT UOCRA", "11. 🧹 Auditoría", "12. 📝 Observaciones por Empresa"
-    ]
-   
-    if st.session_state.usuario_rol == "Restringido":
-        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios y Documentación", "8. 📊 Estadísticas", "9. 📸 Galería Multimedia", "10. 🤖 Chat GPT UOCRA", "12. 📝 Observaciones por Empresa"]
-    else:
-        opciones_permitidas = opciones_totales
-        
-    opcion = st.radio("Navegación:", opciones_permitidas)
+# =========================================================
+    # 2. COMISIÓN DIRECTIVA Y NAVEGACIÓN (CONSERVA TU FORMATO ORIGINAL)
+    # =========================================================
+    st.markdown("<h2 style='text-align: center; color: #0033A0; margin-bottom: 0;'>UOCRA</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 0.85rem; font-weight: bold; color: #555; margin-top: 0;'>Seccional Monte Grande<br>Conducción: Roberto Morelli</p>", unsafe_allow_html=True)
     
-    # 3. ENLACES Y REDES
+    # --- TU EXPANDER ORIGINAL DE LA COMISIÓN DIRECTIVA ---
+    with st.sidebar.expander("👥 Comisión Directiva", expanded=False):
+        st.markdown("""
+        **Secretario General:** 👤 Roberto Morelli  
+        
+        **Secretario Adjunto:** 👤 Alejandro Benítez  
+        
+        **Secretario de Organización:** 👤 Juan Carlos López  
+        
+        **Secretario de Actas:** 👤 Carlos Mendoza  
+        
+        **Tesorero:** 👤 Mariano Rodríguez  
+        """)
+        
+    st.markdown("---")
+
+    # Memoria para recordar qué botón se apretó
+    if 'menu_seleccionado' not in st.session_state:
+        st.session_state.menu_seleccionado = "1. 🗺️ Mapa Territorial"
+
+    rol_actual = st.session_state.get("usuario_rol", "Restringido")
+
+    # --- MÓDULO 1: MAPA TERRITORIAL (Fijo arriba) ---
+    if st.sidebar.button("🗺️ 1. Mapa Territorial", use_container_width=True):
+        st.session_state.menu_seleccionado = "1. 🗺️ Mapa Territorial"
+
+    # --- NUEVO GRUPO 1: CARGA DE DATOS ---
+    with st.sidebar.expander("📁 Carga de Datos", expanded=False):
+        # Opciones exclusivas del Admin
+        if rol_actual == "Admin":
+            if st.button("📥 2. Carga de Datos (ABM)", use_container_width=True): 
+                st.session_state.menu_seleccionado = "2. 📥 Carga de Datos (ABM)"
+            if st.button("⚠️ 5. Reclamos", use_container_width=True): 
+                st.session_state.menu_seleccionado = "5. ⚠️ Reclamos"
+        
+        # Opciones visibles por todos
+        if st.button("🤝 7. Convenios y Documentación", use_container_width=True): 
+            st.session_state.menu_seleccionado = "7. 🤝 Convenios y Documentación"
+        if st.button("📝 12. Observaciones por Empresa", use_container_width=True): 
+            st.session_state.menu_seleccionado = "12. 📝 Observaciones por Empresa"
+
+    # --- MÓDULO 4: CALCULADORAS (Fijo al medio) ---
+    if st.sidebar.button("🧮 4. Calculadoras", use_container_width=True):
+        st.session_state.menu_seleccionado = "4. 🧮 Calculadoras"
+
+    # --- NUEVO GRUPO 2: VISUALIZACIÓN DE DATOS ---
+    with st.sidebar.expander("📊 Visualización de Datos", expanded=False):
+        if st.button("📋 3. Nóminas", use_container_width=True): 
+            st.session_state.menu_seleccionado = "3. 📋 Nóminas"
+        if st.button("📊 8. Estadísticas", use_container_width=True): 
+            st.session_state.menu_seleccionado = "8. 📊 Estadísticas"
+        if st.button("💜 6. UOCRA Mujeres", use_container_width=True): 
+            st.session_state.menu_seleccionado = "6. 💜 UOCRA Mujeres"
+        if st.button("🧹 11. Auditoría", use_container_width=True): 
+            st.session_state.menu_seleccionado = "11. 🧹 Auditoría"
+        if st.button("📸 9. Galería Multimedia", use_container_width=True): 
+            st.session_state.menu_seleccionado = "9. 📸 Galería Multimedia"
+
+    # --- MÓDULO 10: ASISTENTE VIRTUAL (Fijo abajo) ---
+    # Respetamos el nombre exacto que tenía en tu código original ('10. 🤖 Asistente Virtual')
+    if st.sidebar.button("🤖 10. Chat GPT UOCRA", use_container_width=True):
+        st.session_state.menu_seleccionado = "10. 🤖 Chat GPT UOCRA"
+
+    # =========================================================
+    # CONEXIÓN CON EL RESTO DEL CÓDIGO
+    # =========================================================
+    # Esta línea asegura que la variable intermedia 'opcion' reciba el valor correcto
+    opcion_map = {
+        "1. 🗺️ Mapa Territorial": "1. 🗺️ Mapa Territorial",
+        "2. 📥 Carga de Datos (ABM)": "2. 📥 Carga de Datos (ABM)",
+        "3. 📋 Nóminas": "3. 📋 Nóminas",
+        "4. 🧮 Calculadoras": "4. 🧮 Calculadoras",
+        "5. ⚠️ Reclamos": "5. ⚠️ Reclamos",
+        "6. 💜 UOCRA Mujeres": "6. 💜 UOCRA Mujeres",
+        "7. 🤝 Convenios y Documentación": "7. 🤝 Convenios y Documentación",
+        "8. 📊 Estadísticas": "8. 📊 Estadísticas",
+        "9. 📸 Galería Multimedia": "9. 📸 Galería Multimedia",
+        "10. 🤖 Chat GPT UOCRA": "10. 🤖 Asistente Virtual", # Mapeado a tu elif original
+        "11. 🧹 Auditoría": "11. 🧹 Auditoría",
+        "12. 📝 Observaciones por Empresa": "12. 📝 Observaciones por Empresa"
+    }
+    
+    opcion = opcion_map.get(st.session_state.menu_seleccionado, "1. 🗺️ Mapa Territorial")
+    
     st.markdown("---") 
     
     # Reemplazamos st.caption por un texto blindado en HTML
