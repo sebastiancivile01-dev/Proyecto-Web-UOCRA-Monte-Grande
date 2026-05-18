@@ -543,7 +543,7 @@ with st.sidebar:
         
     st.markdown("---")
         
-# =========================================================
+    # =========================================================
     # 2. COMISIÓN DIRECTIVA Y NAVEGACIÓN (CORREGIDO)
     # =========================================================
     st.markdown("<h2 style='text-align: center; color: #0033A0; margin-bottom: 0;'>UOCRA</h2>", unsafe_allow_html=True)
@@ -656,18 +656,33 @@ with st.sidebar:
     
     st.write("#")
     
-    # Reemplazamos st.caption por un texto blindado en HTML
-    st.markdown("<p style='color: #666666; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>📱 REDES SOCIALES</p>", unsafe_allow_html=True)
+    # =========================================================
+    # ACCESOS DIRECTOS Y REDES (CORREGIDO CON ENLACE RAW DE GITHUB)
+    # =========================================================
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("<p style='text-align: center; font-weight: bold; color: #0033A0; margin-bottom: 5px;'>🌐 Redes Oficiales</p>", unsafe_allow_html=True)
     
-    st.markdown("""
-    <div style='text-align: center; margin-bottom: 15px;'>
-        <a href='https://www.instagram.com/uocra.juventud.montegrande?igsh=MW5rbGU3c3M4M3F5' target='_blank' style='text-decoration: none;'>
-            <img src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/600px-Instagram_icon.png' width='45px' style='vertical-align: middle; margin-right: 10px;'>
-            <span style='font-size: 1.1rem; font-weight: bold; color: #e1306c; vertical-align: middle;'>Instagram</span>
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
+    col_red1, col_red2 = st.sidebar.columns(2)
     
+    with col_red1:
+        # Enlace e imagen de la Web Oficial
+        st.markdown(
+            '<a href="https://www.uocra.org/" target="_blank">'
+            '<img src="https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/main/uocra_oficial.png" width="100%" style="border-radius:10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">'
+            '</a>', 
+            unsafe_allow_html=True
+        )
+        st.markdown("<p style='text-align: center; font-size: 0.8rem; margin-top: 2px;'>Sitio Web</p>", unsafe_allow_html=True)
+
+    with col_red2:
+        # ENLACE E IMAGEN DE INSTAGRAM CORREGIDO CON TU RAW DE GITHUB
+        st.markdown(
+            '<a href="https://www.instagram.com/uocra_seccional_montegrande/" target="_blank">'
+            '<img src="https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/main/logo_instagram.png" width="100%" style="border-radius:10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">'
+            '</a>', 
+            unsafe_allow_html=True
+        )
+        st.markdown("<p style='text-align: center; font-size: 0.8rem; margin-top: 2px;'>Instagram</p>", unsafe_allow_html=True)
 
     # 4. BOTÓN DEL CALENDARIO ABAJO DE TODO
     st.markdown("---")
