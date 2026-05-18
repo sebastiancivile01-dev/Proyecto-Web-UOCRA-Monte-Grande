@@ -532,16 +532,7 @@ with st.sidebar:
         
     st.markdown("---") 
 
-    # 1. BOTONES OPERATIVOS JUNTOS
-    if st.button("🔄 Actualizar Datos", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-
-    if st.button("🚪 Cerrar Sesión", use_container_width=True):
-        st.session_state.usuario_rol = None
-        st.rerun()
-        
-    st.markdown("---")
+ 
         
     # =========================================================
     # 2. COMISIÓN DIRECTIVA Y NAVEGACIÓN (CORREGIDO)
@@ -562,6 +553,17 @@ with st.sidebar:
         
         **Tesorero:** 👤 Mariano Rodríguez  
         """)
+        
+    st.markdown("---")
+
+       # 1. BOTONES OPERATIVOS JUNTOS
+    if st.button("🔄 Actualizar Datos", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+
+    if st.button("🚪 Cerrar Sesión", use_container_width=True):
+        st.session_state.usuario_rol = None
+        st.rerun()
         
     st.markdown("---")
 
