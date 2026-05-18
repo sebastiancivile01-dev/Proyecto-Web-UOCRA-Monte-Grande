@@ -550,7 +550,7 @@ with st.sidebar:
     st.markdown("<p style='text-align: center; font-size: 0.85rem; font-weight: bold; color: #555; margin-top: 0;'>Seccional Monte Grande<br>Conducción: Roberto Morelli</p>", unsafe_allow_html=True)
     
     # --- TU EXPANDER ORIGINAL DE LA COMISIÓN DIRECTIVA ---
-    with st.sidebar.expander("👤👤👤👤👤 Comisión Directiva", expanded=False):
+    with st.sidebar.expander("Comisión Directiva", expanded=False):
         st.markdown(""" 
         1- Sec. Gral:👤 Roberto Morelli
         
