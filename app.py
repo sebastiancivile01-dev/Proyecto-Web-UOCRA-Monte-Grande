@@ -664,21 +664,11 @@ with st.sidebar:
     
     col_red1, col_red2 = st.sidebar.columns(2)
     
-    with col_red1:
-        # Enlace e imagen de la Web Oficial
-        st.markdown(
-            '<a href="https://www.uocra.org/" target="_blank">'
-            '<img src="https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/main/uocra_oficial.png" width="100%" style="border-radius:10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">'
-            '</a>', 
-            unsafe_allow_html=True
-        )
-        st.markdown("<p style='text-align: center; font-size: 0.8rem; margin-top: 2px;'>Sitio Web</p>", unsafe_allow_html=True)
-
     with col_red2:
         # ENLACE E IMAGEN DE INSTAGRAM CORREGIDO CON TU RAW DE GITHUB
         st.markdown(
             '<a href="https://www.instagram.com/uocra_seccional_montegrande/" target="_blank">'
-            '<img src="https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/main/logo_instagram.png" width="100%" style="border-radius:10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">'
+            '<img src="https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/main/instagram.png" width="100%" style="border-radius:10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">'
             '</a>', 
             unsafe_allow_html=True
         )
