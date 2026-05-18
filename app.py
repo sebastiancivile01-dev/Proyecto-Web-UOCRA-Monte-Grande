@@ -657,23 +657,25 @@ with st.sidebar:
     st.write("#")
     
     # =========================================================
-    # ACCESOS DIRECTOS Y REDES (CORREGIDO CON ENLACE RAW DE GITHUB)
+    # ACCESOS DIRECTOS Y REDES (CORREGIDO Y CENTRADO)
     # =========================================================
     st.sidebar.markdown("---")
     st.sidebar.markdown("<p style='text-align: center; font-weight: bold; color: #0033A0; margin-bottom: 5px;'>🌐 Redes Oficiales</p>", unsafe_allow_html=True)
     
-    col_red1, col_red2 = st.sidebar.columns(2)
+    # Creamos 3 columnas: Izquierda (vacía), Centro (la foto), Derecha (vacía)
+    col_izq, col_centro, col_der = st.sidebar.columns([1, 2, 1])
     
-    with col_red2:
-        # ENLACE E IMAGEN DE INSTAGRAM CORREGIDO CON TU RAW DE GITHUB
+    with col_centro:
+        # ENLACE E IMAGEN DE INSTAGRAM (Centrado)
         st.markdown(
+            '<div style="text-align: center;">'
             '<a href="https://www.instagram.com/uocra_seccional_montegrande/" target="_blank">'
             '<img src="https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/main/instagram.png" width="100%" style="border-radius:10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">'
-            '</a>', 
+            '</a>'
+            '</div>', 
             unsafe_allow_html=True
         )
-        st.markdown("<p style='text-align: center; font-size: 0.8rem; margin-top: 2px;'>Instagram</p>", unsafe_allow_html=True)
-
+        st.markdown("<p style='text-align: center; font-size: 0.8rem; margin-top: 5px;'>Instagram</p>", unsafe_allow_html=True)
     # 4. BOTÓN DEL CALENDARIO ABAJO DE TODO
     st.markdown("---")
     if st.button("📅 Calendario y Feriados", type="primary", use_container_width=True):
