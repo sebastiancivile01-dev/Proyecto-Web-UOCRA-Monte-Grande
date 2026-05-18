@@ -542,66 +542,36 @@ with st.sidebar:
         st.rerun()
         
     st.markdown("---")
-
-    # =========================================================
-    # 2. COMISIÓN DIRECTIVA Y NAVEGACIÓN (ORDENADA)
-    # =========================================================
-    st.markdown("<h2 style='text-align: center; color: #0033A0; margin-bottom: 0;'>UOCRA</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size: 0.85rem; font-weight: bold; color: #555; margin-top: 0;'>Seccional Monte Grande<br>Conducción: Roberto Morelli</p>", unsafe_allow_html=True)
-    st.markdown("---")
-
-    # Variable que usará el cuerpo del código para saber qué módulo ejecutar
-    opcion_ejecutar = None
-
-    # Botones directos que quedan fijos arriba
-    if st.sidebar.button("🗺️ 1. Mapa Territorial", use_container_width=True):
-        st.session_state.menu_seleccionado = "1. 🗺️ Mapa Territorial"
+        
+    # 2. COMISIÓN DIRECTIVA Y NAVEGACIÓN
+    with st.expander("🏛️ Comisión Directiva", expanded=False):
+        st.markdown("""
+        **1- Sec. Gral:** Roberto Morelli
+        
+        **2- Sec. Adj:** Alejandro Benitez
+        
+        **3- Sec. Org:** Rolando Civile
+        
+        **4- Sec. Actas:** Ruben Fernandez
+        
+        **5- Sec. Finanzas:** Roberto Oviedo
+        """)
+        opciones_totales = [
+        "1. 🗺️ Mapa Territorial", "2. 📥 Carga de Datos (ABM)", 
+        "3. 📋 Nóminas", "4. 🧮 Calculadoras", "5. ⚠️ Reclamos",
+        "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios y Documentación", "8. 📊 Estadísticas",
+        "9. 📸 Galería Multimedia", "10. 🤖 Chat GPT UOCRA", "11. 🧹 Auditoría", "12. 📝 Observaciones por Empresa"
+    ]
+   
+    if st.session_state.usuario_rol == "Restringido":
+        opciones_permitidas = ["1. 🗺️ Mapa Territorial", "3. 📋 Nóminas", "4. 🧮 Calculadoras", "6. 💜 UOCRA Mujeres", "7. 🤝 Convenios y Documentación", "8. 📊 Estadísticas", "9. 📸 Galería Multimedia", "10. 🤖 Chat GPT UOCRA", "12. 📝 Observaciones por Empresa"]
+    else:
+        opciones_permitidas = opciones_totales
+        
+    opcion = st.radio("Navegación:", opciones_permitidas)
     
-    # 📁 DESPLEGABLE 1: INGRESO Y CARGA DE DATOS
-    with st.sidebar.expander("📁 Carga de Datos", expanded=False):
-        c_datos_opciones = ["", "📥 Carga General (ABM)", "⚠️ Reclamos", "🤝 Convenios y Documentación", "📝 Observaciones por Empresa"]
-        sel_carga = st.selectbox("Seleccione módulo:", c_datos_opciones, key="sel_carga_db", label_visibility="collapsed")
-        if sel_carga:
-            st.session_state.menu_seleccionado = sel_carga
-
-    # Botón directo intermedio
-    if st.sidebar.button("🧮 4. Calculadoras", use_container_width=True):
-        st.session_state.menu_seleccionado = "4. 🧮 Calculadoras"
-
-    # 📁 DESPLEGABLE 2: VISUALIZACIÓN Y AUDITORÍA
-    with st.sidebar.expander("📁 Visualización de Datos", expanded=False):
-        v_datos_opciones = ["", "📋 Nóminas", "📊 Estadísticas", "💜 UOCRA Mujeres", "🧹 Auditoría", "📸 Galería Multimedia"]
-        sel_vista = st.selectbox("Seleccione módulo:", v_datos_opciones, key="sel_vista_db", label_visibility="collapsed")
-        if sel_vista:
-            st.session_state.menu_seleccionado = sel_vista
-
-    # Botón directo que queda fijo abajo
-    if st.sidebar.button("🤖 Chat GPT UOCRA", use_container_width=True):
-        st.session_state.menu_seleccionado = "10. 🤖 Chat GPT UOCRA"
-
-    # Fallback por si recién inicia la app o se desloguea
-    if 'menu_seleccionado' not in st.session_state:
-        st.session_state.menu_seleccionado = "1. 🗺️ Mapa Territorial"
-
-    # Mapeamos la variable de control 'opcion' para que coincida exactamente con tus 'elif' existentes
-    mapa_modulos = {
-        "1. 🗺️ Mapa Territorial": "1. 🗺️ Mapa Territorial",
-        "📥 Carga General (ABM)": "2. 📥 Carga de Datos (ABM)",
-        "📋 Nóminas": "3. 📋 Nóminas",
-        "4. 🧮 Calculadoras": "4. 🧮 Calculadoras",
-        "⚠️ Reclamos": "5. ⚠️ Reclamos",
-        "💜 UOCRA Mujeres": "6. 💜 UOCRA Mujeres",
-        "🤝 Convenios y Documentación": "7. 🤝 Convenios y Documentación",
-        "📊 Estadísticas": "8. 📊 Estadísticas",
-        "📸 Galería Multimedia": "9. 📸 Galería Multimedia",
-        "10. 🤖 Chat GPT UOCRA": "10. 🤖 Chat GPT UOCRA",
-        "🧹 Auditoría": "11. 🧹 Auditoría",
-        "📝 Observaciones por Empresa": "12. 📝 Observaciones por Empresa"
-    }
-
-    opcion = mapa_modulos.get(st.session_state.menu_seleccionado, "1. 🗺️ Mapa Territorial")
-    
-    st.markdown("---")
+    # 3. ENLACES Y REDES
+    st.markdown("---") 
     
     # Reemplazamos st.caption por un texto blindado en HTML
     st.markdown("<p style='color: #666666; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>🔗 ENLACES ÚTILES</p>", unsafe_allow_html=True)
