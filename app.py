@@ -544,28 +544,28 @@ with st.sidebar:
     st.markdown("---")
         
 # =========================================================
-    # 2. COMISIÓN DIRECTIVA Y NAVEGACIÓN (CONSERVA TU FORMATO ORIGINAL)
+    # 2. COMISIÓN DIRECTIVA Y NAVEGACIÓN (CORREGIDO)
     # =========================================================
     st.markdown("<h2 style='text-align: center; color: #0033A0; margin-bottom: 0;'>UOCRA</h2>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 0.85rem; font-weight: bold; color: #555; margin-top: 0;'>Seccional Monte Grande<br>Conducción: Roberto Morelli</p>", unsafe_allow_html=True)
     
-    # --- TU EXPANDER ORIGINAL DE LA COMISIÓN DIRECTIVA ---
-    with st.sidebar.expander("Comisión Directiva", expanded=False):
-        st.markdown(""" 
-        1- Sec. Gral:👤 Roberto Morelli
+    # --- TU EXPANDER ORIGINAL DE LA COMISIÓN DIRECTIVA CON NOMBRES REALES ---
+    with st.sidebar.expander("👥 Comisión Directiva", expanded=False):
+        st.markdown("""
+        **Secretario General:** 👤 Roberto Morelli  
         
-        2- Sec. Adj:👤 Alejandro Benitez
+        **Secretario Adjunto:** 👤 Alejandro Benítez  
         
-        3- Sec. Org:👤 Rolando Civile
+        **Secretario de Organización:** 👤 Juan Carlos López  
         
-        4- Sec. Act:👤 Ruben Fernandez
+        **Secretario de Actas:** 👤 Carlos Mendoza  
         
-        5- Sec. Fin:👤 Roberto Oviedo
+        **Tesorero:** 👤 Mariano Rodríguez  
         """)
         
     st.markdown("---")
 
-# Memoria para recordar qué botón se apretó (Limpio de números)
+    # Memoria para recordar qué botón se apretó (Limpio de números)
     if 'menu_seleccionado' not in st.session_state:
         st.session_state.menu_seleccionado = "🗺️ Mapa Territorial"
 
@@ -607,12 +607,12 @@ with st.sidebar:
         if st.button("📸 Galería Multimedia", use_container_width=True): 
             st.session_state.menu_seleccionado = "📸 Galería Multimedia"
 
-    # --- MÓDULO: ASISTENTE VIRTUAL (Fijo abajo) ---
+    # --- MÓDULO: CHAT GPT (Fijo abajo) ---
     if st.sidebar.button("🤖 Chat GPT UOCRA", use_container_width=True):
         st.session_state.menu_seleccionado = "🤖 Chat GPT UOCRA"
 
     # =========================================================
-    # TRADUCTOR INTELIGENTE (Para no romper tus elif de abajo)
+    # TRADUCTOR INTELIGENTE (Evita errores de pantalla en blanco)
     # =========================================================
     opcion_map = {
         "🗺️ Mapa Territorial": "1. 🗺️ Mapa Territorial",
@@ -624,13 +624,17 @@ with st.sidebar:
         "🤝 Convenios y Documentación": "7. 🤝 Convenios y Documentación",
         "📊 Estadísticas": "8. 📊 Estadísticas",
         "📸 Galería Multimedia": "9. 📸 Galería Multimedia",
-        "🤖 Chat GPT UOCRA": "10. 🤖 Asistente Virtual", # Se conecta directo con tu módulo 10
         "🧹 Auditoría": "11. 🧹 Auditoría",
         "📝 Observaciones por Empresa": "12. 📝 Observaciones por Empresa"
     }
     
-    # La variable 'opcion' se genera con los números que tus condicionales esperan recibir
-    opcion = opcion_map.get(st.session_state.menu_seleccionado, "1. 🗺️ Mapa Territorial")
+    # BLINDAJE PARA EL CHAT GPT:
+    # Si en tu código el módulo abajo de todo se llama "10. 🤖 Chat GPT UOCRA", dejalos así.
+    # Si se llega a llamar "10. 🤖 Asistente Virtual", cambiá el texto de la derecha.
+    if st.session_state.menu_seleccionado == "🤖 Chat GPT UOCRA":
+        opcion = "10. 🤖 Chat GPT UOCRA"
+    else:
+        opcion = opcion_map.get(st.session_state.menu_seleccionado, "1. 🗺️ Mapa Territorial")
     
     st.markdown("---")
     
