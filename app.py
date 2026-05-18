@@ -565,75 +565,74 @@ with st.sidebar:
         
     st.markdown("---")
 
-    # Memoria para recordar qué botón se apretó
+# Memoria para recordar qué botón se apretó (Limpio de números)
     if 'menu_seleccionado' not in st.session_state:
-        st.session_state.menu_seleccionado = "1. 🗺️ Mapa Territorial"
+        st.session_state.menu_seleccionado = "🗺️ Mapa Territorial"
 
     rol_actual = st.session_state.get("usuario_rol", "Restringido")
 
-    # --- MÓDULO 1: MAPA TERRITORIAL (Fijo arriba) ---
-    if st.sidebar.button("🗺️ 1. Mapa Territorial", use_container_width=True):
-        st.session_state.menu_seleccionado = "1. 🗺️ Mapa Territorial"
+    # --- MÓDULO: MAPA TERRITORIAL (Fijo arriba) ---
+    if st.sidebar.button("🗺️ Mapa Territorial", use_container_width=True):
+        st.session_state.menu_seleccionado = "🗺️ Mapa Territorial"
 
-    # --- NUEVO GRUPO 1: CARGA DE DATOS ---
+    # --- DESPLEGABLE 1: CARGA DE DATOS ---
     with st.sidebar.expander("📁 Carga de Datos", expanded=False):
         # Opciones exclusivas del Admin
         if rol_actual == "Admin":
-            if st.button("📥 2. Carga de Datos (ABM)", use_container_width=True): 
-                st.session_state.menu_seleccionado = "2. 📥 Carga de Datos (ABM)"
-            if st.button("⚠️ 5. Reclamos", use_container_width=True): 
-                st.session_state.menu_seleccionado = "5. ⚠️ Reclamos"
+            if st.button("📥 Carga de Datos (ABM)", use_container_width=True): 
+                st.session_state.menu_seleccionado = "📥 Carga de Datos (ABM)"
+            if st.button("⚠️ Reclamos", use_container_width=True): 
+                st.session_state.menu_seleccionado = "⚠️ Reclamos"
         
         # Opciones visibles por todos
-        if st.button("🤝 7. Convenios y Documentación", use_container_width=True): 
-            st.session_state.menu_seleccionado = "7. 🤝 Convenios y Documentación"
-        if st.button("📝 12. Observaciones por Empresa", use_container_width=True): 
-            st.session_state.menu_seleccionado = "12. 📝 Observaciones por Empresa"
+        if st.button("🤝 Convenios y Documentación", use_container_width=True): 
+            st.session_state.menu_seleccionado = "🤝 Convenios y Documentación"
+        if st.button("📝 Observaciones por Empresa", use_container_width=True): 
+            st.session_state.menu_seleccionado = "📝 Observaciones por Empresa"
 
-    # --- MÓDULO 4: CALCULADORAS (Fijo al medio) ---
-    if st.sidebar.button("🧮 4. Calculadoras", use_container_width=True):
-        st.session_state.menu_seleccionado = "4. 🧮 Calculadoras"
+    # --- MÓDULO: CALCULADORAS (Fijo al medio) ---
+    if st.sidebar.button("🧮 Calculadoras", use_container_width=True):
+        st.session_state.menu_seleccionado = "🧮 Calculadoras"
 
-    # --- NUEVO GRUPO 2: VISUALIZACIÓN DE DATOS ---
+    # --- DESPLEGABLE 2: VISUALIZACIÓN DE DATOS ---
     with st.sidebar.expander("📊 Visualización de Datos", expanded=False):
-        if st.button("📋 3. Nóminas", use_container_width=True): 
-            st.session_state.menu_seleccionado = "3. 📋 Nóminas"
-        if st.button("📊 8. Estadísticas", use_container_width=True): 
-            st.session_state.menu_seleccionado = "8. 📊 Estadísticas"
-        if st.button("💜 6. UOCRA Mujeres", use_container_width=True): 
-            st.session_state.menu_seleccionado = "6. 💜 UOCRA Mujeres"
-        if st.button("🧹 11. Auditoría", use_container_width=True): 
-            st.session_state.menu_seleccionado = "11. 🧹 Auditoría"
-        if st.button("📸 9. Galería Multimedia", use_container_width=True): 
-            st.session_state.menu_seleccionado = "9. 📸 Galería Multimedia"
+        if st.button("📋 Nóminas", use_container_width=True): 
+            st.session_state.menu_seleccionado = "📋 Nóminas"
+        if st.button("📊 Estadísticas", use_container_width=True): 
+            st.session_state.menu_seleccionado = "📊 Estadísticas"
+        if st.button("💜 UOCRA Mujeres", use_container_width=True): 
+            st.session_state.menu_seleccionado = "💜 UOCRA Mujeres"
+        if st.button("🧹 Auditoría", use_container_width=True): 
+            st.session_state.menu_seleccionado = "🧹 Auditoría"
+        if st.button("📸 Galería Multimedia", use_container_width=True): 
+            st.session_state.menu_seleccionado = "📸 Galería Multimedia"
 
-    # --- MÓDULO 10: ASISTENTE VIRTUAL (Fijo abajo) ---
-    # Respetamos el nombre exacto que tenía en tu código original ('10. 🤖 Asistente Virtual')
-    if st.sidebar.button("🤖 10. Chat GPT UOCRA", use_container_width=True):
-        st.session_state.menu_seleccionado = "10. 🤖 Chat GPT UOCRA"
+    # --- MÓDULO: ASISTENTE VIRTUAL (Fijo abajo) ---
+    if st.sidebar.button("🤖 Chat GPT UOCRA", use_container_width=True):
+        st.session_state.menu_seleccionado = "🤖 Chat GPT UOCRA"
 
     # =========================================================
-    # CONEXIÓN CON EL RESTO DEL CÓDIGO
+    # TRADUCTOR INTELIGENTE (Para no romper tus elif de abajo)
     # =========================================================
-    # Esta línea asegura que la variable intermedia 'opcion' reciba el valor correcto
     opcion_map = {
-        "1. 🗺️ Mapa Territorial": "1. 🗺️ Mapa Territorial",
-        "2. 📥 Carga de Datos (ABM)": "2. 📥 Carga de Datos (ABM)",
-        "3. 📋 Nóminas": "3. 📋 Nóminas",
-        "4. 🧮 Calculadoras": "4. 🧮 Calculadoras",
-        "5. ⚠️ Reclamos": "5. ⚠️ Reclamos",
-        "6. 💜 UOCRA Mujeres": "6. 💜 UOCRA Mujeres",
-        "7. 🤝 Convenios y Documentación": "7. 🤝 Convenios y Documentación",
-        "8. 📊 Estadísticas": "8. 📊 Estadísticas",
-        "9. 📸 Galería Multimedia": "9. 📸 Galería Multimedia",
-        "10. 🤖 Chat GPT UOCRA": "10. 🤖 Asistente Virtual", # Mapeado a tu elif original
-        "11. 🧹 Auditoría": "11. 🧹 Auditoría",
-        "12. 📝 Observaciones por Empresa": "12. 📝 Observaciones por Empresa"
+        "🗺️ Mapa Territorial": "1. 🗺️ Mapa Territorial",
+        "📥 Carga de Datos (ABM)": "2. 📥 Carga de Datos (ABM)",
+        "📋 Nóminas": "3. 📋 Nóminas",
+        "🧮 Calculadoras": "4. 🧮 Calculadoras",
+        "⚠️ Reclamos": "5. ⚠️ Reclamos",
+        "💜 UOCRA Mujeres": "6. 💜 UOCRA Mujeres",
+        "🤝 Convenios y Documentación": "7. 🤝 Convenios y Documentación",
+        "📊 Estadísticas": "8. 📊 Estadísticas",
+        "📸 Galería Multimedia": "9. 📸 Galería Multimedia",
+        "🤖 Chat GPT UOCRA": "10. 🤖 Asistente Virtual", # Se conecta directo con tu módulo 10
+        "🧹 Auditoría": "11. 🧹 Auditoría",
+        "📝 Observaciones por Empresa": "12. 📝 Observaciones por Empresa"
     }
     
+    # La variable 'opcion' se genera con los números que tus condicionales esperan recibir
     opcion = opcion_map.get(st.session_state.menu_seleccionado, "1. 🗺️ Mapa Territorial")
     
-    st.markdown("---") 
+    st.markdown("---")
     
     # Reemplazamos st.caption por un texto blindado en HTML
     st.markdown("<p style='color: #666666; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>🔗 ENLACES ÚTILES</p>", unsafe_allow_html=True)
