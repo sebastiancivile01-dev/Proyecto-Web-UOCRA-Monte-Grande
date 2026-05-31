@@ -2256,40 +2256,34 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
                 try:
                     with st.spinner("Creando plan de acción y filtrando bases de datos..."):
                         
-prompt_min = prompt.lower()
-            contexto_inyectado = ""
-            
-            # FILTRADO INTELIGENTE (RAG) PARA OBRAS
-            if any(palabra in prompt_min for palabra in ["obra", "predio", "empresa"]):
-                if not df_obras.empty:
-                    # Filtramos la tabla para buscar solo lo que el usuario preguntó
-                    filtro = df_obras['Empresa'].str.lower().apply(lambda x: str(x) in prompt_min) | \
-                             df_obras['Predio'].str.lower().apply(lambda x: str(x) in prompt_min)
-                    df_filtrado = df_obras[filtro]
-                    
-                    if not df_filtrado.empty:
-                        contexto_inyectado += "\n[DATOS DE OBRAS ENCONTRADOS]\n" + df_filtrado[['Predio', 'Empresa', 'Delegado', 'Estado', 'Obreros']].to_string(index=False) + "\n"
-                    else:
-                        contexto_inyectado += "\n[DATOS DE OBRAS] No se encontraron coincidencias exactas para esta consulta.\n"
+                        prompt_min = prompt.lower()
+                        contexto_inyectado = ""
                         
-            # FILTRADO INTELIGENTE (RAG) PARA DELEGADOS
-            if any(palabra in prompt_min for palabra in ["delegado", "cuil", "teléfono", "celular"]):
-                if not df_delegados.empty:
-                    # Filtramos para mandar solo el delegado que coincida con el texto
-                    filtro_del = df_delegados['Nombre'].str.lower().apply(lambda x: str(x) in prompt_min)
-                    df_filtrado_del = df_delegados[filtro_del]
-                    if not df_filtrado_del.empty:
-                         contexto_inyectado += "\n[DATOS DE DELEGADOS ENCONTRADOS]\n" + df_filtrado_del.to_string(index=False) + "\n"
-                    else:
-                         contexto_inyectado += "\n[DATOS DE DELEGADOS] No se encontraron coincidencias exactas.\n"
-                         
-                        
-                        if any(palabra in prompt_min for palabra in ["delegado", "tel", "celular", "cuil", "numero", "contacto", "rrhh", "recursos humanos"]):
+                        # FILTRADO INTELIGENTE (RAG) PARA OBRAS
+                        if any(palabra in prompt_min for palabra in ["obra", "predio", "empresa"]):
+                            if not df_obras.empty:
+                                # Filtramos la tabla para buscar solo lo que el usuario preguntó
+                                filtro = df_obras['Empresa'].str.lower().apply(lambda x: str(x) in prompt_min) | \
+                                         df_obras['Predio'].str.lower().apply(lambda x: str(x) in prompt_min)
+                                df_filtrado = df_obras[filtro]
+                                
+                                if not df_filtrado.empty:
+                                    contexto_inyectado += "\n[DATOS DE OBRAS ENCONTRADOS]\n" + df_filtrado[['Predio', 'Empresa', 'Delegado', 'Estado', 'Obreros']].to_string(index=False) + "\n"
+                                else:
+                                    contexto_inyectado += "\n[DATOS DE OBRAS] No se encontraron coincidencias exactas para esta consulta.\n"
+                                    
+                        # FILTRADO INTELIGENTE (RAG) PARA DELEGADOS
+                        if any(palabra in prompt_min for palabra in ["delegado", "cuil", "teléfono", "celular", "tel", "numero", "contacto", "rrhh"]):
                             if not df_delegados.empty:
-                                contexto_inyectado += "\n[PADRÓN DELEGADOS (TELÉFONOS/CUIL)]\n" + df_delegados[['Nombre', 'Celular', 'CUIL']].fillna("S/D").to_string(index=False) + "\n"
-                            if not df_contactos.empty:
-                                contexto_inyectado += "\n[CONTACTOS EMPRESARIALES (RRHH)]\n" + df_contactos[['Nombre', 'Cargo', 'Empresa']].fillna("S/D").to_string(index=False) + "\n"
-
+                                # Filtramos para mandar solo el delegado que coincida con el texto
+                                filtro_del = df_delegados['Nombre'].str.lower().apply(lambda x: str(x) in prompt_min)
+                                df_filtrado_del = df_delegados[filtro_del]
+                                if not df_filtrado_del.empty:
+                                     contexto_inyectado += "\n[DATOS DE DELEGADOS ENCONTRADOS]\n" + df_filtrado_del.to_string(index=False) + "\n"
+                                else:
+                                     contexto_inyectado += "\n[DATOS DE DELEGADOS] No se encontraron coincidencias exactas.\n"
+                                     
+                        # RESTO DE LOS FILTROS
                         if any(palabra in prompt_min for palabra in ["convenio", "paritaria", "plus", "acuerdo", "escala"]):
                             if not df_convenios.empty:
                                 contexto_inyectado += "\n[CONVENIOS Y PARITARIAS POR EMPRESA]\n" + df_convenios[['Empresa', 'Detalle_Convenio', 'monto $', 'Monto %', 'Vigencia']].fillna("-").to_string(index=False) + "\n"
@@ -2315,11 +2309,6 @@ prompt_min = prompt.lower()
                 except Exception as e_api:
                     st.error(f"❌ Error de conexión con el motor: {e_api}")
                     st.info("💡 Tip: Probá refrescar la página o limpiar el historial de la IA.")
-
-    except Exception as e_config:
-        st.error("⚠️ Error en el acceso a la Inteligencia Artificial.")
-        st.info("Verificá que la GEMINI_API_KEY en los Secrets de Streamlit sea la correcta.")
-
 
 # ==========================================
 # MÓDULO 11: AUDITORÍA DE DATOS (RANKING DE MAYOR A MENOR)
@@ -2614,6 +2603,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
 
   
+
 
 
 
