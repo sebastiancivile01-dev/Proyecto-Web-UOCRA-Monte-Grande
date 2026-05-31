@@ -1821,7 +1821,8 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                         if not c_emp or not c_det:
                             st.error("❌ Empresa y Detalles son obligatorios.")
                         else:
-                                                        c_link = "" 
+                            c_link = "" 
+                            
                             if archivo_pdf is not None:
                                 with st.spinner("Subiendo archivo a Google Cloud..."):
                                     codigo_unico = str(uuid.uuid4())[:8]
@@ -2651,6 +2652,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     registrar_log("Envió una nueva propuesta al Buzón")
 
   
+
 
 
 
