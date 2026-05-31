@@ -2253,7 +2253,7 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
                 st.markdown(prompt)
 
             with st.chat_message("assistant"):
-                try:
+try:
                     with st.spinner("Creando plan de acción y filtrando bases de datos..."):
                         
                         prompt_min = prompt.lower()
@@ -2262,7 +2262,6 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
                         # FILTRADO INTELIGENTE (RAG) PARA OBRAS
                         if any(palabra in prompt_min for palabra in ["obra", "predio", "empresa"]):
                             if not df_obras.empty:
-                                # Filtramos la tabla para buscar solo lo que el usuario preguntó
                                 filtro = df_obras['Empresa'].str.lower().apply(lambda x: str(x) in prompt_min) | \
                                          df_obras['Predio'].str.lower().apply(lambda x: str(x) in prompt_min)
                                 df_filtrado = df_obras[filtro]
@@ -2275,7 +2274,6 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
                         # FILTRADO INTELIGENTE (RAG) PARA DELEGADOS
                         if any(palabra in prompt_min for palabra in ["delegado", "cuil", "teléfono", "celular", "tel", "numero", "contacto", "rrhh"]):
                             if not df_delegados.empty:
-                                # Filtramos para mandar solo el delegado que coincida con el texto
                                 filtro_del = df_delegados['Nombre'].str.lower().apply(lambda x: str(x) in prompt_min)
                                 df_filtrado_del = df_delegados[filtro_del]
                                 if not df_filtrado_del.empty:
@@ -2301,7 +2299,7 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
                         else:
                             prompt_final_ia = prompt
 
-         # MANDAMOS AL CHAT USANDO LA MEMORIA DE LA SESIÓN
+                        # MANDAMOS AL CHAT USANDO LA MEMORIA DE LA SESIÓN
                         respuesta = st.session_state.chat_session.send_message(prompt_final_ia)
                         st.markdown(respuesta.text)
                         st.session_state.mensajes_ui.append({"rol": "assistant", "contenido": respuesta.text})
@@ -2314,10 +2312,10 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
     # MÓDULO 11 - AUDITORÍA
     # ==========================================
     elif opcion == "11. 🧹 Auditoría":
-    st.title("🧹 Auditoría y Calidad de Datos")
-    st.markdown("Radar automático de celdas vacías ordenado por el responsable con mayor cantidad de faltantes.")
-    st.markdown("---")
-
+        st.title("🧹 Auditoría y Calidad de Datos")
+        st.markdown("Radar automático de celdas vacías ordenado por el responsable con mayor cantidad de faltantes.")
+        st.markdown("---")
+        
     tablas_a_auditar = {
         "Padrón de Delegados": (df_delegados, "Nombre"),
         "Obras y Empresas": (df_obras, "Predio"),
@@ -2603,6 +2601,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
 
   
+
 
 
 
