@@ -2246,14 +2246,14 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
             with st.chat_message(mensaje["rol"]):
                 st.markdown(mensaje["contenido"])
 
-        # 3. Interacción con el Usuario y ENRUTADOR DINÁMICO
+# 3. Interacción con el Usuario y ENRUTADOR DINÁMICO
         if prompt := st.chat_input("Ej: Dame el teléfono del delegado de Techint, o liquidame 8hs de Oficial..."):
             st.session_state.mensajes_ui.append({"rol": "user", "contenido": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
 
             with st.chat_message("assistant"):
-try:
+                try:
                     with st.spinner("Creando plan de acción y filtrando bases de datos..."):
                         
                         prompt_min = prompt.lower()
@@ -2601,6 +2601,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
 
   
+
 
 
 
