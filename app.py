@@ -228,7 +228,7 @@ except Exception as e:
     st.stop()
 
 # --- FUNCIONES DE BASE DE DATOS EN LA NUBE ---
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=20)
 def cargar_db(hoja_nombre, columnas):
     try:
         sheet = DOC.worksheet(hoja_nombre)
@@ -2611,6 +2611,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
 
   
+
 
 
 
