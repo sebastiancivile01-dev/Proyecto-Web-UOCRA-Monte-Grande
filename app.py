@@ -12,6 +12,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 from google.oauth2 import service_account
 import io
+import uuid
 
 st.markdown("""
     <style>
@@ -1786,8 +1787,14 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                             c_link = "" 
                             if archivo_pdf is not None:
                                 with st.spinner("Subiendo archivo a Google Drive..."):
-                                    nombre_limpio = f"Convenio_{c_emp}_{c_vig}.pdf".replace(" ", "_")
-                                    c_link = subir_archivo_drive(archivo_pdf, nombre_limpio)
+                                    # Generamos un código único de 8 letras y números al azar (ej: a1b2c3d4)
+                                    codigo_unico = str(uuid.uuid4())[:8]
+                                    
+                                    # Le pegamos ese código al principio del nombre del archivo
+                                    nombre_limpio = f"{codigo_unico}_Doc_{d_tit}.pdf".replace(" ", "_")
+                                    
+                                    # Subimos el archivo
+                                    d_link = subir_archivo_drive(archivo_doc, nombre_limpio)
                                     if c_link:
                                         st.success("✅ Archivo subido con éxito.")
                                     else:
@@ -2604,6 +2611,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
 
   
+
 
 
 
