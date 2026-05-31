@@ -2301,7 +2301,7 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
                         else:
                             prompt_final_ia = prompt
 
-                        # MANDAMOS AL CHAT USANDO LA MEMORIA DE LA SESIÓN
+         # MANDAMOS AL CHAT USANDO LA MEMORIA DE LA SESIÓN
                         respuesta = st.session_state.chat_session.send_message(prompt_final_ia)
                         st.markdown(respuesta.text)
                         st.session_state.mensajes_ui.append({"rol": "assistant", "contenido": respuesta.text})
@@ -2310,10 +2310,10 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
                     st.error(f"❌ Error de conexión con el motor: {e_api}")
                     st.info("💡 Tip: Probá refrescar la página o limpiar el historial de la IA.")
 
-# ==========================================
-# MÓDULO 11: AUDITORÍA DE DATOS (RANKING DE MAYOR A MENOR)
-# ==========================================
-elif opcion == "11. 🧹 Auditoría":
+    # ==========================================
+    # MÓDULO 11 - AUDITORÍA
+    # ==========================================
+    elif opcion == "11. 🧹 Auditoría":
     st.title("🧹 Auditoría y Calidad de Datos")
     st.markdown("Radar automático de celdas vacías ordenado por el responsable con mayor cantidad de faltantes.")
     st.markdown("---")
@@ -2603,6 +2603,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
 
   
+
 
 
 
