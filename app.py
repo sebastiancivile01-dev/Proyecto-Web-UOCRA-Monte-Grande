@@ -2312,10 +2312,10 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
     # MÓDULO 11 - AUDITORÍA
     # ==========================================
 elif opcion == "11. 🧹 Auditoría":
-        st.title("🧹 Auditoría y Calidad de Datos")
-        st.markdown("Radar automático de celdas vacías ordenado por el responsable con mayor cantidad de faltantes.")
-        st.markdown("---")
-        
+    st.title("🧹 Auditoría y Calidad de Datos")
+    st.markdown("Radar automático de celdas vacías ordenado por el responsable con mayor cantidad de faltantes.")
+    st.markdown("---")
+
     tablas_a_auditar = {
         "Padrón de Delegados": (df_delegados, "Nombre"),
         "Obras y Empresas": (df_obras, "Predio"),
@@ -2325,7 +2325,6 @@ elif opcion == "11. 🧹 Auditoría":
         "Eventos UOCRA Mujeres": (df_eventos, "Titulo"),
         "Predios/Polos Base": (df_predios, "Nombre")
     }
-
     alertas_por_responsable = {}
     alertas_totales = 0
 
@@ -2601,6 +2600,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
 
   
+
 
 
 
