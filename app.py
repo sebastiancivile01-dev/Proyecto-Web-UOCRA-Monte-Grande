@@ -842,12 +842,13 @@ if opcion == "1. 🗺️ Mapa Territorial":
                                 if "Temporal" in p_tipo:
                                     st.session_state.puntos_custom.append({"nombre": p_nom, "lat": lat_f, "lon": lon_f, "color": color_final, "obs": p_obs})
                                     st.success("✅ Punto Temporal agregado al mapa.")
+                                    registrar_log("Agregó Punto Temporal al Mapa")
                                 else:
                                     nuevo_punto = pd.DataFrame([{"Nombre": p_nom, "Latitud": lat_f, "Longitud": lon_f, "Color": color_final, "Observacion": p_obs}])
                                     df_puntos_extra = pd.concat([df_puntos_extra, nuevo_punto], ignore_index=True)
                                     guardar_db(df_puntos_extra, "Puntos_Extra")
                                     st.success("✅ Punto Permanente guardado en Google Sheets.")
-                                
+                                    registrar_log("Agregó Punto Permanente al Mapa")
                                 st.rerun()
                             except ValueError:
                                 st.error("❌ Error: Latitud y Longitud deben ser números válidos.")
@@ -876,6 +877,7 @@ if opcion == "1. 🗺️ Mapa Territorial":
                         df_puntos_extra = df_puntos_extra[df_puntos_extra["Nombre"] != perm_a_borrar]
                         guardar_db(df_puntos_extra, "Puntos_Extra")
                         st.success("✅ Borrado definitivamente del Excel.")
+                        registrar_log("Borró Punto del Mapa")
                         st.rerun()
                 else:
                     st.info("No hay puntos permanentes guardados.")
@@ -908,6 +910,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                         df_predios = pd.concat([df_predios, nuevo_predio], ignore_index=True)
                         guardar_db(df_predios, "Predios")
                         st.success("✅ Polo registrado exitosamente.")
+                        registrar_log("Agregó Polo")
                         st.rerun()
 
         elif acc_predio == "✏️ Modificar":
@@ -928,6 +931,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             df_predios.loc[idx] = [nn, float(nlat) if nlat else 0.0, float(nlon) if nlon else 0.0, nrad, nobs]
                             guardar_db(df_predios, "Predios")
                             st.success("✅ Polo actualizado.")
+                            registrar_log("Actualizó Polo")
                             st.rerun()
 
         elif acc_predio == "🗑️ Eliminar":
@@ -937,6 +941,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     df_predios = df_predios[df_predios['Nombre'] != predio_el]
                     guardar_db(df_predios, "Predios")
                     st.success("✅ Polo eliminado.")
+                    registrar_log("Eliminó Polo")
                     st.rerun()
 
     with tab_obras:
@@ -982,6 +987,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                         }])], ignore_index=True)
                         guardar_db(df_obras, "Obras")
                         st.success("Registrada!")
+                        registrar_log(f"Alta/Modificación de Obra: {nombre_obra}")
                         st.rerun()
 
         elif acc_obras == "✏️ Modificar Obra":
@@ -1018,6 +1024,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             df_obras.loc[idx] = [obra_id_actual, np, ne, ", ".join(nd), no, ne_est, float(nlat) if nlat else None, float(nlon) if nlon else None, nj, "SI" if nj_r else "", dat.get('Mujeres', 0)]
                             guardar_db(df_obras, "Obras")
                             st.success("Actualizada!")
+                            registrar_log("Actualizó Obra")
                             st.rerun()
 
         elif acc_obras == "🗑️ Eliminar Obra":
@@ -1029,6 +1036,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     df_obras = df_obras.drop(df_obras.index[idx_el])
                     guardar_db(df_obras, "Obras")
                     st.success("Eliminada.")
+                    registrar_log("Borró Obra")
                     st.rerun()
     
     with tab_delegados:
@@ -1050,6 +1058,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     df_delegados = pd.concat([df_delegados, pd.DataFrame([{"Nombre": nom, "CUIL": cuil, "Celular": cel, "Domicilio": dom, "Nacimiento": nac.strftime("%d/%m/%Y"), "Correo": corr, "Observacion": obs}])], ignore_index=True)
                     guardar_db(df_delegados, "Delegados")
                     st.success("Agregado!")
+                    registrar_log("Agregó Delegado")
                     st.rerun()
 
         elif acc_del == "✏️ Modificar":
@@ -1078,6 +1087,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             df_delegados.loc[idx] = [nn, ncu, nce, ndo, nna.strftime("%d/%m/%Y"), nco, nob]
                             guardar_db(df_delegados, "Delegados")
                             st.success("Actualizado!")
+                            registrar_log("Actualizó Delegado")                            
                             st.rerun()
 
         elif acc_del == "🗑️ Eliminar":
@@ -1087,6 +1097,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     df_delegados = df_delegados[df_delegados['Nombre'] != del_el]
                     guardar_db(df_delegados, "Delegados")
                     st.success("Eliminado.")
+                    registrar_log("Borró Delegado")                     
                     st.rerun()
 
     with tab_contactos:
@@ -1108,6 +1119,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                         df_contactos = pd.concat([df_contactos, pd.DataFrame([{"Nombre": cnom, "Cargo": ccar, "Empresa": cemp_f, "Observaciones": cobs}])], ignore_index=True)
                         guardar_db(df_contactos, "Contactos")
                         st.success("Guardado!")
+                        registrar_log("Guardó Contacto") 
                         st.rerun()
 
         elif acc_con == "✏️ Modificar":
@@ -1129,6 +1141,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             df_contactos.loc[idx] = [nn, nc, ne, no]
                             guardar_db(df_contactos, "Contactos")
                             st.success("Actualizado!")
+                            registrar_log("Actualizó Contacto") 
                             st.rerun()
 
         elif acc_con == "🗑️ Eliminar":
@@ -1140,6 +1153,7 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     df_contactos = df_contactos.drop(df_contactos.index[idx])
                     guardar_db(df_contactos, "Contactos")
                     st.success("Eliminado.")
+                    registrar_log("Eliminó Contacto") 
                     st.rerun()
 
 # ==========================================
@@ -1479,6 +1493,7 @@ elif opcion == "4. 🧮 Calculadoras":
                     st.session_state.rec_nombre = n_emp
                     st.session_state.rec_empresa = e_liq
                     st.success("✅ Generado.")
+                    registrar_log("Generó Liquidación") 
 
             if 'recibo_txt' in st.session_state:
                 st.code(st.session_state.recibo_txt, language="text")
@@ -1492,6 +1507,7 @@ elif opcion == "4. 🧮 Calculadoras":
                         df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": st.session_state.rec_nombre, "Empresa": st.session_state.rec_empresa, "Motivo": motivo_recibo, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": f"Generado desde Calculadora ({'Modo Inteligente' if modo_carga != '✍️ Carga Manual (Clásica)' else 'Manual'})."}])], ignore_index=True)
                         guardar_db(df_reclamos, "Reclamos")
                         st.success("✅ Reclamo enviado!")
+                        registrar_log("Envió un Reclamo del sistema")
 
         # ---------------------------------------------------------
         # 2. PANTALLA: IERIC
@@ -1914,7 +1930,8 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                                 nombre_limpio = f"Doc_{d_tit}.pdf".replace(" ", "_")
                                 d_link = subir_archivo_drive(archivo_doc, nombre_limpio)
                                 if d_link:
-                                    st.success("✅ Archivo subido con éxito.")
+                                    st.success("✅ Archivo subido con éxito
+                                    registrar_log("Subió Archivo") 
                                 else:
                                     st.error("⚠️ Error al subir el PDF.")
                                     
@@ -1925,6 +1942,7 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                         df_documentos = pd.concat([df_documentos, nuevo_doc], ignore_index=True)
                         guardar_db(df_documentos, "Documentos")
                         st.success("✅ ¡Documento guardado!")
+                        registrar_log("Guardó Documento") 
                         import time
                         time.sleep(2)
                         st.rerun()
@@ -1965,6 +1983,7 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                                 # Guardamos en la base de datos
                                 guardar_db(df_documentos, "Documentos")
                                 st.success("✅ Documento eliminado del sistema.")
+                                registrar_log("Eliminó Documento") 
                                 import time
                                 time.sleep(1)
                                 st.rerun()
@@ -2097,6 +2116,7 @@ elif opcion == "9. 📸 Galería Multimedia":
                                     df_galeria = df_galeria.drop(idx_real)
                                     guardar_db(df_galeria, "Galeria")
                                     st.success("Foto eliminada.")
+                                    registrar_log("Eliminó Foto") 
                                     import time
                                     time.sleep(1)
                                     st.rerun()
@@ -2128,6 +2148,7 @@ elif opcion == "9. 📸 Galería Multimedia":
                         df_galeria = df_galeria.drop(idx_real)
                         guardar_db(df_galeria, "Galeria")
                         st.success("Video eliminado.")
+                        registrar_log("Eliminó Video") 
                         import time
                         time.sleep(1)
                         st.rerun()
@@ -2630,8 +2651,10 @@ if opcion != "10. 🤖 Asistente Virtual":
                     df_propuestas = pd.concat([df_propuestas, nueva_prop], ignore_index=True)
                     guardar_db(df_propuestas, "Propuestas")
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
+                    registrar_log("Envió una nueva propuesta al Buzón")
 
   
+
 
 
 
