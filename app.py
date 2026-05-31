@@ -2308,9 +2308,13 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
                     st.error(f"❌ Error de conexión con el motor: {e_api}")
                     st.info("💡 Tip: Probá refrescar la página o limpiar el historial de la IA.")
 
-    # ==========================================
-    # MÓDULO 11 - AUDITORÍA
-    # ==========================================
+    except Exception as e_ia:
+        st.error("❌ No se pudo inicializar el asistente virtual.")
+        st.info("💡 Verificá la configuración de GEMINI_API_KEY y la disponibilidad del servicio.")
+
+# ==========================================
+# MÓDULO 11 - AUDITORÍA
+# ==========================================
 elif opcion == "11. 🧹 Auditoría":
     st.title("🧹 Auditoría y Calidad de Datos")
     st.markdown("Radar automático de celdas vacías ordenado por el responsable con mayor cantidad de faltantes.")
@@ -2600,6 +2604,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
 
   
+
 
 
 
