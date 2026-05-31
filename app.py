@@ -2256,7 +2256,7 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
                 try:
                     with st.spinner("Creando plan de acción y filtrando bases de datos..."):
                         
-                       prompt_min = prompt.lower()
+prompt_min = prompt.lower()
             contexto_inyectado = ""
             
             # FILTRADO INTELIGENTE (RAG) PARA OBRAS
@@ -2282,6 +2282,7 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
                          contexto_inyectado += "\n[DATOS DE DELEGADOS ENCONTRADOS]\n" + df_filtrado_del.to_string(index=False) + "\n"
                     else:
                          contexto_inyectado += "\n[DATOS DE DELEGADOS] No se encontraron coincidencias exactas.\n"
+                         
                         
                         if any(palabra in prompt_min for palabra in ["delegado", "tel", "celular", "cuil", "numero", "contacto", "rrhh", "recursos humanos"]):
                             if not df_delegados.empty:
@@ -2613,5 +2614,6 @@ if opcion != "10. 🤖 Asistente Virtual":
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
 
   
+
 
 
