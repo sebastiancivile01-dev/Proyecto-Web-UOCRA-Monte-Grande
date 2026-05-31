@@ -1821,19 +1821,16 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                         if not c_emp or not c_det:
                             st.error("❌ Empresa y Detalles son obligatorios.")
                         else:
-                            c_link = "" 
+                                                        c_link = "" 
                             if archivo_pdf is not None:
-                                with st.spinner("Subiendo archivo a Google Drive..."):
-                                    # Generamos un código único de 8 letras y números al azar (ej: a1b2c3d4)
+                                with st.spinner("Subiendo archivo a Google Cloud..."):
                                     codigo_unico = str(uuid.uuid4())[:8]
-                                    
-                                    # Le pegamos ese código al principio del nombre del archivo
-                                    nombre_limpio = f"{codigo_unico}_Doc_{d_tit}.pdf".replace(" ", "_")
-                                    
-                                    # Subimos el archivo
-                                    d_link = subir_archivo_drive(archivo_doc, nombre_limpio)
+                                    nombre_limpio = f"{codigo_unico}_Convenio_{c_emp}.pdf".replace(" ", "_")
+                                    c_link = subir_archivo_drive(archivo_pdf, nombre_limpio)
+                            
                                     if c_link:
                                         st.success("✅ Archivo subido con éxito.")
+                                        registrar_log("Subió PDF de Convenio")
                                     else:
                                         st.error("⚠️ Error al subir el PDF.")
                             
@@ -2654,6 +2651,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     registrar_log("Envió una nueva propuesta al Buzón")
 
   
+
 
 
 
