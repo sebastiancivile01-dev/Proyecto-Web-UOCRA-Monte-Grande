@@ -1930,8 +1930,8 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                                 nombre_limpio = f"Doc_{d_tit}.pdf".replace(" ", "_")
                                 d_link = subir_archivo_drive(archivo_doc, nombre_limpio)
                                 if d_link:
-                                st.success("✅ Archivo subido con éxito")
-                                registrar_log("Subió Archivo")
+                                    st.success("✅ Archivo subido con éxito")
+                                    registrar_log("Subió Archivo")
                                 else:
                                     st.error("⚠️ Error al subir el PDF.")
                                     
@@ -2654,6 +2654,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     registrar_log("Envió una nueva propuesta al Buzón")
 
   
+
 
 
 
