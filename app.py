@@ -249,6 +249,27 @@ def guardar_db(df, hoja_nombre):
         st.cache_data.clear() 
     except Exception as e:
         st.error(f"Error técnico guardando en {hoja_nombre}: {e}")
+def registrar_log(accion_realizada):
+    """Guarda un registro silencioso de quién hizo qué y a qué hora."""
+    try:
+        # 1. Obtenemos el usuario de la sesión actual
+        usuario_actual = st.session_state.get("usuario_rol", "Desconocido")
+        
+        # 2. Obtenemos fecha y hora
+        ahora = datetime.now()
+        fecha = ahora.strftime("%d/%m/%Y")
+        hora = ahora.strftime("%H:%M:%S")
+        
+        # 3. Nos conectamos solo a la pestaña de Logs y agregamos la fila al final
+        # IMPORTANTE: Reemplazá "NOMBRE_DE_TU_EXCEL" por el nombre real de tu archivo en Google Drive
+        hoja_logs = client.open("Base_Datos_UOCRA").worksheet("Logs_Auditoria")
+        
+        # append_row inserta los datos en la primera fila vacía que encuentre hacia abajo
+        hoja_logs.append_row([fecha, hora, usuario_actual, accion_realizada])
+        
+    except Exception as e:
+        # Si falla el registro por un corte de internet, lo ignoramos para no frenar la app
+        pass
 
 # --- CARGA GLOBAL Y EXTRACCIÓN DE DATOS ---
 df_obras = cargar_db("Obras", ["Obra_ID", "Predio", "Empresa", "Delegado", "Obreros", "Estado", "Latitud", "Longitud", "Jurisdiccion", "Jurisdiccion_R", "Mujeres"])
@@ -2611,6 +2632,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
 
   
+
 
 
 
