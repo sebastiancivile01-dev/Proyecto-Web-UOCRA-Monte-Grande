@@ -2311,7 +2311,7 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
     # ==========================================
     # MÓDULO 11 - AUDITORÍA
     # ==========================================
-    elif opcion == "11. 🧹 Auditoría":
+elif opcion == "11. 🧹 Auditoría":
         st.title("🧹 Auditoría y Calidad de Datos")
         st.markdown("Radar automático de celdas vacías ordenado por el responsable con mayor cantidad de faltantes.")
         st.markdown("---")
@@ -2601,6 +2601,7 @@ if opcion != "10. 🤖 Asistente Virtual":
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
 
   
+
 
 
 
