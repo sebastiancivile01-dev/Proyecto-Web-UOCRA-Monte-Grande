@@ -1,8 +1,8 @@
 import streamlit as st
 
 
-def aplicar_estilos_globales(
-
+def aplicar_estilos_globales():
+    
 st.markdown("""
     <style>
     /* 1. FONDO GLOBAL DE LA APLICACIÓN */
@@ -147,13 +147,3 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
-    
-):
-    st.markdown("""
-        <style>
-
-        /* ACÁ PEGÁS TODO EL CSS GLOBAL ACTUAL */
-
-        </style>
-    """, unsafe_allow_html=True)
