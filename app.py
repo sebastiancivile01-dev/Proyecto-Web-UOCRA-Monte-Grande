@@ -25,7 +25,7 @@ if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
 
 if st.session_state.usuario_rol is None:
-        aplicar_estilos_login()
+    aplicar_estilos_login()
     
     st.write("<br><br><br>", unsafe_allow_html=True)
     col_izq, col_centro, col_der = st.columns([1, 1.5, 1])
