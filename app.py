@@ -12,8 +12,11 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 from google.oauth2 import service_account
 import io
-import uuid
+import uuid 
 
+from ui.styles import aplicar_estilos_globales 
+
+aplicar_estilos_globales()
 
 
 
