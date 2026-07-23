@@ -177,4 +177,16 @@ def aplicar_estilos_login():
     """, unsafe_allow_html=True)
 
 
+def aplicar_estilos_mapa():
+    st.markdown("""
+        <style>
+        iframe {
+            border: 3px solid #000000 !important;
+            border-radius: 8px;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.3);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+
 
