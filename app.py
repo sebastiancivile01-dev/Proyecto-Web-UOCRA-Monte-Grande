@@ -1008,14 +1008,7 @@ elif opcion == "3. 📋 Nóminas":
     del_totales = len(df_delegados) if not df_delegados.empty else 0
     con_totales = len(df_contactos) if not df_contactos.empty else 0
     
-    with c1: st.markdown(f'<div class="tarjeta-kpi"><div class="kpi-titulo">🏢 Empresas Activas</div><div class="kpi-valor">{emp_totales}</div></div>', unsafe_allow_html=True)
-    with c2: st.markdown(f'<div class="tarjeta-kpi verde"><div class="kpi-titulo">👥 Delegados Registrados</div><div class="kpi-valor">{del_totales}</div></div>', unsafe_allow_html=True)
-    with c3: st.markdown(f'<div class="tarjeta-kpi naranja"><div class="kpi-titulo">📞 Contactos Agenda</div><div class="kpi-valor">{con_totales}</div></div>', unsafe_allow_html=True)
-    
-    st.write("Buscador en tiempo real. Escriba para filtrar los resultados automáticamente.")
-    t1, t2, t3 = st.tabs(["🏗️ Obras y Empresas", "👥 Padrón de Delegados", "🏢 Agenda de Contactos"])
-    
-        with c1:
+    with c1:
         tarjeta_kpi("🏢 Empresas Activas", emp_totales)
 
     with c2:
@@ -1031,7 +1024,93 @@ elif opcion == "3. 📋 Nóminas":
             con_totales,
             variante="naranja",
         )
+    
+    st.write("Buscador en tiempo real. Escriba para filtrar los resultados automáticamente.")
+    t1, t2, t3 = st.tabs([
+        "🏗️ Obras y Empresas",
+        "👥 Padrón de Delegados",
+        "🏢 Agenda de Contactos",
+    ])
+    
+    with t1:
+        busq_obra = st.text_input(
+            "🔍 Buscar por Predio o Empresa:",
+            key="b_obras",
+        )
+        df_mostrar_o = df_obras.copy()
+        
+        # Oculta la jurisdicción restringida para ese perfil.
+        if st.session_state.usuario_rol == "Restringido":
+            cols_a_borrar = [
+                col
+                for col in df_mostrar_o.columns
+                if "Jurisdiccion_R" in str(col)
+            ]
+            if cols_a_borrar:
+                df_mostrar_o = df_mostrar_o.drop(columns=cols_a_borrar)
+            
+        if busq_obra:
+            df_mostrar_o = df_mostrar_o[
+                df_mostrar_o["Predio"].str.contains(
+                    busq_obra,
+                    case=False,
+                    na=False,
+                )
+                | df_mostrar_o["Empresa"].str.contains(
+                    busq_obra,
+                    case=False,
+                    na=False,
+                )
+            ]
 
+        st.dataframe(df_mostrar_o, use_container_width=True)
+        
+    with t2:
+        busq_del = st.text_input(
+            "🔍 Buscar Delegado por Nombre o CUIL:",
+            key="b_del",
+        )
+        df_mostrar_d = df_delegados
+
+        if busq_del:
+            df_mostrar_d = df_delegados[
+                df_delegados["Nombre"].str.contains(
+                    busq_del,
+                    case=False,
+                    na=False,
+                )
+                | df_delegados["CUIL"].astype(str).str.contains(
+                    busq_del,
+                    case=False,
+                    na=False,
+                )
+            ]
+
+        st.dataframe(df_mostrar_d, use_container_width=True)
+        
+    with t3:
+        busq_con = st.text_input(
+            "🔍 Buscar Contacto por Nombre o Empresa:",
+            key="b_con",
+        )
+        df_mostrar_c = df_contactos
+
+        if busq_con:
+            df_mostrar_c = df_contactos[
+                df_contactos["Nombre"].str.contains(
+                    busq_con,
+                    case=False,
+                    na=False,
+                )
+                | df_contactos["Empresa"].str.contains(
+                    busq_con,
+                    case=False,
+                    na=False,
+                )
+            ]
+
+        st.dataframe(df_mostrar_c, use_container_width=True)
+        
 # ==========================================
 # MÓDULO 4: CALCULADORAS GENÉRICAS
 # ==========================================
