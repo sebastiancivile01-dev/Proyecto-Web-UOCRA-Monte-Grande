@@ -14,7 +14,7 @@ from google.oauth2 import service_account
 import io
 import uuid 
 
-from ui.styles import aplicar_estilos_globales 
+from ui.styles import aplicar_estilos_globales, aplicar_estilos_login
 
 aplicar_estilos_globales()
 
@@ -25,27 +25,7 @@ if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
 
 if st.session_state.usuario_rol is None:
-    st.markdown("""
-        <style>
-        .stApp {
-            background-image: url("https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/main/banner_uocra.jpg");
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-        [data-testid="stHeader"], [data-testid="stAppViewContainer"] { background: rgba(0,0,0,0) !important; }
-        [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"] {
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 3rem;
-            border-radius: 15px;
-            box-shadow: 0px 8px 25px rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+        aplicar_estilos_login()
     
     st.write("<br><br><br>", unsafe_allow_html=True)
     col_izq, col_centro, col_der = st.columns([1, 1.5, 1])
