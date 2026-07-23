@@ -1,5 +1,5 @@
 import streamlit as st
-
+# Fuerza la resincronización del módulo de estilos en Streamlit Cloud.
 
 def aplicar_estilos_globales():
     
