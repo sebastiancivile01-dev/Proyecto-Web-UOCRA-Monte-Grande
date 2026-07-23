@@ -14,7 +14,14 @@ from google.oauth2 import service_account
 import io
 import uuid 
 
-from ui.styles import aplicar_estilos_globales 
+from ui.components import tarjeta_kpi
+from ui.styles import (
+    aplicar_estilos_estadisticas,
+    aplicar_estilos_globales,
+    aplicar_estilos_login,
+    aplicar_estilos_mapa,
+    aplicar_estilos_mujeres,
+)
 
 aplicar_estilos_globales()
 
@@ -25,27 +32,7 @@ if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
 
 if st.session_state.usuario_rol is None:
-    st.markdown("""
-        <style>
-        .stApp {
-            background-image: url("https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/main/banner_uocra.jpg");
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-        [data-testid="stHeader"], [data-testid="stAppViewContainer"] { background: rgba(0,0,0,0) !important; }
-        [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"] {
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 3rem;
-            border-radius: 15px;
-            box-shadow: 0px 8px 25px rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    aplicar_estilos_login()
     
     st.write("<br><br><br>", unsafe_allow_html=True)
     col_izq, col_centro, col_der = st.columns([1, 1.5, 1])
@@ -654,15 +641,7 @@ if opcion == "1. 🗺️ Mapa Territorial":
                 
                 folium.Marker([lat, lon], tooltip=folium.Tooltip(html), icon=icon).add_to(m)                
     # CSS PARA EL BORDE NEGRO DEL MAPA
-    st.markdown("""
-        <style>
-        iframe {
-            border: 3px solid #000000 !important;
-            border-radius: 8px;
-            box-shadow: 0px 5px 15px rgba(0,0,0,0.3);
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    aplicar_estilos_mapa()
     
     # RENDERIZAMOS EL MAPA (El tamaño se ajusta por CSS)
     folium_static(m, width=725, height=600)
@@ -1029,41 +1008,109 @@ elif opcion == "3. 📋 Nóminas":
     del_totales = len(df_delegados) if not df_delegados.empty else 0
     con_totales = len(df_contactos) if not df_contactos.empty else 0
     
-    with c1: st.markdown(f'<div class="tarjeta-kpi"><div class="kpi-titulo">🏢 Empresas Activas</div><div class="kpi-valor">{emp_totales}</div></div>', unsafe_allow_html=True)
-    with c2: st.markdown(f'<div class="tarjeta-kpi verde"><div class="kpi-titulo">👥 Delegados Registrados</div><div class="kpi-valor">{del_totales}</div></div>', unsafe_allow_html=True)
-    with c3: st.markdown(f'<div class="tarjeta-kpi naranja"><div class="kpi-titulo">📞 Contactos Agenda</div><div class="kpi-valor">{con_totales}</div></div>', unsafe_allow_html=True)
+    with c1:
+        tarjeta_kpi("🏢 Empresas Activas", emp_totales)
+
+    with c2:
+        tarjeta_kpi(
+            "👥 Delegados Registrados",
+            del_totales,
+            variante="verde",
+        )
+
+    with c3:
+        tarjeta_kpi(
+            "📞 Contactos Agenda",
+            con_totales,
+            variante="naranja",
+        )
     
     st.write("Buscador en tiempo real. Escriba para filtrar los resultados automáticamente.")
-    t1, t2, t3 = st.tabs(["🏗️ Obras y Empresas", "👥 Padrón de Delegados", "🏢 Agenda de Contactos"])
+    t1, t2, t3 = st.tabs([
+        "🏗️ Obras y Empresas",
+        "👥 Padrón de Delegados",
+        "🏢 Agenda de Contactos",
+    ])
     
-    with t1: 
-        busq_obra = st.text_input("🔍 Buscar por Predio o Empresa:", key="b_obras")
+    with t1:
+        busq_obra = st.text_input(
+            "🔍 Buscar por Predio o Empresa:",
+            key="b_obras",
+        )
         df_mostrar_o = df_obras.copy()
         
-        # MAGIA FASE 2: Borramos la columna si existe
+        # Oculta la jurisdicción restringida para ese perfil.
         if st.session_state.usuario_rol == "Restringido":
-            cols_a_borrar = [col for col in df_mostrar_o.columns if "Jurisdiccion_R" in str(col)]
+            cols_a_borrar = [
+                col
+                for col in df_mostrar_o.columns
+                if "Jurisdiccion_R" in str(col)
+            ]
             if cols_a_borrar:
                 df_mostrar_o = df_mostrar_o.drop(columns=cols_a_borrar)
             
         if busq_obra:
-            df_mostrar_o = df_mostrar_o[df_mostrar_o['Predio'].str.contains(busq_obra, case=False, na=False) | df_mostrar_o['Empresa'].str.contains(busq_obra, case=False, na=False)]
+            df_mostrar_o = df_mostrar_o[
+                df_mostrar_o["Predio"].str.contains(
+                    busq_obra,
+                    case=False,
+                    na=False,
+                )
+                | df_mostrar_o["Empresa"].str.contains(
+                    busq_obra,
+                    case=False,
+                    na=False,
+                )
+            ]
+
         st.dataframe(df_mostrar_o, use_container_width=True)
         
-    with t2: 
-        busq_del = st.text_input("🔍 Buscar Delegado por Nombre o CUIL:", key="b_del")
+    with t2:
+        busq_del = st.text_input(
+            "🔍 Buscar Delegado por Nombre o CUIL:",
+            key="b_del",
+        )
         df_mostrar_d = df_delegados
+
         if busq_del:
-            df_mostrar_d = df_delegados[df_delegados['Nombre'].str.contains(busq_del, case=False, na=False) | df_delegados['CUIL'].astype(str).str.contains(busq_del, case=False, na=False)]
+            df_mostrar_d = df_delegados[
+                df_delegados["Nombre"].str.contains(
+                    busq_del,
+                    case=False,
+                    na=False,
+                )
+                | df_delegados["CUIL"].astype(str).str.contains(
+                    busq_del,
+                    case=False,
+                    na=False,
+                )
+            ]
+
         st.dataframe(df_mostrar_d, use_container_width=True)
         
-    with t3: 
-        busq_con = st.text_input("🔍 Buscar Contacto por Nombre o Empresa:", key="b_con")
+    with t3:
+        busq_con = st.text_input(
+            "🔍 Buscar Contacto por Nombre o Empresa:",
+            key="b_con",
+        )
         df_mostrar_c = df_contactos
-        if busq_con:
-            df_mostrar_c = df_contactos[df_contactos['Nombre'].str.contains(busq_con, case=False, na=False) | df_contactos['Empresa'].str.contains(busq_con, case=False, na=False)]
-        st.dataframe(df_mostrar_c, use_container_width=True)
 
+        if busq_con:
+            df_mostrar_c = df_contactos[
+                df_contactos["Nombre"].str.contains(
+                    busq_con,
+                    case=False,
+                    na=False,
+                )
+                | df_contactos["Empresa"].str.contains(
+                    busq_con,
+                    case=False,
+                    na=False,
+                )
+            ]
+
+        st.dataframe(df_mostrar_c, use_container_width=True)
+        
 # ==========================================
 # MÓDULO 4: CALCULADORAS GENÉRICAS
 # ==========================================
@@ -1562,12 +1609,8 @@ elif opcion == "5. ⚠️ Reclamos":
 # ==========================================
 elif opcion == "6. 💜 UOCRA Mujeres":
     # Inyectamos CSS para pintar el módulo de violeta sin romper el resto
-    st.markdown("""
-        <style>
-        div.stTabs [data-baseweb="tab-list"] button {color: #4B0082;}
-        div.stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {border-bottom-color: #8A2BE2; color: #8A2BE2;}
-        </style>
-    """, unsafe_allow_html=True)
+    # Aplica el diseño violeta propio del módulo.
+    aplicar_estilos_mujeres()
     
     st.markdown("<h1 style='color: #8A2BE2;'>💜 Departamento UOCRA Mujeres</h1>", unsafe_allow_html=True)
     
@@ -1590,10 +1633,22 @@ elif opcion == "6. 💜 UOCRA Mujeres":
                 
                 # Tarjetas Visuales de la Obra Seleccionada
                 c_m1, c_m2, c_m3 = st.columns(3)
-                with c_m1: st.markdown(f'<div class="tarjeta-kpi"><div class="kpi-titulo">Operarios Totales</div><div class="kpi-valor">{tot_obreros}</div></div>', unsafe_allow_html=True)
-                with c_m2: st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">Mujeres Asignadas</div><div class="kpi-valor">{mujeres_actual}</div></div>', unsafe_allow_html=True)
-                with c_m3: st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">% de Participación</div><div class="kpi-valor">{porcentaje:.1f}%</div></div>', unsafe_allow_html=True)
-                
+                with c_m1:
+                    tarjeta_kpi("Operarios Totales", tot_obreros)
+
+                with c_m2:
+                    tarjeta_kpi(
+                        "Mujeres Asignadas",
+                        mujeres_actual,
+                        variante="violeta",
+                    )
+
+                with c_m3:
+                    tarjeta_kpi(
+                        "% de Participación",
+                        f"{porcentaje:.1f}%",
+                        variante="violeta",
+                    )                
                 with st.form("f_cupo"):
                     n_mujeres = st.number_input("Modificar Cantidad de Mujeres (Cupo):", min_value=0, step=1, value=mujeres_actual)
                     if st.form_submit_button("💾 Guardar / Actualizar Cupo"):
@@ -1859,35 +1914,8 @@ elif opcion == "8. 📊 Estadísticas":
     st.markdown("Visión analítica general de la Jurisdicción Esteban Echeverría.")
     
     # CSS Súper Agresivo para anular el diseño por defecto...
-    st.markdown("""
-        <style>
-        .tarjeta-kpi {
-            background-color: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
-            border-left: 8px solid #0033A0;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .tarjeta-kpi.verde { border-left-color: #28a745; }
-        .tarjeta-kpi.naranja { border-left-color: #fd7e14; }
-        .tarjeta-kpi.violeta { border-left-color: #8A2BE2; }
-        .kpi-titulo {
-            color: #6c757d;
-            font-size: 1.1rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-        .kpi-valor {
-            color: #212529;
-            font-size: 3.5rem;
-            font-weight: 900;
-            margin: 0;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    # Amplía las tarjetas KPI para el tablero.
+    aplicar_estilos_estadisticas()
     
     st.markdown("---")
     
@@ -1900,14 +1928,17 @@ elif opcion == "8. 📊 Estadísticas":
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.markdown(f'<div class="tarjeta-kpi"><div class="kpi-titulo">🏗️ Obras Totales</div><div class="kpi-valor">{total_obras}</div></div>', unsafe_allow_html=True)
+        tarjeta_kpi("🏗️ Obras Totales", total_obras)
+
     with col2:
-        st.markdown(f'<div class="tarjeta-kpi verde"><div class="kpi-titulo">🟢 Obras Activas</div><div class="kpi-valor">{obras_activas}</div></div>', unsafe_allow_html=True)
+        tarjeta_kpi("🟢 Obras Activas", obras_activas, variante="verde")
+
     with col3:
-        st.markdown(f'<div class="tarjeta-kpi"><div class="kpi-titulo">👷‍♂️ Compañeros</div><div class="kpi-valor">{total_obreros}</div></div>', unsafe_allow_html=True)
+        tarjeta_kpi("👷‍♂️ Compañeros", total_obreros)
+
     with col4:
-        st.markdown(f'<div class="tarjeta-kpi naranja"><div class="kpi-titulo">🚨 Reclamos</div><div class="kpi-valor">{reclamos_activos}</div></div>', unsafe_allow_html=True)
-    
+        tarjeta_kpi("🚨 Reclamos", reclamos_activos, variante="naranja")
+        
     st.markdown("---")
     
     # 2. GRÁFICOS Y CUPO
@@ -1929,10 +1960,18 @@ elif opcion == "8. 📊 Estadísticas":
             
             c_m1, c_m2 = st.columns(2)
             with c_m1:
-                st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">Compañeras</div><div class="kpi-valor">{total_mujeres}</div></div>', unsafe_allow_html=True)
-            with c_m2:
-                st.markdown(f'<div class="tarjeta-kpi violeta"><div class="kpi-titulo">Cupo Global</div><div class="kpi-valor">{porc_general:.1f}%</div></div>', unsafe_allow_html=True)
+                tarjeta_kpi(
+                    "Compañeras",
+                    total_mujeres,
+                    variante="violeta",
+                )
 
+            with c_m2:
+                tarjeta_kpi(
+                    "Cupo Global",
+                    f"{porc_general:.1f}%",
+                    variante="violeta",
+                )
 # ==========================================
 # MÓDULO 9: GALERÍA MULTIMEDIA
 # ==========================================

@@ -147,3 +147,94 @@ def aplicar_estilos_globales():
     }
     </style>
 """, unsafe_allow_html=True)
+
+
+def aplicar_estilos_login():
+    st.markdown("""
+        <style>
+        .stApp {
+            background-image: url("https://raw.githubusercontent.com/sebastiancivile01-dev/Proyecto-Web-UOCRA-Monte-Grande/main/banner_uocra.jpg");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        [data-testid="stHeader"], [data-testid="stAppViewContainer"] {
+            background: rgba(0,0,0,0) !important;
+        }
+
+        [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"] {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0px 8px 25px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+
+def aplicar_estilos_mapa():
+    st.markdown("""
+        <style>
+        iframe {
+            border: 3px solid #000000 !important;
+            border-radius: 8px;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.3);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+
+def aplicar_estilos_mujeres():
+    st.markdown("""
+        <style>
+        div.stTabs [data-baseweb="tab-list"] button {
+            color: #4B0082;
+        }
+        div.stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
+            border-bottom-color: #8A2BE2;
+            color: #8A2BE2;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+
+def aplicar_estilos_estadisticas():
+    st.markdown("""
+        <style>
+        .tarjeta-kpi {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+            border-left: 8px solid #0033A0;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .tarjeta-kpi.verde { border-left-color: #28a745; }
+        .tarjeta-kpi.naranja { border-left-color: #fd7e14; }
+        .tarjeta-kpi.violeta { border-left-color: #8A2BE2; }
+
+        .kpi-titulo {
+            color: #6c757d;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .kpi-valor {
+            color: #212529;
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin: 0;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+
+
