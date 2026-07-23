@@ -3,7 +3,7 @@ import streamlit as st
 
 def aplicar_estilos_globales():
     
-st.markdown("""
+    st.markdown("""
     <style>
     /* 1. FONDO GLOBAL DE LA APLICACIÓN */
     .stApp {
