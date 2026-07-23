@@ -14,7 +14,7 @@ from google.oauth2 import service_account
 import io
 import uuid 
 
-from ui.styles import aplicar_estilos_globales, aplicar_estilos_login
+from ui.styles import aplicar_estilos_globales, aplicar_estilos_login, aplicar_estilos_mapa
 
 aplicar_estilos_globales()
 
@@ -634,15 +634,7 @@ if opcion == "1. 🗺️ Mapa Territorial":
                 
                 folium.Marker([lat, lon], tooltip=folium.Tooltip(html), icon=icon).add_to(m)                
     # CSS PARA EL BORDE NEGRO DEL MAPA
-    st.markdown("""
-        <style>
-        iframe {
-            border: 3px solid #000000 !important;
-            border-radius: 8px;
-            box-shadow: 0px 5px 15px rgba(0,0,0,0.3);
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    aplicar_estilos_mapa()
     
     # RENDERIZAMOS EL MAPA (El tamaño se ajusta por CSS)
     folium_static(m, width=725, height=600)
