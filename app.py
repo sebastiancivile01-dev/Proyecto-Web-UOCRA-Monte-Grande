@@ -14,6 +14,9 @@ from google.oauth2 import service_account
 import io
 import uuid
 
+
+
+
 # --- SISTEMA DE LOGIN Y MEMORIA ---
 if 'usuario_rol' not in st.session_state:
     st.session_state.usuario_rol = None
