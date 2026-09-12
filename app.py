@@ -14,6 +14,11 @@ from google.oauth2 import service_account
 import io
 import uuid 
 
+from safety import (
+    leer_hoja, escribir_hoja, limpiar_sesion, modulo_permitido,
+    cargar_geojson_local, ConflictoEscrituraError,
+)
+
 from ui.components import tarjeta_kpi
 from ui.styles import (
     aplicar_estilos_estadisticas,
@@ -51,9 +56,11 @@ if st.session_state.usuario_rol is None:
         
         if st.button("Ingresar al Sistema Operativo", use_container_width=True):
             if clave == st.secrets["passwords"]["admin"]: 
+                limpiar_sesion(st.session_state)
                 st.session_state.usuario_rol = "Admin"
                 st.rerun()
             elif clave == st.secrets["passwords"]["restringido"]:
+                limpiar_sesion(st.session_state)
                 st.session_state.usuario_rol = "Restringido"
                 st.rerun()
             else:
@@ -76,27 +83,60 @@ except Exception as e:
     st.stop()
 
 # --- FUNCIONES DE BASE DE DATOS EN LA NUBE ---
-@st.cache_data(ttl=20)
-def cargar_db(hoja_nombre, columnas):
+@st.cache_data(ttl=120)
+def _leer_db_cache(documento_id, hoja_nombre, columnas):
     try:
-        sheet = DOC.worksheet(hoja_nombre)
-        datos = sheet.get_all_records()
-        if not datos:
-            return pd.DataFrame(columns=columnas)
-        return pd.DataFrame(datos)
-    except Exception as e:
-        return pd.DataFrame(columns=columnas)
+        return leer_hoja(DOC.worksheet(hoja_nombre), columnas)
+    except Exception:
+        # None es un fallo cacheado; una hoja vacía devuelve (DataFrame, snapshot).
+        return None
+
+
+def cargar_db(hoja_nombre, columnas):
+    versiones = st.session_state.setdefault("_versiones_hojas", {})
+    claves = st.session_state.setdefault("_claves_cache_hojas", {})
+    versiones.pop(hoja_nombre, None)
+    claves.pop(hoja_nombre, None)
+    try:
+        clave_cache = (DOC.id, hoja_nombre, list(columnas))
+        resultado = _leer_db_cache(*clave_cache)
+    except Exception:
+        resultado = None
+    if resultado is None:
+        st.error(f"No se pudo leer {hoja_nombre}. No se habilitarán escrituras. Recargue para volver a intentar.")
+        st.stop()
+    df, version = resultado
+    versiones[hoja_nombre] = version
+    claves[hoja_nombre] = clave_cache
+    return df
+
 
 def guardar_db(df, hoja_nombre):
+    versiones = st.session_state.setdefault("_versiones_hojas", {})
+    claves = st.session_state.setdefault("_claves_cache_hojas", {})
+    version = versiones.pop(hoja_nombre, None)
+    clave_cache = claves.pop(hoja_nombre, None)
     try:
-        df_limpio = df.fillna("")
-        sheet = DOC.worksheet(hoja_nombre)
-        sheet.clear()
-        datos_a_subir = [df_limpio.columns.values.tolist()] + df_limpio.values.tolist()
-        sheet.update(values=datos_a_subir, range_name="A1")
-        st.cache_data.clear() 
-    except Exception as e:
-        st.error(f"Error técnico guardando en {hoja_nombre}: {e}")
+        if version is None or clave_cache is None:
+            raise ValueError("Falta una lectura válida de esta hoja.")
+        escribir_hoja(DOC.worksheet(hoja_nombre), df, version)
+    except ConflictoEscrituraError:
+        st.error(f"{hoja_nombre} cambió mientras trabajaba. No se guardó. Actualice los datos y revise los cambios antes de reintentar.")
+        return False
+    except Exception:
+        st.error(f"No se pudo confirmar el guardado en {hoja_nombre}. Actualice y verifique la hoja antes de repetir la operación.")
+        return False
+    finally:
+        if clave_cache is not None:
+            _leer_db_cache.clear(*clave_cache)
+    return True
+
+
+@st.cache_data
+def cargar_limites_mapa():
+    return cargar_geojson_local()
+
+
 def registrar_log(accion_realizada):
     """Guarda un registro silencioso de quién hizo qué y a qué hora."""
     try:
@@ -432,7 +472,7 @@ with st.sidebar:
         st.rerun()
 
     if st.button("🚪 Cerrar Sesión", use_container_width=True):
-        st.session_state.usuario_rol = None
+        limpiar_sesion(st.session_state)
         st.rerun()
         
     st.markdown("---")
@@ -571,7 +611,7 @@ if opcion == "1. 🗺️ Mapa Territorial":
 
     # --- 1. DIBUJAMOS EL MAPA A TAMAÑO COMPLETO ---
     m = folium.Map(location=[-35.15, -58.8], zoom_start=8, tiles="CartoDB positron")
-    url_geojson = "https://raw.githubusercontent.com/mgaitan/departamentos_argentina/master/departamentos-buenos_aires.json"
+    limites_geojson = cargar_limites_mapa()
     
     def filtrar_partidos(feature):
         n = str(feature['properties'].get('departamento', '')).lower()
@@ -579,7 +619,10 @@ if opcion == "1. 🗺️ Mapa Territorial":
         if "viamonte" in n or "hermoso" in n: es_jur = False
         return {'fillColor': '#3186cc', 'color': '#000000', 'weight': 1.5, 'fillOpacity': 0.15} if es_jur else {'fillColor': 'transparent', 'color': 'transparent', 'weight': 0}
 
-    folium.GeoJson(url_geojson, name="Límites", style_function=filtrar_partidos).add_to(m)
+    if limites_geojson is not None:
+        folium.GeoJson(limites_geojson, name="Límites", style_function=filtrar_partidos).add_to(m)
+    else:
+        st.warning("Límites territoriales no disponibles. Se muestran las obras, polos y marcadores sin esa capa.")
 
     # DIBUJAR RADIOS DE PREDIOS/POLOS
     if not df_predios.empty:
@@ -686,7 +729,8 @@ if opcion == "1. 🗺️ Mapa Territorial":
                                 else:
                                     nuevo_punto = pd.DataFrame([{"Nombre": p_nom, "Latitud": lat_f, "Longitud": lon_f, "Color": color_final, "Observacion": p_obs}])
                                     df_puntos_extra = pd.concat([df_puntos_extra, nuevo_punto], ignore_index=True)
-                                    guardar_db(df_puntos_extra, "Puntos_Extra")
+                                    if not guardar_db(df_puntos_extra, "Puntos_Extra"):
+                                        st.stop()
                                     st.success("✅ Punto Permanente guardado en Google Sheets.")
                                     registrar_log("Agregó Punto Permanente al Mapa")
                                 st.rerun()
@@ -715,7 +759,8 @@ if opcion == "1. 🗺️ Mapa Territorial":
                     perm_a_borrar = st.selectbox("Seleccionar permanente para borrar:", [""] + nombres_perm, key="del_perm")
                     if st.button("🗑️ Borrar Permanente") and perm_a_borrar:
                         df_puntos_extra = df_puntos_extra[df_puntos_extra["Nombre"] != perm_a_borrar]
-                        guardar_db(df_puntos_extra, "Puntos_Extra")
+                        if not guardar_db(df_puntos_extra, "Puntos_Extra"):
+                            st.stop()
                         st.success("✅ Borrado definitivamente del Excel.")
                         registrar_log("Borró Punto del Mapa")
                         st.rerun()
@@ -725,6 +770,9 @@ if opcion == "1. 🗺️ Mapa Territorial":
 # MÓDULO 2: CARGA DE DATOS (ABM)
 # ==========================================
 elif opcion == "2. 📥 Carga de Datos (ABM)":
+    if not modulo_permitido(st.session_state.get("usuario_rol"), opcion):
+        st.error("Acceso no autorizado para este perfil.")
+        st.stop()
     st.title("📥 Ingreso y Modificación de Datos")
     
     tab_predios, tab_obras, tab_delegados, tab_contactos = st.tabs(["🗺️ Predios/Polos", "🏗️ Obras y Empresas", "👥 Delegados y Colab.", "🏢 Contactos"])
@@ -748,7 +796,8 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     else:
                         nuevo_predio = pd.DataFrame([{"Nombre": p_nom, "Latitud": float(p_lat) if p_lat else 0.0, "Longitud": float(p_lon) if p_lon else 0.0, "Radio_KM": p_rad, "Observaciones": p_obs}])
                         df_predios = pd.concat([df_predios, nuevo_predio], ignore_index=True)
-                        guardar_db(df_predios, "Predios")
+                        if not guardar_db(df_predios, "Predios"):
+                            st.stop()
                         st.success("✅ Polo registrado exitosamente.")
                         registrar_log("Agregó Polo")
                         st.rerun()
@@ -769,7 +818,8 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
 
                         if st.form_submit_button("🔄 Actualizar"):
                             df_predios.loc[idx] = [nn, float(nlat) if nlat else 0.0, float(nlon) if nlon else 0.0, nrad, nobs]
-                            guardar_db(df_predios, "Predios")
+                            if not guardar_db(df_predios, "Predios"):
+                                st.stop()
                             st.success("✅ Polo actualizado.")
                             registrar_log("Actualizó Polo")
                             st.rerun()
@@ -779,7 +829,8 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                 predio_el = st.selectbox("Seleccione el Polo a borrar:", [""] + df_predios['Nombre'].tolist())
                 if st.button("🗑️ Eliminar Definitivamente") and predio_el:
                     df_predios = df_predios[df_predios['Nombre'] != predio_el]
-                    guardar_db(df_predios, "Predios")
+                    if not guardar_db(df_predios, "Predios"):
+                        st.stop()
                     st.success("✅ Polo eliminado.")
                     registrar_log("Eliminó Polo")
                     st.rerun()
@@ -825,9 +876,10 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             "Jurisdiccion_R": "SI" if jur_r else "", # Se guarda como SI
                             "Mujeres": 0  # Inicia en 0 para UOCRA Mujeres
                         }])], ignore_index=True)
-                        guardar_db(df_obras, "Obras")
+                        if not guardar_db(df_obras, "Obras"):
+                            st.stop()
                         st.success("Registrada!")
-                        registrar_log(f"Alta/Modificación de Obra: {nombre_obra}")
+                        registrar_log(f"Alta de Obra #{nuevo_id}: {p_fin} ({e_fin})")
                         st.rerun()
 
         elif acc_obras == "✏️ Modificar Obra":
@@ -862,7 +914,8 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                         if st.form_submit_button("🔄 Actualizar"):
                             obra_id_actual = dat.get('Obra_ID', '')
                             df_obras.loc[idx] = [obra_id_actual, np, ne, ", ".join(nd), no, ne_est, float(nlat) if nlat else None, float(nlon) if nlon else None, nj, "SI" if nj_r else "", dat.get('Mujeres', 0)]
-                            guardar_db(df_obras, "Obras")
+                            if not guardar_db(df_obras, "Obras"):
+                                st.stop()
                             st.success("Actualizada!")
                             registrar_log("Actualizó Obra")
                             st.rerun()
@@ -874,7 +927,8 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                 if st.button("🗑️ Eliminar") and obra_el != "":
                     idx_el = opciones_obras_el.index(obra_el) - 1
                     df_obras = df_obras.drop(df_obras.index[idx_el])
-                    guardar_db(df_obras, "Obras")
+                    if not guardar_db(df_obras, "Obras"):
+                        st.stop()
                     st.success("Eliminada.")
                     registrar_log("Borró Obra")
                     st.rerun()
@@ -896,7 +950,8 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     obs = st.text_area("Obs:")
                 if st.form_submit_button("💾 Guardar") and nom:
                     df_delegados = pd.concat([df_delegados, pd.DataFrame([{"Nombre": nom, "CUIL": cuil, "Celular": cel, "Domicilio": dom, "Nacimiento": nac.strftime("%d/%m/%Y"), "Correo": corr, "Observacion": obs}])], ignore_index=True)
-                    guardar_db(df_delegados, "Delegados")
+                    if not guardar_db(df_delegados, "Delegados"):
+                        st.stop()
                     st.success("Agregado!")
                     registrar_log("Agregó Delegado")
                     st.rerun()
@@ -925,7 +980,8 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             nob = st.text_area("Obs:", value=str(dat.get('Observacion','')))
                         if st.form_submit_button("🔄 Actualizar"):
                             df_delegados.loc[idx] = [nn, ncu, nce, ndo, nna.strftime("%d/%m/%Y"), nco, nob]
-                            guardar_db(df_delegados, "Delegados")
+                            if not guardar_db(df_delegados, "Delegados"):
+                                st.stop()
                             st.success("Actualizado!")
                             registrar_log("Actualizó Delegado")                            
                             st.rerun()
@@ -935,7 +991,8 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                 del_el = st.selectbox("Borrar:", [""] + df_delegados['Nombre'].tolist())
                 if st.button("🗑️ Eliminar") and del_el:
                     df_delegados = df_delegados[df_delegados['Nombre'] != del_el]
-                    guardar_db(df_delegados, "Delegados")
+                    if not guardar_db(df_delegados, "Delegados"):
+                        st.stop()
                     st.success("Eliminado.")
                     registrar_log("Borró Delegado")                     
                     st.rerun()
@@ -957,7 +1014,8 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                     cemp_f = cemp_n.strip() if cemp_sel == "➕ Nueva..." else cemp_sel
                     if cemp_f:
                         df_contactos = pd.concat([df_contactos, pd.DataFrame([{"Nombre": cnom, "Cargo": ccar, "Empresa": cemp_f, "Observaciones": cobs}])], ignore_index=True)
-                        guardar_db(df_contactos, "Contactos")
+                        if not guardar_db(df_contactos, "Contactos"):
+                            st.stop()
                         st.success("Guardado!")
                         registrar_log("Guardó Contacto") 
                         st.rerun()
@@ -979,7 +1037,8 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                             no = st.text_area("Obs:", value=str(dat.get('Observaciones','')))
                         if st.form_submit_button("🔄 Actualizar"):
                             df_contactos.loc[idx] = [nn, nc, ne, no]
-                            guardar_db(df_contactos, "Contactos")
+                            if not guardar_db(df_contactos, "Contactos"):
+                                st.stop()
                             st.success("Actualizado!")
                             registrar_log("Actualizó Contacto") 
                             st.rerun()
@@ -991,7 +1050,8 @@ elif opcion == "2. 📥 Carga de Datos (ABM)":
                 if st.button("🗑️ Eliminar") and con_el:
                     idx = ops_el.index(con_el) - 1
                     df_contactos = df_contactos.drop(df_contactos.index[idx])
-                    guardar_db(df_contactos, "Contactos")
+                    if not guardar_db(df_contactos, "Contactos"):
+                        st.stop()
                     st.success("Eliminado.")
                     registrar_log("Eliminó Contacto") 
                     st.rerun()
@@ -1413,7 +1473,8 @@ elif opcion == "4. 🧮 Calculadoras":
                     else:
                         from datetime import datetime
                         df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": st.session_state.rec_nombre, "Empresa": st.session_state.rec_empresa, "Motivo": motivo_recibo, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": f"Generado desde Calculadora ({'Modo Inteligente' if modo_carga != '✍️ Carga Manual (Clásica)' else 'Manual'})."}])], ignore_index=True)
-                        guardar_db(df_reclamos, "Reclamos")
+                        if not guardar_db(df_reclamos, "Reclamos"):
+                            st.stop()
                         st.success("✅ Reclamo enviado!")
                         registrar_log("Envió un Reclamo del sistema")
 
@@ -1487,7 +1548,8 @@ elif opcion == "4. 🧮 Calculadoras":
                         from datetime import datetime
                         motivo_final = f"{motivo_ieric} | Deuda Actualizada: $ {suma_actualizada:,.2f}"
                         df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": ieric_nombre, "Empresa": ieric_emp, "Motivo": motivo_final, "Ingreso": datetime.now().strftime("%d/%m/%Y"), "Estado": "Activo", "Finalizacion": "En proceso", "Respuesta": "", "Observaciones": "Generado Auto desde IERIC (Con CER)."}])], ignore_index=True)
-                        guardar_db(df_reclamos, "Reclamos")
+                        if not guardar_db(df_reclamos, "Reclamos"):
+                            st.stop()
                         st.success("✅ Reclamo enviado!")
                 
                 if c_btn2.button("🗑️ Borrar Última Quincena"): 
@@ -1546,7 +1608,8 @@ elif opcion == "4. 🧮 Calculadoras":
                                 "Sereno": p_sereno, "Viatico": p_viatico
                             }])
                             df_paritarias = pd.concat([df_paritarias, nueva_paritaria], ignore_index=True)
-                            guardar_db(df_paritarias, "Paritarias_Historia")
+                            if not guardar_db(df_paritarias, "Paritarias_Historia"):
+                                st.stop()
                             st.success("✅ ¡Escala salarial guardada en la historia!")
                             import time
                             time.sleep(2)
@@ -1565,6 +1628,9 @@ elif opcion == "4. 🧮 Calculadoras":
 # MÓDULO 5: REPOSITORIO DE RECLAMOS
 # ==========================================
 elif opcion == "5. ⚠️ Reclamos":
+    if not modulo_permitido(st.session_state.get("usuario_rol"), opcion):
+        st.error("Acceso no autorizado para este perfil.")
+        st.stop()
     st.title("⚠️ Gestión de Reclamos Gremiales")
     tab_r_nuevo, tab_r_bd = st.tabs(["➕ Ingresar Reclamo Manual", "📋 Historial de Reclamos"])
     
@@ -1589,7 +1655,8 @@ elif opcion == "5. ⚠️ Reclamos":
                     st.error("❌ Nombre, Empresa y Motivo obligatorios.")
                 else:
                     df_reclamos = pd.concat([df_reclamos, pd.DataFrame([{"Nombre": rn, "Empresa": re_fin, "Motivo": rm, "Ingreso": fi.strftime("%d/%m/%Y"), "Estado": "Activo" if ract else "Finalizado", "Finalizacion": "En proceso" if ract else ff.strftime("%d/%m/%Y"), "Respuesta": rresp, "Observaciones": robs}])], ignore_index=True)
-                    guardar_db(df_reclamos, "Reclamos")
+                    if not guardar_db(df_reclamos, "Reclamos"):
+                        st.stop()
                     st.success("Reclamo asentado!")
                     st.rerun()
 
@@ -1600,7 +1667,8 @@ elif opcion == "5. ⚠️ Reclamos":
             rel = st.selectbox("Eliminar:", [""] + ops.tolist())
             if st.button("🗑️ Eliminar") and rel:
                 df_reclamos = df_reclamos.drop(df_reclamos.index[ops.tolist().index(rel)])
-                guardar_db(df_reclamos, "Reclamos")
+                if not guardar_db(df_reclamos, "Reclamos"):
+                    st.stop()
                 st.success("Eliminado.")
                 st.rerun()
 
@@ -1656,7 +1724,8 @@ elif opcion == "6. 💜 UOCRA Mujeres":
                         try:
                             # Forzamos que el dato sea entero para que Google Sheets lo tome perfecto
                             df_obras.at[idx_m, 'Mujeres'] = int(n_mujeres)
-                            guardar_db(df_obras, "Obras")
+                            if not guardar_db(df_obras, "Obras"):
+                                st.stop()
                             
                             st.success("✅ ¡Dato guardado en Google Sheets! Actualizando tablero...")
                             time.sleep(1.5) # Frena la web 1.5 segundos para que leas el cartel
@@ -1686,7 +1755,8 @@ elif opcion == "6. 💜 UOCRA Mujeres":
                     else:
                         nuevo_ev = pd.DataFrame([{"Titulo": e_tit, "Fecha": e_fec.strftime("%d/%m/%Y"), "Observaciones": e_obs}])
                         df_eventos = pd.concat([df_eventos, nuevo_ev], ignore_index=True)
-                        guardar_db(df_eventos, "Mujeres_Eventos")
+                        if not guardar_db(df_eventos, "Mujeres_Eventos"):
+                            st.stop()
                         st.success("✅ Evento agendado correctamente.")
                         st.rerun()
                         
@@ -1697,7 +1767,8 @@ elif opcion == "6. 💜 UOCRA Mujeres":
                 if st.button("🗑️ Eliminar") and ev_el != "":
                     idx_el = ops_ev.tolist().index(ev_el)
                     df_eventos = df_eventos.drop(df_eventos.index[idx_el])
-                    guardar_db(df_eventos, "Mujeres_Eventos")
+                    if not guardar_db(df_eventos, "Mujeres_Eventos"):
+                        st.stop()
                     st.success("Evento borrado.")
                     st.rerun()
         
@@ -1745,18 +1816,20 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                                     nombre_limpio = f"{codigo_unico}_Convenio_{c_emp}.pdf".replace(" ", "_")
                                     c_link = subir_archivo_drive(archivo_pdf, nombre_limpio)
                             
-                                    if c_link:
-                                        st.success("✅ Archivo subido con éxito.")
-                                        registrar_log("Subió PDF de Convenio")
-                                    else:
+                                    if not c_link:
                                         st.error("⚠️ Error al subir el PDF.")
+                                        st.stop()
                             
                             nuevo_conv = pd.DataFrame([{
                                 "Empresa": c_emp, "Detalle_Convenio": c_det, 
                                 "monto $": c_monto, "Monto %": c_porc, "Vigencia": c_vig, "Link_PDF": c_link
                             }])
                             df_convenios = pd.concat([df_convenios, nuevo_conv], ignore_index=True)
-                            guardar_db(df_convenios, "Convenios")
+                            if not guardar_db(df_convenios, "Convenios"):
+                                st.stop()
+                            if c_link:
+                                st.success("✅ Archivo subido con éxito.")
+                                registrar_log("Subió PDF de Convenio")
                             st.success("✅ Convenio registrado exitosamente.")
                             import time
                             time.sleep(2)
@@ -1787,7 +1860,8 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                                 df_convenios.at[idx, 'Monto %'] = e_porc
                                 df_convenios.at[idx, 'Vigencia'] = e_vig
                                 df_convenios.at[idx, 'Link_PDF'] = e_link
-                                guardar_db(df_convenios, "Convenios")
+                                if not guardar_db(df_convenios, "Convenios"):
+                                    st.stop()
                                 st.success("✅ Actualizado.")
                                 st.rerun()
                                 
@@ -1798,7 +1872,8 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                     if st.button("🗑️ Eliminar") and c_el != "":
                         idx_el = opciones_el.index(c_el) - 1
                         df_convenios = df_convenios.drop(df_convenios.index[idx_el])
-                        guardar_db(df_convenios, "Convenios")
+                        if not guardar_db(df_convenios, "Convenios"):
+                            st.stop()
                         st.success("Eliminado.")
                         st.rerun()
 
@@ -1843,18 +1918,20 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                             with st.spinner("Subiendo archivo a Google Cloud..."):
                                 nombre_limpio = f"Doc_{d_tit}.pdf".replace(" ", "_")
                                 d_link = subir_archivo_drive(archivo_doc, nombre_limpio)
-                                if d_link:
-                                    st.success("✅ Archivo subido con éxito")
-                                    registrar_log("Subió Archivo")
-                                else:
+                                if not d_link:
                                     st.error("⚠️ Error al subir el PDF.")
+                                    st.stop()
                                     
                         nuevo_doc = pd.DataFrame([{
                             "Titulo": d_tit, "Fecha": d_fec.strftime("%d/%m/%Y"), 
                             "Vigencia": d_vig, "Observaciones": d_obs, "Link_PDF": d_link
                         }])
                         df_documentos = pd.concat([df_documentos, nuevo_doc], ignore_index=True)
-                        guardar_db(df_documentos, "Documentos")
+                        if not guardar_db(df_documentos, "Documentos"):
+                            st.stop()
+                        if d_link:
+                            st.success("✅ Archivo subido con éxito")
+                            registrar_log("Subió Archivo")
                         st.success("✅ ¡Documento guardado!")
                         registrar_log("Guardó Documento") 
                         import time
@@ -1895,7 +1972,8 @@ elif opcion == "7. 🤝 Convenios y Documentación":
                                 # Borramos la fila exacta del dataframe original
                                 df_documentos = df_documentos.drop(idx)
                                 # Guardamos en la base de datos
-                                guardar_db(df_documentos, "Documentos")
+                                if not guardar_db(df_documentos, "Documentos"):
+                                    st.stop()
                                 st.success("✅ Documento eliminado del sistema.")
                                 registrar_log("Eliminó Documento") 
                                 import time
@@ -2012,7 +2090,8 @@ elif opcion == "9. 📸 Galería Multimedia":
                             if usuario_actual == "Admin":
                                 if st.button("🗑️ Eliminar", key=f"del_f_{idx_real}"):
                                     df_galeria = df_galeria.drop(idx_real)
-                                    guardar_db(df_galeria, "Galeria")
+                                    if not guardar_db(df_galeria, "Galeria"):
+                                        st.stop()
                                     st.success("Foto eliminada.")
                                     registrar_log("Eliminó Foto") 
                                     import time
@@ -2044,7 +2123,8 @@ elif opcion == "9. 📸 Galería Multimedia":
                 if usuario_actual == "Admin":
                     if st.button("🗑️ Eliminar Video", key=f"del_v_{idx_real}"):
                         df_galeria = df_galeria.drop(idx_real)
-                        guardar_db(df_galeria, "Galeria")
+                        if not guardar_db(df_galeria, "Galeria"):
+                            st.stop()
                         st.success("Video eliminado.")
                         registrar_log("Eliminó Video") 
                         import time
@@ -2099,7 +2179,8 @@ elif opcion == "9. 📸 Galería Multimedia":
                     if nuevos_registros:
                         df_nuevos = pd.DataFrame(nuevos_registros)
                         df_galeria = pd.concat([df_galeria, df_nuevos], ignore_index=True)
-                        guardar_db(df_galeria, "Galeria")
+                        if not guardar_db(df_galeria, "Galeria"):
+                            st.stop()
                         
                         st.success(f"✅ ¡Se subieron {len(nuevos_registros)} archivos correctamente!")
                         import time
@@ -2131,7 +2212,8 @@ elif opcion == "10. 🤖 Chat GPT UOCRA":
                         
                         # Guardamos en la variable global y mandamos al Excel
                         df_cerebro = pd.concat([df_cerebro, nueva_memoria], ignore_index=True)
-                        guardar_db(df_cerebro, "Cerebro_IA")
+                        if not guardar_db(df_cerebro, "Cerebro_IA"):
+                            st.stop()
                         
                         st.success("✅ ¡Conocimiento asimilado! La IA acaba de volverse más inteligente.")
                         import time
@@ -2448,7 +2530,8 @@ elif opcion == "12. 📝 Observaciones por Empresa":
                     }])
                     
                     df_observaciones = pd.concat([df_observaciones, nueva_obs], ignore_index=True)
-                    guardar_db(df_observaciones, "Observaciones_Empresas")
+                    if not guardar_db(df_observaciones, "Observaciones_Empresas"):
+                        st.stop()
                     st.success("✅ Observación registrada con éxito.")
                     import time
                     time.sleep(1.5)
@@ -2514,11 +2597,12 @@ elif opcion == "12. 📝 Observaciones por Empresa":
                                                           (df_observaciones['Observacion'] == row['Observacion'])].index[0]
                             if st.button(f"🗑️ Eliminar Nota #{idx_original}", key=f"del_obs_{idx_original}"):
                                 df_observaciones = df_observaciones.drop(idx_original)
-                                guardar_db(df_observaciones, "Observaciones_Empresas")
+                                if not guardar_db(df_observaciones, "Observaciones_Empresas"):
+                                    st.stop()
                                 st.success("✅ Eliminado.")
                                 time.sleep(1)
                                 st.rerun()
-                        except:
+                        except Exception:
                             pass
 # ==========================================
 # PIE DE PÁGINA: BUZÓN GLOBAL DE PROPUESTAS
@@ -2547,7 +2631,8 @@ if opcion != "10. 🤖 Asistente Virtual":
                     }])
                     
                     df_propuestas = pd.concat([df_propuestas, nueva_prop], ignore_index=True)
-                    guardar_db(df_propuestas, "Propuestas")
+                    if not guardar_db(df_propuestas, "Propuestas"):
+                        st.stop()
                     st.success("✅ ¡Propuesta enviada exitosamente! Gracias por colaborar.")
                     registrar_log("Envió una nueva propuesta al Buzón")
 
