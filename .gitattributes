@@ -1,0 +1,2 @@
+# app.py ya está versionado con CRLF; conservar los controles de espacios.
+app.py whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

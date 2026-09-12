@@ -74,10 +74,10 @@ if st.session_state.usuario_rol is None:
         clave = st.text_input("Contraseña:", type="password")
         
         if st.button("Ingresar al Sistema Operativo", use_container_width=True):
-            if clave == "Civile2026":  # Clave Admin
+            if clave == st.secrets["passwords"]["admin"]:  # Clave Admin
                 st.session_state.usuario_rol = "Admin"
                 st.rerun()
-            elif clave == "Morelli2026": # Clave Restringida
+            elif clave == st.secrets["passwords"]["restringido"]: # Clave Restringida
                 st.session_state.usuario_rol = "Restringido"
                 st.rerun()
             else:
