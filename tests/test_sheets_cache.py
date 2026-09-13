@@ -29,7 +29,10 @@ import safety
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = (ROOT / "app.py").read_text(encoding="utf-8")
+SOURCE = "\n\n".join(path.read_text(encoding="utf-8-sig") for path in (
+    ROOT / "data" / "runtime.py",
+    ROOT / "screens" / "navigation.py",
+))
 APP = ast.parse(SOURCE)
 FUNCTION_NAMES = {"_leer_db_cache", "cargar_db", "guardar_db"}
 
@@ -137,7 +140,7 @@ class FakeHTTP:
 
 class OfflineApp:
     def __init__(self, before=False):
-        loads = [node for node in APP.body if isinstance(node, ast.Assign)
+        loads = [node for node in ast.walk(APP) if isinstance(node, ast.Assign)
                  and isinstance(node.value, ast.Call)
                  and isinstance(node.value.func, ast.Name)
                  and node.value.func.id == "cargar_db"]
@@ -147,7 +150,7 @@ class OfflineApp:
                           if isinstance(node, ast.Assign)
                           and any(isinstance(t, ast.Name) and t.id == "DOC"
                                   for t in node.targets))
-        definitions = [node for node in APP.body
+        definitions = [node for node in ast.walk(APP)
                        if isinstance(node, ast.FunctionDef)
                        and node.name in FUNCTION_NAMES]
 
