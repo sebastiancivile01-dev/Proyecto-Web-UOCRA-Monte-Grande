@@ -88,7 +88,7 @@ def render(ctx):
                         f"{porcentaje:.1f}%",
                         variante="violeta",
                     )                
-                with st.form("f_cupo"):
+                with st.form(f"f_cupo_{idx_m}"):
                     n_mujeres = st.number_input("Modificar Cantidad de Mujeres (Cupo):", min_value=0, step=1, value=mujeres_actual)
                     if st.form_submit_button("💾 Guardar / Actualizar Cupo"):
                         import time # Importamos el reloj para hacer una pausa visual

@@ -85,7 +85,7 @@ def render(ctx):
                 if predio_ed:
                     idx = df_predios[df_predios['Nombre'] == predio_ed].index[0]
                     dat = df_predios.loc[idx]
-                    with st.form("f_e_predio"):
+                    with st.form(f"f_e_predio_{idx}"):
                         nn = st.text_input("Nombre:*", value=str(dat.get('Nombre','')))
                         c1, c2, c3 = st.columns(3)
                         nlat = c1.text_input("Latitud:", value=str(dat.get('Latitud','')))
@@ -94,7 +94,7 @@ def render(ctx):
                         nobs = st.text_area("Observaciones:", value=str(dat.get('Observaciones','')))
     
                         if st.form_submit_button("🔄 Actualizar"):
-                            df_predios.loc[idx] = [nn, float(nlat) if nlat else 0.0, float(nlon) if nlon else 0.0, nrad, nobs]
+                            df_predios.loc[idx, ['Nombre', 'Latitud', 'Longitud', 'Radio_KM', 'Observaciones']] = [nn, float(nlat) if nlat else 0.0, float(nlon) if nlon else 0.0, nrad, nobs]
                             if not guardar_db(df_predios, "Predios"):
                                 st.stop()
                             st.success("✅ Polo actualizado.")
@@ -169,7 +169,7 @@ def render(ctx):
                     dat = df_obras.loc[idx] 
                     del_v = [d for d in str(dat.get('Delegado','')).split(", ") if d in lista_delegados_nombres]
                     
-                    with st.form("f_e_obra"):
+                    with st.form(f"f_e_obra_{idx}"):
                         col1, col2 = st.columns(2)
                         with col1:
                             np = st.text_input("Predio:*", value=str(dat.get('Predio','')))
@@ -190,7 +190,7 @@ def render(ctx):
                         
                         if st.form_submit_button("🔄 Actualizar"):
                             obra_id_actual = dat.get('Obra_ID', '')
-                            df_obras.loc[idx] = [obra_id_actual, np, ne, ", ".join(nd), no, ne_est, float(nlat) if nlat else None, float(nlon) if nlon else None, nj, "SI" if nj_r else "", dat.get('Mujeres', 0)]
+                            df_obras.loc[idx, ['Obra_ID', 'Predio', 'Empresa', 'Delegado', 'Obreros', 'Estado', 'Latitud', 'Longitud', 'Jurisdiccion', 'Jurisdiccion_R', 'Mujeres']] = [obra_id_actual, np, ne, ", ".join(nd), no, ne_est, float(nlat) if nlat else None, float(nlon) if nlon else None, nj, "SI" if nj_r else "", dat.get('Mujeres', 0)]
                             if not guardar_db(df_obras, "Obras"):
                                 st.stop()
                             st.success("Actualizada!")
@@ -200,8 +200,8 @@ def render(ctx):
         elif acc_obras == "🗑️ Eliminar Obra":
             if not df_obras.empty:
                 opciones_obras_el = [""] + (df_obras['Predio'].astype(str) + " (" + df_obras['Empresa'].astype(str) + ")").tolist()
-                obra_el = st.selectbox("Borrar:", opciones_obras_el)
-                if st.button("🗑️ Eliminar") and obra_el != "":
+                obra_el = st.selectbox("Borrar:", opciones_obras_el, key="abm_borrar_obra")
+                if st.button("🗑️ Eliminar", key="abm_eliminar_obra") and obra_el != "":
                     idx_el = opciones_obras_el.index(obra_el) - 1
                     df_obras = df_obras.drop(df_obras.index[idx_el])
                     if not guardar_db(df_obras, "Obras"):
@@ -235,7 +235,7 @@ def render(ctx):
     
         elif acc_del == "✏️ Modificar":
             if not df_delegados.empty:
-                del_ed = st.selectbox("Modificar:", df_delegados['Nombre'].tolist())
+                del_ed = st.selectbox("Modificar:", df_delegados['Nombre'].tolist(), key="abm_modificar_delegado")
                 if del_ed:
                     idx = df_delegados[df_delegados['Nombre'] == del_ed].index[0]
                     dat = df_delegados.loc[idx]
@@ -244,7 +244,7 @@ def render(ctx):
                     except: 
                         f_obj = datetime(2000, 1, 1).date()
                     
-                    with st.form("f_e_del"):
+                    with st.form(f"f_e_del_{idx}"):
                         col1, col2 = st.columns(2)
                         with col1:
                             nn = st.text_input("Nombre:*", value=str(dat.get('Nombre','')))
@@ -256,7 +256,7 @@ def render(ctx):
                             nco = st.text_input("Correo:", value=str(dat.get('Correo','')))
                             nob = st.text_area("Obs:", value=str(dat.get('Observacion','')))
                         if st.form_submit_button("🔄 Actualizar"):
-                            df_delegados.loc[idx] = [nn, ncu, nce, ndo, nna.strftime("%d/%m/%Y"), nco, nob]
+                            df_delegados.loc[idx, ['Nombre', 'CUIL', 'Celular', 'Domicilio', 'Nacimiento', 'Correo', 'Observacion']] = [nn, ncu, nce, ndo, nna.strftime("%d/%m/%Y"), nco, nob]
                             if not guardar_db(df_delegados, "Delegados"):
                                 st.stop()
                             st.success("Actualizado!")
@@ -265,8 +265,8 @@ def render(ctx):
     
         elif acc_del == "🗑️ Eliminar":
             if not df_delegados.empty:
-                del_el = st.selectbox("Borrar:", [""] + df_delegados['Nombre'].tolist())
-                if st.button("🗑️ Eliminar") and del_el:
+                del_el = st.selectbox("Borrar:", [""] + df_delegados['Nombre'].tolist(), key="abm_borrar_delegado")
+                if st.button("🗑️ Eliminar", key="abm_eliminar_delegado") and del_el:
                     df_delegados = df_delegados[df_delegados['Nombre'] != del_el]
                     if not guardar_db(df_delegados, "Delegados"):
                         st.stop()
@@ -300,11 +300,11 @@ def render(ctx):
         elif acc_con == "✏️ Modificar":
             if not df_contactos.empty:
                 ops = df_contactos['Nombre'] + " (" + df_contactos['Empresa'] + ")"
-                con_ed = st.selectbox("Modificar:", ops.tolist())
+                con_ed = st.selectbox("Modificar:", ops.tolist(), key="abm_modificar_contacto")
                 if con_ed:
                     idx = ops[ops == con_ed].index[0]
                     dat = df_contactos.loc[idx]
-                    with st.form("f_e_con"):
+                    with st.form(f"f_e_con_{idx}"):
                         col1, col2 = st.columns(2)
                         with col1:
                             nn = st.text_input("Nombre:*", value=str(dat.get('Nombre','')))
@@ -313,7 +313,7 @@ def render(ctx):
                             nc = st.text_input("Cargo:", value=str(dat.get('Cargo','')))
                             no = st.text_area("Obs:", value=str(dat.get('Observaciones','')))
                         if st.form_submit_button("🔄 Actualizar"):
-                            df_contactos.loc[idx] = [nn, nc, ne, no]
+                            df_contactos.loc[idx, ['Nombre', 'Cargo', 'Empresa', 'Observaciones']] = [nn, nc, ne, no]
                             if not guardar_db(df_contactos, "Contactos"):
                                 st.stop()
                             st.success("Actualizado!")
@@ -323,8 +323,8 @@ def render(ctx):
         elif acc_con == "🗑️ Eliminar":
             if not df_contactos.empty:
                 ops_el = [""] + (df_contactos['Nombre'] + " (" + df_contactos['Empresa'] + ")").tolist()
-                con_el = st.selectbox("Borrar:", ops_el)
-                if st.button("🗑️ Eliminar") and con_el:
+                con_el = st.selectbox("Borrar:", ops_el, key="abm_borrar_contacto")
+                if st.button("🗑️ Eliminar", key="abm_eliminar_contacto") and con_el:
                     idx = ops_el.index(con_el) - 1
                     df_contactos = df_contactos.drop(df_contactos.index[idx])
                     if not guardar_db(df_contactos, "Contactos"):

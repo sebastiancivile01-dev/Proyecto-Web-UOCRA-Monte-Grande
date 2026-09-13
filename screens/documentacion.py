@@ -110,7 +110,7 @@ def render(ctx):
                     if c_ed:
                         idx = opciones_c.tolist().index(c_ed)
                         dat = df_convenios.loc[idx]
-                        with st.form("f_e_conv"):
+                        with st.form(f"f_e_conv_{idx}"):
                             col1, col2 = st.columns(2)
                             with col1:
                                 e_emp = st.text_input("Empresa:*", value=str(dat.get('Empresa', '')))
@@ -149,7 +149,7 @@ def render(ctx):
             busq_c = st.text_input("🔍 Buscar Empresa:", key="b_conv")
             df_mostrar_conv = df_convenios.copy()
             if busq_c:
-                df_mostrar_conv = df_mostrar_conv[df_mostrar_conv['Empresa'].str.contains(busq_c, case=False, na=False)]
+                df_mostrar_conv = df_mostrar_conv[df_mostrar_conv['Empresa'].astype(str).str.contains(busq_c, case=False, na=False, regex=False)]
             
             for _, row in df_mostrar_conv.iterrows():
                 with st.expander(f"🏢 {row.get('Empresa', '')} | Vigencia: {row.get('Vigencia', '')}"):
@@ -214,7 +214,7 @@ def render(ctx):
                 b_doc = st.text_input("🔍 Buscar por Título:", key="buscador_docs_unico")
                 df_doc_view = df_documentos.copy()
                 if b_doc:
-                    df_doc_view = df_doc_view[df_doc_view['Titulo'].str.contains(b_doc, case=False, na=False)]
+                    df_doc_view = df_doc_view[df_doc_view['Titulo'].astype(str).str.contains(b_doc, case=False, na=False, regex=False)]
                 
                 # Usamos enumerate para generar un ID 100% único por cada tarjeta
                 for num_fila, (idx, doc) in enumerate(df_doc_view.iterrows()):

@@ -98,15 +98,17 @@ def render(ctx):
             
         if busq_obra:
             df_mostrar_o = df_mostrar_o[
-                df_mostrar_o["Predio"].str.contains(
+                df_mostrar_o["Predio"].astype(str).str.contains(
                     busq_obra,
                     case=False,
                     na=False,
+                    regex=False,
                 )
-                | df_mostrar_o["Empresa"].str.contains(
+                | df_mostrar_o["Empresa"].astype(str).str.contains(
                     busq_obra,
                     case=False,
                     na=False,
+                    regex=False,
                 )
             ]
     
@@ -121,15 +123,17 @@ def render(ctx):
     
         if busq_del:
             df_mostrar_d = df_delegados[
-                df_delegados["Nombre"].str.contains(
+                df_delegados["Nombre"].astype(str).str.contains(
                     busq_del,
                     case=False,
                     na=False,
+                    regex=False,
                 )
                 | df_delegados["CUIL"].astype(str).str.contains(
                     busq_del,
                     case=False,
                     na=False,
+                    regex=False,
                 )
             ]
     
@@ -144,15 +148,17 @@ def render(ctx):
     
         if busq_con:
             df_mostrar_c = df_contactos[
-                df_contactos["Nombre"].str.contains(
+                df_contactos["Nombre"].astype(str).str.contains(
                     busq_con,
                     case=False,
                     na=False,
+                    regex=False,
                 )
-                | df_contactos["Empresa"].str.contains(
+                | df_contactos["Empresa"].astype(str).str.contains(
                     busq_con,
                     case=False,
                     na=False,
+                    regex=False,
                 )
             ]
     
