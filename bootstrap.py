@@ -35,17 +35,24 @@ from screens import (
     observaciones,
     propuestas,
     reclamos,
+    simplified,
 )
-from screens import navigation
+from screens import mode, navigation
 
 
 def main() -> None:
     aplicar_estilos_globales()
     require_login(st, limpiar_sesion)
 
+    app_mode = mode.render(st, limpiar_sesion)
+    if app_mode is None:
+        st.stop()
+
     data = initialize()
     services = build_services(st, data["df_cierres"])
-    opcion = navigation.render(st, services["abrir_calendario_flotante"], limpiar_sesion)
+    opcion = ""
+    if app_mode == "complete":
+        opcion = navigation.render(st, services["abrir_calendario_flotante"], limpiar_sesion)
     context = ScreenContext(
         st=st,
         pd=pd,
@@ -64,6 +71,10 @@ def main() -> None:
         **data,
         **services,
     )
+
+    if app_mode == "simple":
+        simplified.render(context)
+        return
 
     handlers = {
         "1. 🗺️ Mapa Territorial": map_screen.render,

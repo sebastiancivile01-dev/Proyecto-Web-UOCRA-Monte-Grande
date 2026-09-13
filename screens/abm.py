@@ -119,7 +119,7 @@ def render(ctx):
             with st.form("f_n_obra", clear_on_submit=True):
                 col1, col2 = st.columns(2)
                 with col1:
-                    p_sel = st.selectbox("Predio/Polo Base:*", [""] + lista_predios_historicos, help="Si no está en la lista, créelo primero en la pestaña 'Predios/Polos'.")
+                    p_sel = st.selectbox("Predio/Polo (opcional):", [""] + lista_predios_historicos, help="Puede seleccionar un Predio/Polo existente si corresponde.")
                     e_sel = st.selectbox("Empresa:", ["➕ Nueva..."] + lista_empresas_historicas)
                     e_nueva = st.text_input("Si es Nueva, escríbala:")
                     d_sel = st.multiselect("Delegado/s:", lista_delegados_nombres)
@@ -136,28 +136,24 @@ def render(ctx):
                 if st.form_submit_button("💾 Guardar"):
                     p_fin = p_sel 
                     e_fin = e_nueva.strip() if e_sel == "➕ Nueva..." else e_sel
-                    
-                    if not p_fin: 
-                        st.error("❌ Falta seleccionar un Predio/Polo Base.")
-                    else:
-                        # Auto-generar Obra_ID
-                        nuevo_id = 1
-                        if not df_obras.empty and 'Obra_ID' in df_obras.columns:
-                            nuevo_id = int(pd.to_numeric(df_obras['Obra_ID'], errors='coerce').max() + 1)
-    
-                        df_obras = pd.concat([df_obras, pd.DataFrame([{
-                            "Obra_ID": nuevo_id, "Predio": p_fin, "Empresa": e_fin, "Delegado": ", ".join(d_sel), 
-                            "Obreros": obr, "Estado": est, "Jurisdiccion": jur, 
-                            "Latitud": float(lat) if lat else None, 
-                            "Longitud": float(lon) if lon else None, 
-                            "Jurisdiccion_R": "SI" if jur_r else "", # Se guarda como SI
-                            "Mujeres": 0  # Inicia en 0 para UOCRA Mujeres
-                        }])], ignore_index=True)
-                        if not guardar_db(df_obras, "Obras"):
-                            st.stop()
-                        st.success("Registrada!")
-                        registrar_log(f"Alta de Obra #{nuevo_id}: {p_fin} ({e_fin})")
-                        st.rerun()
+                    # Auto-generar Obra_ID
+                    nuevo_id = 1
+                    if not df_obras.empty and 'Obra_ID' in df_obras.columns:
+                        nuevo_id = int(pd.to_numeric(df_obras['Obra_ID'], errors='coerce').max() + 1)
+
+                    df_obras = pd.concat([df_obras, pd.DataFrame([{
+                        "Obra_ID": nuevo_id, "Predio": p_fin, "Empresa": e_fin, "Delegado": ", ".join(d_sel),
+                        "Obreros": obr, "Estado": est, "Jurisdiccion": jur,
+                        "Latitud": float(lat) if lat else None,
+                        "Longitud": float(lon) if lon else None,
+                        "Jurisdiccion_R": "SI" if jur_r else "", # Se guarda como SI
+                        "Mujeres": 0  # Inicia en 0 para UOCRA Mujeres
+                    }])], ignore_index=True)
+                    if not guardar_db(df_obras, "Obras"):
+                        st.stop()
+                    st.success("Registrada!")
+                    registrar_log(f"Alta de Obra #{nuevo_id}: {p_fin} ({e_fin})")
+                    st.rerun()
     
         elif acc_obras == "✏️ Modificar Obra":
             if not df_obras.empty:

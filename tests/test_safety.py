@@ -257,13 +257,24 @@ class AppIntegrationTests(unittest.TestCase):
                 env["registrar_log"].assert_not_called()
 
     def test_real_new_work_handler_success_and_failure(self):
-        branch = next(n for n in ast.walk(APP) if isinstance(n, ast.If) and isinstance(n.test, ast.UnaryOp) and isinstance(n.test.operand, ast.Name) and n.test.operand.id == "p_fin")
+        handler = next(
+            n for n in ast.walk(APP)
+            if isinstance(n, ast.If)
+            and isinstance(n.test, ast.Call)
+            and isinstance(n.test.func, ast.Attribute)
+            and n.test.func.attr == "form_submit_button"
+            and any(
+                isinstance(statement, ast.Assign)
+                and any(isinstance(target, ast.Name) and target.id == "p_fin" for target in statement.targets)
+                for statement in n.body
+            )
+        )
         for persisted in (False, True):
             with self.subTest(persisted=persisted):
                 st = fake_ui()
-                env = dict(st=st, pd=pd, df_obras=pd.DataFrame(), p_fin="Polo Sur", e_fin="Empresa A", d_sel=[], obr=3, est="Activa", jur="Ezeiza", lat="", lon="", jur_r=False, guardar_db=Mock(return_value=persisted), registrar_log=Mock())
+                env = dict(st=st, pd=pd, df_obras=pd.DataFrame(), p_sel="Polo Sur", e_sel="Empresa A", e_nueva="", d_sel=[], obr=3, est="Activa", jur="Ezeiza", lat="", lon="", jur_r=False, guardar_db=Mock(return_value=persisted), registrar_log=Mock())
                 with self.assertRaises(Rerun if persisted else StopRun):
-                    execute(branch.orelse, env)
+                    execute(handler.body, env)
                 if persisted:
                     st.success.assert_called_once()
                     env["registrar_log"].assert_called_once_with("Alta de Obra #1: Polo Sur (Empresa A)")
