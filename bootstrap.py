@@ -44,7 +44,7 @@ def main() -> None:
     require_login(st, limpiar_sesion)
 
     data = initialize()
-    services = build_services(st)
+    services = build_services(st, data["df_cierres"])
     opcion = navigation.render(st, services["abrir_calendario_flotante"], limpiar_sesion)
     context = ScreenContext(
         st=st,

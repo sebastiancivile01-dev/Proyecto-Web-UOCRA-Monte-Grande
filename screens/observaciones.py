@@ -76,7 +76,6 @@ def render(ctx):
                     if not guardar_db(df_observaciones, "Observaciones_Empresas"):
                         st.stop()
                     st.success("✅ Observación registrada con éxito.")
-                    import time
                     time.sleep(1.5)
                     st.rerun()
     
@@ -103,7 +102,7 @@ def render(ctx):
             
             # Filtro 2: Texto (si escribió algo)
             if busqueda_texto:
-                df_vista = df_vista[df_vista['Observacion'].str.contains(busqueda_texto, case=False, na=False)]
+                df_vista = df_vista[df_vista['Observacion'].astype(str).str.contains(busqueda_texto, case=False, na=False, regex=False)]
                 
             st.markdown("---")
     
@@ -113,7 +112,7 @@ def render(ctx):
                 st.write(f"Se encontraron **{len(df_vista)}** observaciones:")
                 
                 # Invertimos para ver lo más reciente primero
-                df_vista = df_vista.iloc[::-1].reset_index(drop=True)
+                df_vista = df_vista.iloc[::-1]
                 
                 for idx, row in df_vista.iterrows():
                     # Tarjeta visual mejorada
@@ -134,10 +133,9 @@ def render(ctx):
                     
                     # Botón de eliminar (Solo para Admin)
                     if st.session_state.get("usuario_rol", "") == "Admin":
-                        # Buscamos el ID original por si hay varios con la misma fecha
+                        # Conservamos la fila original al filtrar y ordenar las tarjetas.
                         try:
-                            idx_original = df_observaciones[(df_observaciones['Fecha'] == row['Fecha']) & 
-                                                          (df_observaciones['Observacion'] == row['Observacion'])].index[0]
+                            idx_original = idx
                             if st.button(f"🗑️ Eliminar Nota #{idx_original}", key=f"del_obs_{idx_original}"):
                                 df_observaciones = df_observaciones.drop(idx_original)
                                 if not guardar_db(df_observaciones, "Observaciones_Empresas"):

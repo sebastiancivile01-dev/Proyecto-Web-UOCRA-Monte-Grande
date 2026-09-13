@@ -4,8 +4,10 @@ from datetime import datetime
 
 import requests
 
+from services.storage import unique_object_name
 
-def build(st):
+
+def build(st, df_cierres):
     # --- FASE 4: CONEXIÓN API BCRA (CÁLCULO CER) ---
     @st.cache_data(ttl=86400)
     def obtener_cer(fecha_str=None):
@@ -226,12 +228,13 @@ def build(st):
             bucket = storage_client.bucket(nombre_balde)
             
             # Preparamos el archivo
-            blob = bucket.blob(nombre_archivo)
+            blob = bucket.blob(unique_object_name(nombre_archivo))
             
             # Lo subimos
             blob.upload_from_string(
                 archivo_subido.getvalue(), 
-                content_type=archivo_subido.type
+                content_type=archivo_subido.type,
+                if_generation_match=0,
             )
             
             # Devolvemos el link público directo

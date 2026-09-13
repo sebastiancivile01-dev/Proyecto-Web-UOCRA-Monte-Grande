@@ -364,15 +364,25 @@ def render(ctx):
                 st.warning("⚠️ No se pudo conectar con el BCRA. Se calcularán montos nominales sin indexar.")
             
             col_i1, col_i2 = st.columns(2)
-            ieric_nombre = col_i1.text_input("Nombre del Compañero (Para Registro/Reclamo):")
+            ieric_nombre = col_i1.text_input("Nombre del Compañero (Para Registro/Reclamo):", key="ieric_nombre")
             ieric_emp = col_i2.selectbox("Empresa:", ["➕ Nueva..."] + lista_empresas_historicas, key="ieric_e")
     
+            # La identidad pertenece a los importes, incluso tras volver al panel.
+            identidad_ieric = (ieric_nombre, ieric_emp)
+            if st.session_state.get("ieric_identidad") != identidad_ieric:
+                if st.session_state.get("quincenas"):
+                    st.info("Cambió el Nombre o la Empresa. Cargue nuevamente las quincenas para esta identidad.")
+                st.session_state.quincenas = []
+                for key in ("ieric_bruto", "ieric_fecha", "ieric_motivo"):
+                    st.session_state.pop(key, None)
+                st.session_state.ieric_identidad = identidad_ieric
+
             if 'quincenas' not in st.session_state: st.session_state.quincenas = []
     
             with st.form("form_q"):
                 c1, c2 = st.columns(2)
-                fp = c1.date_input("Fecha de Pago Original")
-                bru = c2.number_input("Sueldo Bruto Quincenal ($):", min_value=0.0, step=1000.0)
+                fp = c1.date_input("Fecha de Pago Original", key="ieric_fecha")
+                bru = c2.number_input("Sueldo Bruto Quincenal ($):", min_value=0.0, step=1000.0, key="ieric_bruto")
                 if st.form_submit_button("➕ Agregar Quincena") and bru > 0:
                     nro = len(st.session_state.quincenas) + 1
                     tasa = 0.12 if nro <= 24 else 0.08
@@ -411,7 +421,7 @@ def render(ctx):
                 
                 st.markdown("---")
                 st.markdown("### ⚠️ Iniciar Reclamo de IERIC")
-                motivo_ieric = st.text_input("Motivo del Reclamo (Ej: Falta de pago libretas):")
+                motivo_ieric = st.text_input("Motivo del Reclamo (Ej: Falta de pago libretas):", key="ieric_motivo")
                 c_btn1, c_btn2 = st.columns(2)
                 if c_btn1.button("🚨 Enviar al Repositorio de Reclamos", key="btn_ieric"):
                     if not ieric_nombre or ieric_emp == "➕ Nueva...": st.error("❌ Complete Nombre y Empresa arriba.")
@@ -424,9 +434,11 @@ def render(ctx):
                             st.stop()
                         st.success("✅ Reclamo enviado!")
                 
-                if c_btn2.button("🗑️ Borrar Última Quincena"): 
-                    st.session_state.quincenas.pop()
-                    st.rerun()
+                def borrar_ultima_quincena():
+                    if st.session_state.get("quincenas"):
+                        st.session_state.quincenas.pop()
+
+                c_btn2.button("🗑️ Borrar Última Quincena", on_click=borrar_ultima_quincena)
     
         # ---------------------------------------------------------
         # 3. PANTALLA: VACACIONES
@@ -494,6 +506,6 @@ def render(ctx):
             else:
                 df_mostrar = df_paritarias.iloc[::-1].copy()
                 for col in ["Oficial_Especializado", "Oficial", "Medio_Oficial", "Ayudante", "Sereno", "Viatico"]:
-                    df_mostrar[col] = df_mostrar[col].apply(lambda x: f"$ {float(str(x).replace('$','').replace(' ','').replace('.','').replace(',','.')):,.2f}" if str(x).replace('$','').replace(' ','').replace('.','').replace(',','.').replace('-','',1).replace('.','',1).isdigit() else x)
+                    df_mostrar[col] = df_mostrar[col].apply(lambda x: f"$ {x:,.2f}" if isinstance(x, (int, float)) and pd.notna(x) else f"$ {float(str(x).replace('$','').replace(' ','').replace('.','').replace(',','.')):,.2f}" if str(x).replace('$','').replace(' ','').replace('.','').replace(',','.').replace('-','',1).replace('.','',1).isdigit() else x)
                 st.dataframe(df_mostrar, hide_index=True, use_container_width=True)            
     # ==========================================
