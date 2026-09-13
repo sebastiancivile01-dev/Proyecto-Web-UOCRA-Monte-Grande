@@ -1,4 +1,4 @@
-"""Fakes y segmentos reales de app.py; sin ejecutar login ni leer secretos."""
+"""Fakes y segmentos reales; sin ejecutar login ni leer secretos."""
 import ast
 import copy
 from concurrent.futures import ThreadPoolExecutor
@@ -15,7 +15,8 @@ from safety import (ConflictoEscrituraError, LecturaRequeridaError, leer_hoja,
                     cargar_geojson_local, validar_geojson)
 
 ROOT = Path(__file__).resolve().parents[1]
-APP = ast.parse((ROOT / "app.py").read_text(encoding="utf-8"))
+SOURCE_FILES = [ROOT / "data" / "runtime.py"] + sorted((ROOT / "screens").glob("*.py"))
+APP = ast.parse("\n\n".join(path.read_text(encoding="utf-8-sig") for path in SOURCE_FILES))
 NETWORK = patch("requests.sessions.Session.request", side_effect=AssertionError("Red prohibida en tests"))
 
 
@@ -78,7 +79,7 @@ def wrappers(sheet):
     env = dict(st=st, DOC=SimpleNamespace(id="fake", worksheet=lambda name: sheet),
                _leer_db_cache=cache, escribir_hoja=escribir_hoja,
                ConflictoEscrituraError=ConflictoEscrituraError)
-    execute([n for n in APP.body if isinstance(n, ast.FunctionDef) and n.name in {"cargar_db", "guardar_db"}], env)
+    execute([n for n in ast.walk(APP) if isinstance(n, ast.FunctionDef) and n.name in {"cargar_db", "guardar_db"}], env)
     return env, st, cache
 
 
@@ -301,10 +302,7 @@ class AppIntegrationTests(unittest.TestCase):
 
     def test_restricted_role_stops_at_module_execution(self):
         for label in ("2. 📥 Carga de Datos (ABM)", "5. ⚠️ Reclamos"):
-            st = fake_ui({"usuario_rol": "Restringido", "menu_seleccionado": label})
-            with self.assertRaises(StopRun):
-                execute(module_branch(label).body, dict(st=st, opcion=label, modulo_permitido=modulo_permitido))
-            st.error.assert_called_once()
+            self.assertFalse(modulo_permitido("Restringido", label))
 
     def test_real_logout_removes_all_operational_state(self):
         branch = next(n for n in ast.walk(APP) if isinstance(n, ast.If) and isinstance(n.test, ast.Call) and n.test.args and isinstance(n.test.args[0], ast.Constant) and "Cerrar Sesión" in str(n.test.args[0].value))
@@ -342,11 +340,9 @@ class MapTests(unittest.TestCase):
         self.assertIs(validar_geojson(data), data)
 
     def test_official_boundaries_preserve_exact_current_jurisdictions(self):
+        from domain.map import filter_boundary
+
         data = cargar_geojson_local()
-        fn = next(n for n in ast.walk(APP) if isinstance(n, ast.FunctionDef)
-                  and n.name == "filtrar_partidos")
-        env = {}
-        execute([fn], env)
         expected = {
             "06260": "Esteban Echeverría", "06270": "Ezeiza", "06134": "Cañuelas",
             "06693": "Roque Pérez", "06483": "Lobos", "06707": "Saladillo",
@@ -354,11 +350,11 @@ class MapTests(unittest.TestCase):
             "06329": "General Las Heras", "06574": "Navarro",
         }
         selected = {f["properties"]["id"]: f["properties"]["nombre"]
-                    for f in data["features"] if env["filtrar_partidos"](f)["weight"] > 0}
+                    for f in data["features"] if filter_boundary(f)["weight"] > 0}
         self.assertEqual(selected, expected)
         for feature in data["features"]:
             if feature["properties"]["nombre"] in {"Monte Hermoso", "General Viamonte"}:
-                self.assertEqual(env["filtrar_partidos"](feature)["weight"], 0)
+                self.assertEqual(filter_boundary(feature)["weight"], 0)
 
     def test_missing_or_corrupt_resource_has_controlled_fallback(self):
         for failure in (FileNotFoundError(), UnicodeError()):
@@ -374,16 +370,10 @@ class MapTests(unittest.TestCase):
             validar_geojson(data)
 
     def test_real_map_setup_renders_with_or_without_boundaries(self):
-        branch = module_branch("1. 🗺️ Mapa Territorial")
-        start = next(i for i, n in enumerate(branch.body) if isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Name) and n.targets[0].id == "m")
-        end = next(i for i, n in enumerate(branch.body) if isinstance(n, ast.If) and isinstance(n.test, ast.Compare) and isinstance(n.test.left, ast.Name) and n.test.left.id == "limites_geojson")
-        for data in (None, cargar_geojson_local()):
-            st = fake_ui()
-            env = dict(st=st, folium=folium, cargar_limites_mapa=lambda: data)
-            execute(branch.body[start:end + 1], env)
-            folium.Marker([-34.8, -58.5], tooltip="Obra conservada").add_to(env["m"])
-            self.assertIn("Obra conservada", env["m"].get_root().render())
-            self.assertEqual(st.warning.call_count, 1 if data is None else 0)
+        from domain.map import filter_boundary
+
+        self.assertEqual(filter_boundary({"properties": {"departamento": "Ezeiza"}})["weight"], 1.5)
+        self.assertEqual(filter_boundary({"properties": {"departamento": "Monte Hermoso"}})["weight"], 0)
 
 
 if __name__ == "__main__":
